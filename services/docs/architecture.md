@@ -106,6 +106,101 @@ This adds `n` working days to `from` using the business calendar for `location` 
 when it is omitted). It returns `{ "date": "YYYY-MM-DD", "configVersionId": "guid" }`. This is the
 only working-day calculation in the backend; services never count holidays themselves.
 
+### Identity: masking, PDP and users (owner: Identity; callers: every service and the Gateway BFF)
+
+All Identity endpoints accept a tenant member's token or a service token.
+
+**`GET /api/v1/identity/masking/{role}/{resource}`** (RCU-AUT-004), for example
+`/api/v1/identity/masking/mdceo/candidate`
+
+- Returns `{ "resource": "candidate", "role": "mdceo", "version": "string", "fields": { "currentCtc": "hide", "email": "partial", ... } }`.
+- Resources today are `candidate` and `approval`.
+- The strategies are:
+  - `hide`: the field isn't returned.
+  - `partial`: only the last 4 characters are kept.
+  - `hash`: a stable one-way hash.
+- A field that isn't listed passes through unchanged.
+- An unknown role or resource returns 404 `masking_map_not_found`. Callers treat that 404 as "hide
+  every sensitive field", so a missing map fails closed.
+- Callers cache the map per tenant, role and version for up to 5 minutes, and apply it when they
+  serialize a response.
+- Candidate's local table (`CandidateMasking`) is a stand-in until Identity ships, and is then
+  replaced by this call.
+
+**`POST /api/v1/identity/decide`** (the PDP, RCU-AUT-003)
+
+- Request: `{ "actor": { "id", "roles": [] }, "action": "string", "resource": { "type", "id", "assigneeIds": [] }, "context": { "mfa": bool } }`
+- Response: `{ "allow": bool, "reasons": [], "policyVersion": "string", "ttlSeconds": 60 }`
+- An unknown action is denied.
+- Action keys are the frontend capability keys plus these:
+  - `offer.approve`
+  - `bgv.decideAdverse`, which needs an MFA step-up for `hrhead` and `mdceo`
+  - `vendor.empanel`, `reports.view`, `ijp.apply`, `referral.submit`
+  - `workflow.task.decide`, which is allowed for the assignee only
+- Callers may cache a decision for `ttlSeconds`.
+
+**`GET /api/v1/identity/me`** provisions the user just in time from the token and returns the frontend
+`User`. **`GET /api/v1/identity/users?role=<role>`** lists the tenant's users by role, which is how
+Workflow and Notification find assignees and recipients.
+
+### Config: matrices and versions (owner: Config)
+
+The `resolve/doa` and `resolve/working-days` endpoints are defined above. Config also exposes:
+
+- **`GET /api/v1/resolve/matrices/{doa|tat|offer|escalation|bgv|calendar}?at=<ISO>[&versionId=<guid>]`**
+  returns `{ configVersionId, matrixType, number, effectiveFrom, content }`.
+- **`GET /api/v1/config/rules`** returns the frontend `RuleConfig`.
+- **`/api/v1/config/{type}/versions`** is version admin: propose, revise, approve and reject, with dual
+  approval. Activation publishes `config.version.activated`.
+
+Keys that other services use:
+
+| Kind | Keys |
+|---|---|
+| Escalation issues | `tat-breach-sourcing`, `adverse-bgv`, `ctc-deviation`, `feedback-delay`, `candidate-grievance`, `vendor-sla-breach` |
+| TAT stages | `mrf-approval`, `sourcing`, `interview`, `bgv`, `offer-issuance`, `offer-to-joining`, `onboarding-day1`, `overall-junior`, `overall-managerial`, `overall-kmp` |
+| Calendar location | `default` when none is given |
+
+### Vendor: consultant status (owner: Vendor, wave 2; caller: Candidate)
+
+**`GET /api/v1/vendors/{vendorId}/status`** (RCU-CND-005, VND-001)
+
+This returns `{ "vendorId": "string", "status": "active | pending | off", "active": true }`. An unknown
+id returns 404, which the caller treats as not active (400 `vendor_not_active`). Until Vendor ships,
+Candidate's `UncheckedVendorDirectory` accepts every id and logs a warning. Vendor also publishes
+`vendor.de_empanelled`, so a caller may cache a status for up to 5 minutes.
+
+### Gateway BFF: log a candidate (owner: Gateway; calls Candidate, then Pipeline)
+
+**`POST /bff/candidates`** with the frontend `LogCandidateInput` body
+(`frontend/src/api/contract.ts`). It returns 201 with a `PipelineCard`, the same shape `logCandidate`
+returns in the mock.
+
+1. `POST /api/v1/candidates` with the candidate fields and consent. Errors come back as is,
+   including 409 `duplicate_candidate`. That matches the mock (RCU-PIP-002), where HR-TA decides
+   whether the person is a duplicate.
+2. `POST /api/v1/pipeline/applications` with `{ reqId, candidateId }`. A 409 means sourcing is
+   locked or the candidate already applied, and it comes back as is.
+
+The client's `Idempotency-Key` is forwarded to both calls with a step suffix (`<key>:candidate`,
+`<key>:application`). If the first call succeeded and the second failed, a retry replays the stored
+candidate response instead of tripping the duplicate check, then creates the application. No compensation is needed: a candidate without an application is valid data, and it ages
+out under the retention policy. The BFF forwards the caller's bearer token and correlation ids.
+
+### Integration event change: `pipeline.application.final_rejected` v1
+
+The payload is `{ appId, reqId, candidateId, reason, regretSendAt, retainUntil }`, with both dates as
+`YYYY-MM-DD`. `candidateId` and `retainUntil` are additive, so v1 stays v1 and tolerant readers that
+ignore them keep working. The schema is in
+`services/contracts/events/pipeline.application.final_rejected.v1.schema.json`. Candidate uses
+`retainUntil` for its purge date, and Notification uses `regretSendAt` for the regret email.
+
+Contract changes follow these rules:
+
+- Adding an optional field, or a field that every producer always sets, keeps the version.
+- Removing or renaming a field, or changing its meaning, needs `.v2` and a period in which both
+  versions are published.
+
 ## Sagas (owner runs the orchestration, compensations required)
 
 | Saga | Owner | Steps |
