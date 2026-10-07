@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet } from 'react-router-dom'
+import type { AdminLevel } from '../api/types'
 import { useSession } from '../auth/sessionContext'
-import type { AdminLevel } from '../auth/personaStorage'
 
 interface NavItem {
   to: string
@@ -21,8 +21,8 @@ const NAV: Record<AdminLevel, NavItem[]> = {
 
 export function Layout() {
   const { t } = useTranslation()
-  const { persona, level, signOut } = useSession()
-  if (!persona || !level) return null
+  const { admin, level, signOut } = useSession()
+  if (!admin || !level) return null
 
   return (
     <div className="shell">
@@ -45,10 +45,10 @@ export function Layout() {
         </nav>
         <div className="who">
           <span>
-            <strong>{persona.tenantName ?? persona.role}</strong>
-            {persona.tenantName && <> · {persona.role}</>}
+            <strong>{admin.name}</strong>
+            {admin.tenantName && <> · {admin.tenantName}</>}
           </span>
-          <button type="button" className="btn secondary small" onClick={signOut}>
+          <button type="button" className="btn secondary small" onClick={() => void signOut()}>
             {t('common.signOut')}
           </button>
         </div>

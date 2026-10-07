@@ -1,5 +1,7 @@
 import type {
+  AuthConfig,
   Branding,
+  CurrentAdmin,
   CreateTenantRequest,
   EffectiveScreen,
   Persona,
@@ -12,7 +14,9 @@ import type {
 
 /** The one seam between the admin client and the admin API. Components use it through hooks.ts. */
 export interface AdminApi {
-  // development sign-in
+  // sign-in
+  getAuthConfig(): Promise<AuthConfig>
+  getMe(): Promise<CurrentAdmin>
   listPersonas(): Promise<Persona[]>
 
   // platform console

@@ -7,9 +7,9 @@ function jsonResponse(status: number, body: unknown): Response {
 }
 
 describe('createHttpClient', () => {
-  it('sends the persona and the JSON body', async () => {
+  it('sends the credentials and the JSON body', async () => {
     const fetchImpl = vi.fn(() => Promise.resolve(jsonResponse(200, { tenantName: 'Aurora' })))
-    const api = createHttpClient(() => 'platform', fetchImpl)
+    const api = createHttpClient(() => Promise.resolve({ [PERSONA_HEADER]: 'platform' }), fetchImpl)
 
     await api.updateBranding({ themePresetKey: 'royal-plum', themeMode: 'dark' })
 
@@ -24,7 +24,7 @@ describe('createHttpClient', () => {
     const fetchImpl = vi.fn(() =>
       Promise.resolve(jsonResponse(400, { title: 'Field grade is locked.', code: 'screen.lockedField' })),
     )
-    const api = createHttpClient(() => null, fetchImpl)
+    const api = createHttpClient(() => Promise.resolve({}), fetchImpl)
 
     const error = await api.getScreen('mrf').catch((e: unknown) => e)
 

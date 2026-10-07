@@ -116,7 +116,24 @@ export interface UpdateScreenRequest {
   fields: UpdateFieldRequest[]
 }
 
-/** Development sign-in persona (stands in for the identity provider). */
+/** How the API expects people to sign in: Keycloak (OIDC) or the local development personas. */
+export interface AuthConfig {
+  mode: 'oidc' | 'development'
+  authority: string | null
+  clientId: string | null
+}
+
+export type AdminLevel = 'platform' | 'tenant'
+
+/** The signed-in admin, as the API sees them. */
+export interface CurrentAdmin {
+  name: string
+  level: AdminLevel
+  tenantId: string | null
+  tenantName: string | null
+}
+
+/** Development sign-in persona (stands in for Keycloak when running without it). */
 export interface Persona {
   id: string
   role: string

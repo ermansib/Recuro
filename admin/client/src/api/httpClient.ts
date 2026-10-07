@@ -1,3 +1,4 @@
+import { credentialHeaders } from '../auth/credentials'
 import { ApiError, type AdminApi } from './contract'
 
 const BASE = '/api/v1'
@@ -8,15 +9,13 @@ interface ProblemDetails {
   code?: string
 }
 
-/**
- * Fetch-based AdminApi. getPersona returns what identifies the caller: today the development persona,
- * later the identity provider's access token (sent as a bearer token instead).
- */
-export function createHttpClient(getPersona: () => string | null, fetchImpl: typeof fetch = fetch): AdminApi {
+/** Fetch-based AdminApi. getCredentials supplies the Keycloak bearer token or the development persona header. */
+export function createHttpClient(
+  getCredentials: () => Promise<Record<string, string>> = credentialHeaders,
+  fetchImpl: typeof fetch = fetch,
+): AdminApi {
   async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-    const headers: Record<string, string> = { Accept: 'application/json' }
-    const persona = getPersona()
-    if (persona) headers[PERSONA_HEADER] = persona
+    const headers: Record<string, string> = { Accept: 'application/json', ...(await getCredentials()) }
     if (body !== undefined) headers['Content-Type'] = 'application/json'
 
     const response = await fetchImpl(`${BASE}${path}`, {
@@ -36,6 +35,8 @@ export function createHttpClient(getPersona: () => string | null, fetchImpl: typ
   const key = encodeURIComponent
 
   return {
+    getAuthConfig: () => request('GET', '/auth/config'),
+    getMe: () => request('GET', '/auth/me'),
     listPersonas: () => request('GET', '/dev/personas'),
     listTenants: () => request('GET', '/platform/tenants'),
     createTenant: (body) => request('POST', '/platform/tenants', body),

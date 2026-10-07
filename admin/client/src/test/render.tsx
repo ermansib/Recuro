@@ -4,10 +4,28 @@ import type { ReactElement } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ApiContext } from '../api/client'
 import type { AdminApi } from '../api/contract'
-import type { EffectiveScreen, Persona, ThemePreset } from '../api/types'
+import type { CurrentAdmin, EffectiveScreen, ThemePreset } from '../api/types'
 import { SessionProvider } from '../auth/SessionProvider'
+import type { AuthStrategy } from '../auth/strategies'
 
-export const TENANT_PERSONA: Persona = { id: 'tenant:6a1e3c4e-0b4d-4d55-9f5b-5f0d3b8a0a01', role: 'Tenant admin', tenantName: 'Aurora Housing Finance' }
+export const TENANT_ADMIN: CurrentAdmin = {
+  name: 'Aurora Admin',
+  level: 'tenant',
+  tenantId: '6a1e3c4e-0b4d-4d55-9f5b-5f0d3b8a0a01',
+  tenantName: 'Aurora Housing Finance',
+}
+
+/** A strategy that never signs anyone in by itself; tests pass initialAdmin or drive signIn. */
+export function fakeStrategy(overrides: Partial<AuthStrategy> = {}): AuthStrategy {
+  return {
+    mode: 'development',
+    restore: () => Promise.resolve(false),
+    headers: () => Promise.resolve({}),
+    signIn: () => Promise.resolve(),
+    signOut: () => Promise.resolve(),
+    ...overrides,
+  }
+}
 
 export const PRESETS: ThemePreset[] = [
   {
@@ -47,7 +65,7 @@ export const MRF_SCREEN: EffectiveScreen = {
 export function fakeApi(overrides: Partial<AdminApi> = {}): AdminApi {
   const notStubbed = (name: string) => () => Promise.reject(new Error(`${name} not stubbed`))
   const methods: (keyof AdminApi)[] = [
-    'listPersonas', 'listTenants', 'createTenant', 'updateTenant', 'setTenantSuspended', 'listThemes',
+    'getAuthConfig', 'getMe', 'listPersonas', 'listTenants', 'createTenant', 'updateTenant', 'setTenantSuspended', 'listThemes',
     'setThemePublished', 'getBranding', 'updateBranding', 'listScreens', 'getScreen', 'updateScreen',
   ]
   return Object.fromEntries(methods.map((name) => [name, overrides[name] ?? notStubbed(name)])) as unknown as AdminApi
@@ -55,14 +73,20 @@ export function fakeApi(overrides: Partial<AdminApi> = {}): AdminApi {
 
 export function renderWithApi(
   ui: ReactElement,
-  { api, route = '/', path = '*', persona = TENANT_PERSONA }: { api: AdminApi; route?: string; path?: string; persona?: Persona | null },
+  {
+    api,
+    route = '/',
+    path = '*',
+    admin = TENANT_ADMIN,
+    strategy = fakeStrategy(),
+  }: { api: AdminApi; route?: string; path?: string; admin?: CurrentAdmin | null; strategy?: AuthStrategy },
 ) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
       <ApiContext.Provider value={api}>
         <MemoryRouter initialEntries={[route]}>
-          <SessionProvider initialPersona={persona}>
+          <SessionProvider strategy={strategy} initialAdmin={admin ?? undefined}>
             <Routes>
               <Route path={path} element={ui} />
             </Routes>

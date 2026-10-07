@@ -118,6 +118,14 @@ public sealed class AdminApiTests : IDisposable
     }
 
     [Fact]
+    public async Task Unknown_api_routes_are_not_found_rather_than_the_client_page()
+    {
+        var response = await _factory.ClientAs(null).GetAsync(new Uri("/api/v1/no-such-route", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Unknown_theme_is_not_found()
     {
         var client = _factory.ClientAs(AdminApiFactory.Aurora);

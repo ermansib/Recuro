@@ -31,11 +31,11 @@ admin/
 
 ## Run it
 
-Prerequisites: .NET 10 SDK, Node 24, and PostgreSQL (or Docker). In VS Code, the C# Dev Kit opens
-`admin/server/Recuro.Admin.slnx`.
+Prerequisites: .NET 10 SDK, Node 24, and Docker (or a local PostgreSQL and Keycloak). In VS Code, the
+C# Dev Kit opens `admin/server/Recuro.Admin.slnx`.
 
 ```bash
-docker compose -f admin/docker-compose.yml up -d     # PostgreSQL on localhost:5432
+docker compose -f admin/docker-compose.yml up -d     # PostgreSQL on :5432, Keycloak on :8080
 
 cd admin/server
 dotnet run --project src/Recuro.Admin.Api --launch-profile http   # API on http://localhost:5080
@@ -49,22 +49,36 @@ npm run dev        # http://localhost:5174, proxies /api to the API
 Or build the client once (`npm run build` in `admin/client`) and open http://localhost:5080: the API
 serves it.
 
-No PostgreSQL handy? Run the API on SQLite instead:
+No Docker handy? Run the API on SQLite with the development persona sign-in instead of Keycloak:
 
 ```bash
 dotnet run --project src/Recuro.Admin.Api --launch-profile http -- \
-  --Database:Provider=Sqlite --ConnectionStrings:AdminDb="Data Source=recuro-admin.db"
+  --Database:Provider=Sqlite --ConnectionStrings:AdminDb="Data Source=recuro-admin.db" --Auth:Mode=Development
 ```
 
-## Sign-in
+## Sign-in (Keycloak)
 
-In Development, the sign-in page lists personas (platform admin, or tenant admin of a demo tenant);
-the client sends the choice in an `X-Recuro-Persona` header. This mode refuses to start outside the
-Development and Testing environments.
+People sign in with [Keycloak](https://www.keycloak.org/) (free, Apache 2.0) using the authorization
+code flow with PKCE. The client asks the API for `/api/v1/auth/config`, redirects to Keycloak, and
+sends the access token as a bearer token. The API validates it (`Auth:Authority`, `Auth:Audience`)
+and reads two claims:
 
-Everywhere else `Auth:Mode` is `Oidc`: the API validates bearer tokens from any OpenID Connect
-provider (`Auth:Authority`, `Auth:Audience`). Tokens carry a `roles` claim (`platform-admin` or
-`tenant-admin`) and, for tenant admins, a `tenant_id` claim.
+| Claim | Value | Set in Keycloak as |
+|---|---|---|
+| `roles` | `platform-admin` or `tenant-admin` | realm roles |
+| `tenant_id` | the tenant's id (tenant admins only) | user attribute, editable by Keycloak admins only |
+
+`keycloak/recuro-realm.json` creates the `recuro` realm, the `recuro-admin` client and three demo
+users for local runs (password `Recuro@2026`): `platform@recuro.example`, `admin@aurora.example` and
+`admin@talentbridge.example`. Keycloak's own console is at http://localhost:8080 (admin / admin).
+These demo accounts and passwords are for local development only; production realms are created
+without them.
+
+Tenant admins of a suspended tenant are refused. To add a tenant admin, create the user in Keycloak,
+give them the `tenant-admin` role, and set `tenant_id` to the tenant's id from the platform console.
+
+`Auth:Mode=Development` swaps Keycloak for a persona picker (sent as an `X-Recuro-Persona` header).
+The API refuses to start in that mode outside the Development and Testing environments.
 
 ## Checks
 

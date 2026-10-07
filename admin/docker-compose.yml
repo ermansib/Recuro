@@ -11,5 +11,18 @@ services:
     volumes:
       - recuro-admin-pg:/var/lib/postgresql/data
 
+  # Keycloak (Apache 2.0) signs people in. start-dev is for local use only: in-memory-style
+  # storage, plain http and the demo users from keycloak/recuro-realm.json.
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6.4
+    command: start-dev --import-realm --http-port 8080
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+
 volumes:
   recuro-admin-pg:

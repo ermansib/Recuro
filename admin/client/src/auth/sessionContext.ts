@@ -1,12 +1,17 @@
 import { createContext, useContext } from 'react'
-import type { Persona } from '../api/types'
-import type { AdminLevel } from './personaStorage'
+import type { AdminLevel, AuthConfig, CurrentAdmin } from '../api/types'
+
+export type SessionStatus = 'loading' | 'signedOut' | 'signedIn'
 
 export interface Session {
-  persona: Persona | null
+  status: SessionStatus
+  mode: AuthConfig['mode']
+  admin: CurrentAdmin | null
   level: AdminLevel | null
-  signIn: (persona: Persona) => void
-  signOut: () => void
+  /** Why the last sign-in did not work, for example an account without an admin role. */
+  error: Error | null
+  signIn: (personaId?: string) => Promise<void>
+  signOut: () => Promise<void>
 }
 
 export const SessionContext = createContext<Session | null>(null)

@@ -41,12 +41,15 @@ app.UseAuthorization();
 app.MapPlatformEndpoints();
 app.MapTenantEndpoints();
 app.MapRuntimeEndpoints();
+app.MapAuthEndpoints();
 if (string.Equals(app.Configuration["Auth:Mode"], "Development", StringComparison.OrdinalIgnoreCase))
 {
     app.MapDevelopmentEndpoints();
 }
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
+// Unknown API routes are 404s, not the client's index.html; every other path is a client-side route.
+app.MapFallback("/api/{**rest}", () => Results.NotFound()).AllowAnonymous();
 app.MapFallbackToFile("index.html");
 
 await app.RunAsync();

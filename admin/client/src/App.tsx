@@ -1,5 +1,6 @@
+import { useTranslation } from 'react-i18next'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import type { AdminLevel } from './auth/personaStorage'
+import type { AdminLevel } from './api/types'
 import { useSession } from './auth/sessionContext'
 import { Layout } from './components/Layout'
 import { BrandingPage } from './features/branding/BrandingPage'
@@ -15,7 +16,10 @@ const HOME: Record<AdminLevel, string> = {
 }
 
 export function App() {
-  const { level } = useSession()
+  const { t } = useTranslation()
+  const { status, level } = useSession()
+
+  if (status === 'loading') return <p role="status">{t('common.loading')}</p>
 
   if (!level) {
     return (
