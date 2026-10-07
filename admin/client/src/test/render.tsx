@@ -65,8 +65,8 @@ export const MRF_SCREEN: EffectiveScreen = {
 export function fakeApi(overrides: Partial<AdminApi> = {}): AdminApi {
   const notStubbed = (name: string) => () => Promise.reject(new Error(`${name} not stubbed`))
   const methods: (keyof AdminApi)[] = [
-    'getAuthConfig', 'getMe', 'listPersonas', 'listTenants', 'createTenant', 'updateTenant', 'setTenantSuspended', 'listThemes',
-    'setThemePublished', 'getBranding', 'updateBranding', 'listScreens', 'getScreen', 'updateScreen',
+    'getAuthConfig', 'getMe', 'listPersonas', 'listTenants', 'createTenant', 'updateTenant', 'setTenantSuspended', 'assignTenantTheme',
+    'listThemes', 'setThemePublished', 'getBranding', 'listScreens', 'getScreen', 'updateScreen',
   ]
   return Object.fromEntries(methods.map((name) => [name, overrides[name] ?? notStubbed(name)])) as unknown as AdminApi
 }

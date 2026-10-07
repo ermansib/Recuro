@@ -43,11 +43,11 @@ export function createHttpClient(
     updateTenant: (id, body) => request('PUT', `/platform/tenants/${key(id)}`, body),
     setTenantSuspended: (id, suspended) =>
       request('PUT', `/platform/tenants/${key(id)}/status`, { status: suspended ? 'suspended' : 'active' }),
+    assignTenantTheme: (id, body) => request('PUT', `/platform/tenants/${key(id)}/theme`, body),
     listThemes: () => request('GET', '/platform/themes'),
     setThemePublished: (themeKey, isPublished) =>
       request('PUT', `/platform/themes/${key(themeKey)}/published`, { isPublished }),
     getBranding: () => request('GET', '/tenant/branding'),
-    updateBranding: (body) => request('PUT', '/tenant/branding', body),
     listScreens: () => request('GET', '/tenant/screens'),
     getScreen: (screenKey) => request('GET', `/tenant/screens/${key(screenKey)}`),
     updateScreen: (screenKey, body) => request('PUT', `/tenant/screens/${key(screenKey)}`, body),

@@ -110,3 +110,6 @@ tbody th{font-weight:600}
 .who .btn.secondary:hover{background:rgba(255,255,255,.08)}
 .signin h1{margin-top:0;color:var(--navy);font-size:22px}
 .signin h2{font-size:15px}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:8px 0 14px}
+.facts dt{color:var(--muted)}
+.facts dd{margin:0;font-weight:600}

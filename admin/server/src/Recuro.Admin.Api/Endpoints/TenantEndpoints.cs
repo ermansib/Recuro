@@ -14,11 +14,9 @@ internal static class TenantEndpoints
             .RequireAuthorization(AdminPolicies.Tenant)
             .WithTags("Tenant admin");
 
+        // Read-only: the platform console assigns each tenant's theme (PUT /api/v1/platform/tenants/{id}/theme).
         tenant.MapGet("/branding", async (GetBrandingHandler handler, CancellationToken ct) =>
             (await handler.HandleAsync(ct)).ToHttpResult());
-
-        tenant.MapPut("/branding", async (UpdateBrandingRequest request, UpdateBrandingHandler handler, CancellationToken ct) =>
-            (await handler.HandleAsync(request, ct)).ToHttpResult());
 
         tenant.MapGet("/screens", async (ListScreensHandler handler, CancellationToken ct) =>
             (await handler.HandleAsync(ct)).ToHttpResult());

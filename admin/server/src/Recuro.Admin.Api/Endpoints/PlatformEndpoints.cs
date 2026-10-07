@@ -29,6 +29,9 @@ internal static class PlatformEndpoints
         platform.MapPut("/tenants/{id:guid}/status", async (Guid id, ChangeTenantStatusRequest request, ChangeTenantStatusHandler handler, CancellationToken ct) =>
             (await handler.HandleAsync(id, request, ct)).ToHttpResult());
 
+        platform.MapPut("/tenants/{id:guid}/theme", async (Guid id, AssignTenantThemeRequest request, AssignTenantThemeHandler handler, CancellationToken ct) =>
+            (await handler.HandleAsync(id, request, ct)).ToHttpResult());
+
         platform.MapGet("/themes", async (ListThemePresetsHandler handler, CancellationToken ct) =>
             Results.Ok(await handler.HandleAsync(publishedOnly: false, ct)));
 

@@ -24,5 +24,7 @@
     "domain": "Custom domain (optional)",
     "submit": "Add tenant",
     "created": "{{name}} added"
-  }
+  },
+  "change": "Change",
+  "changeTheme": "Change {{tenant}}'s theme"
 }

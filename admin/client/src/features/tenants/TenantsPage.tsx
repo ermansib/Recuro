@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { useSetTenantSuspended, useTenants, useUpdateTenant } from '../../api/hooks'
 import { TENANT_PLANS, type Tenant, type TenantPlan } from '../../api/types'
 import { ErrorMessage, PageHeader, QueryState } from '../../components/ui'
@@ -72,8 +73,13 @@ function TenantTable({ tenants }: { tenants: Tenant[] }) {
                     </select>
                   </td>
                   <td>{tenant.customDomain ?? '—'}</td>
-                  <td className="hex">
-                    {tenant.themePresetKey} · {t(`common.mode.${tenant.themeMode}`)}
+                  <td>
+                    <span className="hex">
+                      {tenant.themePresetKey} · {t(`common.mode.${tenant.themeMode}`)}
+                    </span>{' '}
+                    <Link to={`/platform/tenant-themes?tenant=${encodeURIComponent(tenant.id)}`} aria-label={t('tenants.changeTheme', { tenant: tenant.name })}>
+                      {t('tenants.change')}
+                    </Link>
                   </td>
                   <td>
                     <span className={`badge ${suspended ? 'off' : 'ok'}`}>{t(`common.status.${tenant.status}`)}</span>

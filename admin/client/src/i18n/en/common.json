@@ -19,7 +19,8 @@
     "tenants": "Tenants",
     "themes": "Theme library",
     "branding": "Branding & theme",
-    "screens": "Screens & fields"
+    "screens": "Screens & fields",
+    "tenantThemes": "Tenant themes"
   },
   "mode": {
     "system": "Follow device",

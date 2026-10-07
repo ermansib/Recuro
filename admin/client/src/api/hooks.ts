@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useApi } from './client'
-import type { CreateTenantRequest, UpdateBrandingRequest, UpdateScreenRequest, UpdateTenantRequest } from './types'
+import type { AssignTenantThemeRequest, CreateTenantRequest, UpdateScreenRequest, UpdateTenantRequest } from './types'
 
 export const queryKeys = {
   personas: ['personas'] as const,
@@ -48,6 +48,15 @@ export function useSetTenantSuspended() {
   })
 }
 
+export function useAssignTenantTheme() {
+  const api = useApi()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, request }: { id: string; request: AssignTenantThemeRequest }) => api.assignTenantTheme(id, request),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.tenants }),
+  })
+}
+
 export function useThemes() {
   const api = useApi()
   return useQuery({ queryKey: queryKeys.themes, queryFn: () => api.listThemes() })
@@ -67,14 +76,6 @@ export function useBranding() {
   return useQuery({ queryKey: queryKeys.branding, queryFn: () => api.getBranding() })
 }
 
-export function useUpdateBranding() {
-  const api = useApi()
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (request: UpdateBrandingRequest) => api.updateBranding(request),
-    onSuccess: (branding) => queryClient.setQueryData(queryKeys.branding, branding),
-  })
-}
 
 export function useScreens() {
   const api = useApi()

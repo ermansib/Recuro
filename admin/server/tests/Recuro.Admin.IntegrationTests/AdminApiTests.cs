@@ -97,15 +97,23 @@ public sealed class AdminApiTests : IDisposable
     }
 
     [Fact]
-    public async Task Branding_change_reaches_the_runtime_config_for_that_tenant_only()
+    public async Task Theme_assigned_in_the_platform_console_reaches_that_tenant_only()
     {
+        var platform = _factory.ClientAs("platform");
         var aurora = _factory.ClientAs(AdminApiFactory.Aurora);
         var anonymous = _factory.ClientAs(null);
 
-        var response = await aurora.PutAsJsonAsync("/api/v1/tenant/branding", new UpdateBrandingRequest("royal-plum", ThemeMode.Dark), Json);
+        var response = await platform.PutAsJsonAsync(
+            $"/api/v1/platform/tenants/{Infrastructure.Persistence.Seed.DatabaseSeeder.AuroraTenantId}/theme",
+            new AssignTenantThemeRequest("royal-plum", ThemeMode.Dark),
+            Json);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var branding = await response.Content.ReadFromJsonAsync<BrandingDto>(Json);
+        var tenant = await response.Content.ReadFromJsonAsync<TenantDto>(Json);
+        Assert.Equal("royal-plum", tenant!.ThemePresetKey);
+
+        var branding = await aurora.GetFromJsonAsync<BrandingDto>("/api/v1/tenant/branding", Json);
         Assert.Equal("royal-plum", branding!.ThemePresetKey);
+        Assert.Equal("Royal Plum", branding.Theme.Name);
 
         var auroraRuntime = await anonymous.GetFromJsonAsync<RuntimeConfigDto>("/api/v1/runtime/aurora", Json);
         var bridgeRuntime = await anonymous.GetFromJsonAsync<RuntimeConfigDto>("/api/v1/runtime/talentbridge", Json);
@@ -128,11 +136,28 @@ public sealed class AdminApiTests : IDisposable
     [Fact]
     public async Task Unknown_theme_is_not_found()
     {
-        var client = _factory.ClientAs(AdminApiFactory.Aurora);
+        var client = _factory.ClientAs("platform");
 
-        var response = await client.PutAsJsonAsync("/api/v1/tenant/branding", new UpdateBrandingRequest("neon", ThemeMode.Light), Json);
+        var response = await client.PutAsJsonAsync(
+            $"/api/v1/platform/tenants/{Infrastructure.Persistence.Seed.DatabaseSeeder.AuroraTenantId}/theme",
+            new AssignTenantThemeRequest("neon", ThemeMode.Light),
+            Json);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Tenant_admins_cannot_change_their_own_theme()
+    {
+        var aurora = _factory.ClientAs(AdminApiFactory.Aurora);
+        var tenantRoute = await aurora.PutAsJsonAsync("/api/v1/tenant/branding", new AssignTenantThemeRequest("royal-plum", ThemeMode.Dark), Json);
+        var platformRoute = await aurora.PutAsJsonAsync(
+            $"/api/v1/platform/tenants/{Infrastructure.Persistence.Seed.DatabaseSeeder.AuroraTenantId}/theme",
+            new AssignTenantThemeRequest("royal-plum", ThemeMode.Dark),
+            Json);
+
+        Assert.False(tenantRoute.IsSuccessStatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, platformRoute.StatusCode);
     }
 
     [Fact]

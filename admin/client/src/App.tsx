@@ -7,6 +7,7 @@ import { BrandingPage } from './features/branding/BrandingPage'
 import { ScreenEditorPage } from './features/screens/ScreenEditorPage'
 import { ScreensPage } from './features/screens/ScreensPage'
 import { SignInPage } from './features/signin/SignInPage'
+import { TenantThemePage } from './features/tenantThemes/TenantThemePage'
 import { TenantsPage } from './features/tenants/TenantsPage'
 import { ThemeLibraryPage } from './features/themes/ThemeLibraryPage'
 
@@ -36,6 +37,7 @@ export function App() {
         {level === 'platform' ? (
           <>
             <Route path="/platform/tenants" element={<TenantsPage />} />
+            <Route path="/platform/tenant-themes" element={<TenantThemePage />} />
             <Route path="/platform/themes" element={<ThemeLibraryPage />} />
           </>
         ) : (
