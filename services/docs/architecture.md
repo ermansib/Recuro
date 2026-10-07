@@ -106,6 +106,9 @@ This adds `n` working days to `from` using the business calendar for `location` 
 when it is omitted). It returns `{ "date": "YYYY-MM-DD", "configVersionId": "guid" }`. This is the
 only working-day calculation in the backend; services never count holidays themselves.
 
+Pipeline (PR #12) reads working days, holidays and the TAT matrix from Config. If Config can't be
+reached, it counts weekends only and uses the FRD deadlines, so a stage clock never stops.
+
 ### Identity: masking, PDP and users (owner: Identity; callers: every service and the Gateway BFF)
 
 All Identity endpoints accept a tenant member's token or a service token.
@@ -124,8 +127,17 @@ All Identity endpoints accept a tenant member's token or a service token.
   every sensitive field", so a missing map fails closed.
 - Callers cache the map per tenant, role and version for up to 5 minutes, and apply it when they
   serialize a response.
-- Candidate's local table (`CandidateMasking`) is a stand-in until Identity ships, and is then
-  replaced by this call.
+- The current map version is `masking-2026.10.1`.
+- The role `service`, used by client-credentials tokens, has its own map, and
+  `GET /api/v1/identity/masking/service/{resource}` returns 200:
+  - On `candidate`, a service account sees `name` and `email`. `phone`, `summary`, `currentCtc` and
+    `expectedCtc` are hidden.
+  - On `approval`, `sensitive` is hidden.
+  - Per-client rules, such as Offer needing CTC, come with the Keycloak service-account clients
+    (RCU-AUT-005).
+- Candidate (PR #12) reads its masking rules from this endpoint. For an unknown role it hides every
+  personal field. If Identity can't be reached, it uses the last rules it cached, and if it has none,
+  the FRD §3.2 table.
 
 **`POST /api/v1/identity/decide`** (the PDP, RCU-AUT-003)
 
