@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/notification.created.v1.schema.json",
+  "title": "notification.created.v1",
+  "description": "Producer: Notification. A bell item was created (RCU-NTF-001). Ids only: no text, names or contact details. Subject: Notification/<notificationId>.",
+  "type": "object",
+  "properties": {
+    "notificationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "recipientRole": {
+      "type": "string",
+      "enum": [
+        "hrta",
+        "hrhead",
+        "mdceo",
+        "employee",
+        "candidate"
+      ]
+    },
+    "recipientUserId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Null when the item is for everyone in recipientRole (HR staff roles only)."
+    },
+    "templateKey": {
+      "type": "string"
+    },
+    "critical": {
+      "type": "boolean"
+    },
+    "sourceEventId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The event that caused it."
+    }
+  },
+  "required": [
+    "notificationId",
+    "recipientRole",
+    "templateKey",
+    "critical",
+    "sourceEventId"
+  ],
+  "additionalProperties": true
+}
