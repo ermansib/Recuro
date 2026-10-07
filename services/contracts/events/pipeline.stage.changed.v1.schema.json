@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/pipeline.stage.changed.v1.schema.json",
+  "title": "pipeline.stage.changed.v1",
+  "description": "Producer: Pipeline. An application moved stage (RCU-PPL-002, RCU-PPL-007 funnel metrics).",
+  "type": "object",
+  "required": [
+    "appId",
+    "reqId",
+    "candidateId",
+    "source",
+    "from",
+    "to",
+    "actor",
+    "at",
+    "dwellMs"
+  ],
+  "properties": {
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "from": {
+      "type": "string",
+      "enum": [
+        "Sourced",
+        "Screened",
+        "Interview",
+        "Selection",
+        "BGV",
+        "Offer",
+        "PreBoarding",
+        "Onboarded",
+        "Confirmed",
+        "Rejected",
+        "Withdrawn",
+        "Hold"
+      ]
+    },
+    "to": {
+      "type": "string",
+      "enum": [
+        "Sourced",
+        "Screened",
+        "Interview",
+        "Selection",
+        "BGV",
+        "Offer",
+        "PreBoarding",
+        "Onboarded",
+        "Confirmed",
+        "Rejected",
+        "Withdrawn",
+        "Hold"
+      ]
+    },
+    "actor": {
+      "type": "string",
+      "description": "User id of who moved it, or the producing service."
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dwellMs": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": true
+}

@@ -75,9 +75,11 @@ services:
       Auth__Authority: http://localhost:${KEYCLOAK_PORT:-8080}/realms/recuro
       Auth__MetadataAddress: http://keycloak:8080/realms/recuro/.well-known/openid-configuration
       ReverseProxy__Clusters__audit__Destinations__primary__Address: http://audit:8080/
+      ReverseProxy__Clusters__candidate__Destinations__primary__Address: http://candidate:8080/
+      ReverseProxy__Clusters__pipeline__Destinations__primary__Address: http://pipeline:8080/
     ports:
       - "5100:8080"
-    depends_on: [redis, keycloak, audit]
+    depends_on: [redis, keycloak, audit, candidate, pipeline]
 
   audit:
     profiles: ["apps"]
@@ -97,5 +99,45 @@ services:
       postgres: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
 
+  candidate:
+    profiles: ["apps"]
+    build:
+      context: .
+      dockerfile: Candidate/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__candidate: Host=postgres;Database=recuro_candidate;Username=recuro_candidate;Password=recuro_candidate
+      ConnectionStrings__rabbitmq: amqp://recuro:recuro@rabbitmq:5672/
+      ConnectionStrings__redis: redis:6379
+      Auth__Authority: http://localhost:${KEYCLOAK_PORT:-8080}/realms/recuro
+      Auth__MetadataAddress: http://keycloak:8080/realms/recuro/.well-known/openid-configuration
+    ports:
+      - "5107:8080"
+    volumes:
+      - recuro-candidate-resumes:/data/resumes
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+
+  pipeline:
+    profiles: ["apps"]
+    build:
+      context: .
+      dockerfile: Pipeline/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__pipeline: Host=postgres;Database=recuro_pipeline;Username=recuro_pipeline;Password=recuro_pipeline
+      ConnectionStrings__rabbitmq: amqp://recuro:recuro@rabbitmq:5672/
+      ConnectionStrings__redis: redis:6379
+      Auth__Authority: http://localhost:${KEYCLOAK_PORT:-8080}/realms/recuro
+      Auth__MetadataAddress: http://keycloak:8080/realms/recuro/.well-known/openid-configuration
+      Services__Candidate__BaseUrl: http://candidate:8080/
+    ports:
+      - "5108:8080"
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+
 volumes:
   recuro-services-pg:
+  recuro-candidate-resumes:

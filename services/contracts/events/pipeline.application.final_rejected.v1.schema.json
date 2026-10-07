@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/pipeline.application.final_rejected.v1.schema.json",
+  "title": "pipeline.application.final_rejected.v1",
+  "description": "Producer: Pipeline. Final rejection with a reason (RCU-PPL-003). Notification sends the regret email by regretSendAt; Candidate keeps the data until retainUntil.",
+  "type": "object",
+  "required": [
+    "appId",
+    "reqId",
+    "candidateId",
+    "reason",
+    "regretSendAt",
+    "retainUntil"
+  ],
+  "properties": {
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "regretSendAt": {
+      "type": "string",
+      "format": "date"
+    },
+    "retainUntil": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "additionalProperties": true
+}
