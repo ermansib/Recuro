@@ -26,3 +26,10 @@ in the account menu.
 The demo personas (and the persona switcher in the account menu) appear in `npm run dev` only; set
 `VITE_DEMO_PERSONAS=true` to keep them in a production build. Accounts and workspaces you create are
 kept in the browser's localStorage; hiring data lives in memory and resets on reload.
+
+**Themes.** Each workspace's theme comes from the admin portal (tenant admin > Branding). With the
+admin portal running on port 5080, `npm run dev` proxies `/api/v1/runtime` to it, so a theme you
+publish there shows up on the sign-in page and across the portal (reload, or switch back to the tab).
+Set `ADMIN_API_PROXY` to use another address, or `VITE_ADMIN_API_URL` for a build. Without the admin
+portal, the built-in Recuro theme is used. Everyone can pick light, dark or "match my device" with the
+switch in the top bar; until they do, the workspace's default mode applies.

@@ -120,7 +120,7 @@ function JdBuilder({ initial, competencies }: { initial: JobDescription; compete
               ))}
               <div className="fgrid" style={{ marginTop: 10 }}>
                 <div className="field"><label htmlFor="jd-bench">{t('jd.benchmark')}</label><input id="jd-bench" type="text" value={jd.benchmark} onChange={(e) => set('benchmark', e.target.value)} /></div>
-                <div className="field"><label htmlFor="jd-owner">{t('jd.owner')}</label><input id="jd-owner" type="text" value={t('jd.ownerValue')} readOnly style={{ background: '#F8FAFC' }} /></div>
+                <div className="field"><label htmlFor="jd-owner">{t('jd.owner')}</label><input id="jd-owner" type="text" value={t('jd.ownerValue')} readOnly style={{ background: 'var(--surface-2)' }} /></div>
               </div>
             </fieldset>
           </Card>

@@ -4,9 +4,9 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { api } from '../api/client'
-import { applyTenantTheme } from '../config/tenant'
 import type { AuthSession, Role } from '../domain/types'
 import { AuthContext, SessionContext, type AuthValue, type SessionValue, type SignOutReason } from './sessionContext'
+import { useTenantTheme } from '../theme/themeContext'
 import { useIdleTimeout } from './useIdleTimeout'
 
 export const SESSION_STORAGE_KEY = 'recuro.session'
@@ -57,9 +57,8 @@ export function AuthProvider({ initialSession, children }: { initialSession?: Au
     }
   }, [restoring])
 
-  useEffect(() => {
-    applyTenantTheme(session?.tenant.theme)
-  }, [session?.tenant])
+  // Signed in: the tenant's theme. Signed out: the sign-in page (AuthShell) picks the workspace's.
+  useTenantTheme(session ? { slug: session.tenant.slug, fallback: session.tenant.theme } : undefined)
 
   const establish = useCallback((next: AuthSession) => {
     write(SESSION_STORAGE_KEY, next.token)

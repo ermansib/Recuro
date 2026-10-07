@@ -22,12 +22,12 @@ const STAGE_COLOR: Record<string, string> = {
 }
 
 const SOURCE_STYLE: Record<string, { background: string; color: string }> = {
-  Portal: { background: '#E9EBFB', color: '#3B4BC8' },
-  IJP: { background: '#F0EAFA', color: '#7B5EA7' },
-  Referral: { background: 'var(--gold-lt)', color: '#6D28D9' },
-  'Walk-in': { background: '#FFF1E3', color: '#C07216' },
+  Portal: { background: 'var(--navy-tint)', color: 'var(--navy-lt)' },
+  IJP: { background: 'var(--purple-lt)', color: 'var(--purple)' },
+  Referral: { background: 'var(--gold-lt)', color: 'var(--accent-tx)' },
+  'Walk-in': { background: 'var(--amber-lt)', color: 'var(--amber-tx)' },
   LinkedIn: { background: '#0A66C2', color: '#fff' },
-  Consultant: { background: '#EEF2F7', color: '#475569' },
+  Consultant: { background: 'var(--surface-3)', color: 'var(--txt-2)' },
 }
 
 const SOURCING_OPEN = ['Approved', 'Sourcing', 'Interviewing', 'Selection', 'BGV', 'Offer']

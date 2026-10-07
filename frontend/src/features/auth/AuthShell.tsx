@@ -1,16 +1,15 @@
-import { useEffect, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Logo } from '../../components/Logo'
-import { applyTenantTheme } from '../../config/tenant'
+import { ThemeSwitch } from '../../components/ThemeSwitch'
 import type { WorkspaceBranding } from '../../domain/types'
+import { useTenantTheme } from '../../theme/themeContext'
 
 /** Split layout for every signed-out page: tenant branding on one side, the form on the other. */
 export function AuthShell({ branding, children }: { branding?: WorkspaceBranding; children: ReactNode }) {
   const { t } = useTranslation()
 
-  useEffect(() => {
-    applyTenantTheme(branding?.theme)
-  }, [branding?.theme])
+  useTenantTheme(branding ? { slug: branding.slug, fallback: branding.theme } : null)
 
   return (
     <div className="auth-shell">
@@ -38,6 +37,7 @@ export function AuthShell({ branding, children }: { branding?: WorkspaceBranding
         </div>
       </aside>
       <main id="main" className="auth-main">
+        <ThemeSwitch className="on-page auth-theme" />
         <div className="auth-card">{children}</div>
       </main>
     </div>

@@ -1,13 +1,41 @@
 :root{
-  /* Default Recuro theme. Tenants override these via src/config/tenant.ts (RCU-PLT-006). */
-  --navy:#1E2A5E; --navy-dk:#141C42; --navy-lt:#3B4BC8; --cy:#22D3EE;
-  --gold:#7C3AED; --gold-lt:#F1EDFE;
-  --red:#D7402F; --red-lt:#FDECEA;
-  --green:#2E9E5B; --green-lt:#E7F6EE;
-  --amber:#E8A33D; --amber-lt:#FDF5E6;
-  --teal:#0E8F8F; --purple:#7B5EA7; --slate:#64748B;
-  --bg:#F4F6FB; --card:#ffffff; --line:#E2E8F0;
-  --txt:#1E293B; --muted:#64748B;
+  /* Default Recuro theme (Recuro Classic, light). Tenants override the brand tokens at runtime from the
+     admin portal's theme (src/theme, RCU-PLT-006); everything else here follows light or dark mode. */
+  --navy:#1E2A5E; --navy-dk:#141C42; --navy-lt:#3B4BC8; --navy-tint:#E9EBFB; --cy:#22D3EE;
+  --gold:#7C3AED; --gold-lt:#F1EDFE; --accent-line:#E4DBFB; --accent-tx:#5B21B6;
+  --on-navy:#fff; --on-gold:#fff;
+  /* Bars: top bar, drawer header, hero banners and toasts. Always dark, with light text on them. */
+  --bar:#1E2A5E; --bar-dk:#141C42; --bar-lt:#3B4BC8; --on-bar:#fff; --on-bar-muted:#C8D6E8;
+  --red:#D7402F; --red-lt:#FDECEA; --red-line:#F3D4CF; --red-tx:#A3271B;
+  --green:#2E9E5B; --green-lt:#E7F6EE; --green-band:linear-gradient(90deg,#BFE3CD,#9FD6B4);
+  --amber:#E8A33D; --amber-lt:#FDF5E6; --amber-line:#F0DCB4; --amber-tx:#9C6F12;
+  --teal:#0E8F8F; --teal-lt:#E3F4F4; --purple:#7B5EA7; --purple-lt:#F0EAFA; --slate:#64748B;
+  --bg:#F4F6FB; --card:#ffffff; --line:#E2E8F0; --line-soft:#EEF2F6;
+  --surface-2:#F8FAFC; --surface-3:#EEF2F7; --hover:#F6F7FE;
+  --track:#EDF1F6; --track-2:#CBD5E1;
+  --txt:#1E293B; --txt-2:#475569; --muted:#64748B; --faint:#8A9BB0;
   --shadow:0 1px 3px rgba(15,23,42,.08),0 4px 14px rgba(15,23,42,.06);
+  --overlay:rgba(15,23,42,.5);
   --radius:12px;
+  color-scheme:light;
+}
+
+/* Dark mode (Recuro Classic, dark). Chosen per user with the switch in the top bar; the tenant's
+   default comes from the admin portal. Tenant brand tokens still override these at runtime. */
+:root[data-theme="dark"]{
+  --navy:#A5B4FC; --navy-dk:#6E78A8; --navy-lt:#C7D0FD; --navy-tint:#1F2850; --cy:#22D3EE;
+  --gold:#A78BFA; --gold-lt:#251D45; --accent-line:#3E3270; --accent-tx:#DDD6FE;
+  --on-navy:#0B1020; --on-gold:#0B1020;
+  --bar:#151C36; --bar-dk:#0B1020; --bar-lt:#232C52; --on-bar:#F1F5F9; --on-bar-muted:#B6C2D6;
+  --red:#F87171; --red-lt:#3A1C22; --red-line:#6B2A2E; --red-tx:#FCA5A5;
+  --green:#4ADE80; --green-lt:#15301F; --green-band:linear-gradient(90deg,#1E4D33,#256B43);
+  --amber:#FBBF24; --amber-lt:#33270F; --amber-line:#5A4520; --amber-tx:#FCD34D;
+  --teal:#2DD4BF; --teal-lt:#0F2E2C; --purple:#C4B5FD; --purple-lt:#2A2145; --slate:#94A3B8;
+  --bg:#0B1020; --card:#151C36; --line:#2A3458; --line-soft:#222B4A;
+  --surface-2:#1A2240; --surface-3:#1F2848; --hover:#212A4C;
+  --track:#2A3456; --track-2:#3A4568;
+  --txt:#E5E7EB; --txt-2:#CBD5E1; --muted:#A0AEC4; --faint:#8C9AB3;
+  --shadow:0 1px 3px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.3);
+  --overlay:rgba(0,0,0,.6);
+  color-scheme:dark;
 }

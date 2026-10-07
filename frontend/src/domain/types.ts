@@ -530,3 +530,25 @@ export interface DashboardData {
   upcoming: { day: string; month: string; title: string; detail: string; link: string }[]
   kpiPeriodLabel: string
 }
+
+// ---------- appearance (RCU-PLT-006) ----------
+
+/** How a user wants the portal coloured. `system` follows the device setting. */
+export type ThemeMode = 'system' | 'light' | 'dark'
+export type ColorScheme = 'light' | 'dark'
+
+/** Values for the CSS design tokens in styles/tokens.css, keyed by token name without `--`. */
+export type ThemeTokens = Record<string, string>
+
+/**
+ * A tenant's look and feel as chosen in the admin portal (GET /api/v1/runtime/{slug}, RuntimeConfigDto).
+ * Only the fields the portal uses are mapped.
+ */
+export interface TenantAppearance {
+  slug: string
+  themePresetKey: string
+  /** The tenant's default; a user's own choice in the top bar wins over it. */
+  themeMode: ThemeMode
+  lightTheme: ThemeTokens
+  darkTheme: ThemeTokens
+}

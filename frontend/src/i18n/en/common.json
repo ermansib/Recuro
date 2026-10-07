@@ -74,5 +74,11 @@
     "subject": "Subject",
     "markRead": "Mark as Read",
     "markedRead": "Marked as read"
+  },
+  "appearance": {
+    "label": "Colour mode",
+    "light": "Light",
+    "system": "Match my device",
+    "dark": "Dark"
   }
 }

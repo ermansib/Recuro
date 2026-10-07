@@ -6,6 +6,7 @@ import { can, homePath } from '../auth/permissions'
 import { useSession } from '../auth/sessionContext'
 import type { Role } from '../domain/types'
 import { Logo } from './Logo'
+import { ThemeSwitch } from './ThemeSwitch'
 import { NAV_ITEMS } from './nav'
 import { useErrorToast, useToast } from './toastContext'
 
@@ -66,6 +67,7 @@ export function Topbar({ onOpenDrawer }: { onOpenDrawer: () => void }) {
         ))}
       </nav>
       <div className="top-right">
+        <ThemeSwitch />
         <button type="button" className="bell" onClick={onOpenDrawer} aria-label={t('common.bell', { count: unread })}>
           🔔{unread > 0 && <span className="dot">{unread}</span>}
         </button>

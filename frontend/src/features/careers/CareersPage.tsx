@@ -157,7 +157,7 @@ export function CareersPage() {
       {result && <SuccessCard result={result} />}
       <StatusLookup />
       {user.role === 'candidate' && <MyCommunications onOpenDrawer={outlet?.openDrawer} />}
-      <div style={{ marginTop: 22, padding: '14px 18px', background: '#eef2f7', borderRadius: 10, fontSize: 11.5, color: 'var(--muted)' }}>
+      <div style={{ marginTop: 22, padding: '14px 18px', background: 'var(--surface-3)', borderRadius: 10, fontSize: 11.5, color: 'var(--muted)' }}>
         <Trans i18nKey="careers.privacyFooter" values={{ tenant: tenant.name }} components={{ b: <b /> }} />
       </div>
     </div>
@@ -236,7 +236,7 @@ function MyCommunications({ onOpenDrawer }: { onOpenDrawer?: () => void }) {
             key={e.id}
             type="button"
             className="applied-row"
-            style={{ width: '100%', background: 'none', border: 'none', borderBottom: '1px dashed #E7ECF2', cursor: 'pointer', textAlign: 'left' }}
+            style={{ width: '100%', background: 'none', border: 'none', borderBottom: '1px dashed var(--line-soft)', cursor: 'pointer', textAlign: 'left' }}
             onClick={() => {
               markRead.mutate(e.id)
               setOpen(e)

@@ -103,7 +103,7 @@ export function Sparkline({ points, color }: { points: number[]; color: string }
   const step = 78 / Math.max(points.length - 1, 1)
   return (
     <svg width="78" height="24" viewBox="0 0 78 24" aria-hidden="true">
-      <polyline points={points.map((y, i) => `${i * step},${y}`).join(' ')} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <polyline points={points.map((y, i) => `${i * step},${y}`).join(' ')} fill="none" style={{ stroke: color }} strokeWidth="2" strokeLinecap="round" />
     </svg>
   )
 }

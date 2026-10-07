@@ -5,7 +5,7 @@ import { can } from '../../auth/permissions'
 import { useSession } from '../../auth/sessionContext'
 import { Card, Chip, ErrorBox, Loading, PageHead, Sparkline } from '../../components/ui'
 
-const toneColor = { green: '#2e9e5b', amber: '#e8a33d', slate: '#64748b' } as Record<string, string>
+const toneColor = { green: 'var(--green)', amber: 'var(--amber)', slate: 'var(--slate)' } as Record<string, string>
 
 export function DashboardPage() {
   const { t } = useTranslation()
@@ -114,7 +114,7 @@ export function DashboardPage() {
                     <b>{k.name}</b>
                     <span>{k.target}</span>
                   </div>
-                  <Sparkline points={k.trend} color={toneColor[k.tone] ?? '#64748b'} />
+                  <Sparkline points={k.trend} color={toneColor[k.tone] ?? 'var(--slate)'} />
                   <span className="k-val">{k.value}</span>
                   <Chip tone={k.tone}>{k.status}</Chip>
                 </div>
