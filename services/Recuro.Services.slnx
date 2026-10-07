@@ -83,6 +83,28 @@
     <Project Path="Pipeline/tests/Recuro.Pipeline.IntegrationTests/Recuro.Pipeline.IntegrationTests.csproj" />
     <Project Path="Pipeline/tests/Recuro.Pipeline.UnitTests/Recuro.Pipeline.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/Requisition/" />
+  <Folder Name="/Requisition/src/">
+    <Project Path="Requisition/src/Recuro.Requisition.Api/Recuro.Requisition.Api.csproj" />
+    <Project Path="Requisition/src/Recuro.Requisition.Application/Recuro.Requisition.Application.csproj" />
+    <Project Path="Requisition/src/Recuro.Requisition.Domain/Recuro.Requisition.Domain.csproj" />
+    <Project Path="Requisition/src/Recuro.Requisition.Infrastructure/Recuro.Requisition.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Requisition/tests/">
+    <Project Path="Requisition/tests/Recuro.Requisition.IntegrationTests/Recuro.Requisition.IntegrationTests.csproj" />
+    <Project Path="Requisition/tests/Recuro.Requisition.UnitTests/Recuro.Requisition.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/Workflow/" />
+  <Folder Name="/Workflow/src/">
+    <Project Path="Workflow/src/Recuro.Workflow.Api/Recuro.Workflow.Api.csproj" />
+    <Project Path="Workflow/src/Recuro.Workflow.Application/Recuro.Workflow.Application.csproj" />
+    <Project Path="Workflow/src/Recuro.Workflow.Domain/Recuro.Workflow.Domain.csproj" />
+    <Project Path="Workflow/src/Recuro.Workflow.Infrastructure/Recuro.Workflow.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Workflow/tests/">
+    <Project Path="Workflow/tests/Recuro.Workflow.IntegrationTests/Recuro.Workflow.IntegrationTests.csproj" />
+    <Project Path="Workflow/tests/Recuro.Workflow.UnitTests/Recuro.Workflow.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Recuro.ArchitectureTests/Recuro.ArchitectureTests.csproj" />
   </Folder>
