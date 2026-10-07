@@ -7,7 +7,6 @@ import { useSession } from '../../auth/sessionContext'
 import { EmailModal } from '../../components/EmailModal'
 import { useErrorToast, useToast } from '../../components/toastContext'
 import { Card, Chip, ErrorBox, Loading } from '../../components/ui'
-import { tenant } from '../../config/tenant'
 import type { EmailMessage, JobPosting, PublicApplicationInput, PublicApplicationResult } from '../../domain/types'
 import { relativeTime } from '../../utils/format'
 import { filterPostings, validateApplication } from './validation'
@@ -33,7 +32,7 @@ export function CareersPage() {
   const postings = useJobPostings()
   const toast = useToast()
   const onError = useErrorToast()
-  const { user } = useSession()
+  const { user, tenant } = useSession()
   const outlet = useOutletContext<{ openDrawer: () => void } | null>()
   const [query, setQuery] = useState('')
   const [location, setLocation] = useState('')

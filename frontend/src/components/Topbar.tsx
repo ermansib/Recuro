@@ -1,19 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { useApprovals, useEmails, useNotifications } from '../api/hooks'
-import { homePath } from '../auth/permissions'
+import { useApprovals, useDemoAccess, useEmails, useNotifications } from '../api/hooks'
+import { can, homePath } from '../auth/permissions'
 import { useSession } from '../auth/sessionContext'
 import type { Role } from '../domain/types'
 import { Logo } from './Logo'
 import { NAV_ITEMS } from './nav'
-import { useToast } from './toastContext'
+import { useErrorToast, useToast } from './toastContext'
 
 export function Topbar({ onOpenDrawer }: { onOpenDrawer: () => void }) {
   const { t } = useTranslation()
-  const { user, users, switchRole } = useSession()
+  const { user, tenant, switchRole, signOut } = useSession()
   const navigate = useNavigate()
   const toast = useToast()
+  const onError = useErrorToast()
+  const demo = useDemoAccess(tenant.slug)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const approvals = useApprovals()
@@ -33,11 +35,21 @@ export function Topbar({ onOpenDrawer }: { onOpenDrawer: () => void }) {
     return () => document.removeEventListener('mousedown', close)
   }, [menuOpen])
 
-  const choose = (role: Role) => {
-    switchRole(role)
+  const choose = async (role: Role) => {
     setMenuOpen(false)
+    try {
+      await switchRole(role)
+    } catch (e) {
+      return onError(e)
+    }
     navigate(homePath(role))
     toast(t('common.persona.viewingAs', { role: t(`common.roles.${role}`) }) + (role === 'mdceo' ? t('common.persona.masked') : ''))
+  }
+
+  const leave = async () => {
+    setMenuOpen(false)
+    await signOut()
+    toast(t('auth.menu.signedOut'))
   }
 
   return (
@@ -63,7 +75,7 @@ export function Topbar({ onOpenDrawer }: { onOpenDrawer: () => void }) {
             className="role-btn"
             aria-haspopup="menu"
             aria-expanded={menuOpen}
-            aria-label={t('common.persona.button', { name: user.name })}
+            aria-label={t('common.persona.button', { name: user.name, workspace: tenant.name })}
             onClick={() => setMenuOpen((o) => !o)}
           >
             <span className="rb-av">{user.initials}</span>
@@ -74,14 +86,31 @@ export function Topbar({ onOpenDrawer }: { onOpenDrawer: () => void }) {
           </button>
           {menuOpen && (
             <div className="role-menu" role="menu">
-              <div className="rm-title">{t('common.persona.title')}</div>
-              {users.map((u) => (
-                <button key={u.id} type="button" role="menuitem" className={`rm-item ${u.role === user.role ? 'active' : ''}`} onClick={() => choose(u.role)}>
-                  <b>{u.name}</b>
-                  <span>{u.title}</span>
-                  <em>{u.summary}</em>
+              <div className="rm-account">
+                <b>{user.name}</b>
+                <span>{user.email}</span>
+                <em>{t('auth.menu.signedInAs', { workspace: tenant.name })}</em>
+              </div>
+              {can(user.role, 'team.invite') && (
+                <button type="button" role="menuitem" className="rm-item" onClick={() => { setMenuOpen(false); navigate('/team') }}>
+                  <b>{t('auth.menu.team')}</b>
                 </button>
-              ))}
+              )}
+              <button type="button" role="menuitem" className="rm-item rm-signout" onClick={() => void leave()}>
+                <b>{t('auth.menu.signOut')}</b>
+              </button>
+              {demo.data && (
+                <>
+                  <div className="rm-title">{t('common.persona.title')}</div>
+                  {demo.data.personas.map((u) => (
+                    <button key={u.id} type="button" role="menuitem" className={`rm-item ${u.role === user.role ? 'active' : ''}`} onClick={() => void choose(u.role)}>
+                      <b>{u.name}</b>
+                      <span>{u.title}</span>
+                      <em>{u.summary}</em>
+                    </button>
+                  ))}
+                </>
+              )}
             </div>
           )}
         </div>

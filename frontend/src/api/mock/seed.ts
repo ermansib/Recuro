@@ -1,6 +1,7 @@
 // Loads the static JSON seed (shaped like the future .NET API responses) into a fresh,
 // mutable in-memory database.
 import applications from '../../mocks/data/applications.json'
+import auth from '../../mocks/data/auth.json'
 import approvals from '../../mocks/data/approvals.json'
 import bgvCases from '../../mocks/data/bgv-cases.json'
 import candidates from '../../mocks/data/candidates.json'
@@ -33,6 +34,9 @@ import type {
   TenantConfig,
   User,
 } from '../../domain/types'
+
+/** Password every seeded demo account signs in with. */
+export const DEMO_PASSWORD: string = auth.demoPassword
 
 export interface MockDb {
   tenant: TenantConfig
