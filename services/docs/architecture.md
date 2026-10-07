@@ -106,18 +106,60 @@ This adds `n` working days to `from` using the business calendar for `location` 
 when it is omitted). It returns `{ "date": "YYYY-MM-DD", "configVersionId": "guid" }`. This is the
 only working-day calculation in the backend; services never count holidays themselves.
 
-### Identity: masking map (owner: Identity, callers: Candidate, Bgv, Offer, Gateway BFF)
+### Identity: masking, PDP and users (owner: Identity; callers: every service and the Gateway BFF)
 
-**`GET /api/v1/masking/{role}/{resource}`** (RCU-AUT-004), for example `/masking/mdceo/candidate`
+All Identity endpoints accept a tenant member's token or a service token.
 
-This returns `{ "role": "mdceo", "resource": "candidate", "version": "string", "fields": { "email": "partial", "phone": "partial", "currentCtc": "hide", "expectedCtc": "hide" } }`.
+**`GET /api/v1/identity/masking/{role}/{resource}`** (RCU-AUT-004), for example
+`/api/v1/identity/masking/mdceo/candidate`
 
-- The strategies are `none`, `partial`, `hide` and `hash`. A field that isn't listed is `none`.
-- An unknown role, or one with no map, gets every sensitive field as `hide`, so the lookup fails closed.
+- Returns `{ "resource": "candidate", "role": "mdceo", "version": "string", "fields": { "currentCtc": "hide", "email": "partial", ... } }`.
+- Resources today are `candidate` and `approval`.
+- The strategies are:
+  - `hide`: the field isn't returned.
+  - `partial`: only the last 4 characters are kept.
+  - `hash`: a stable one-way hash.
+- A field that isn't listed passes through unchanged.
+- An unknown role or resource returns 404 `masking_map_not_found`. Callers treat that 404 as "hide
+  every sensitive field", so a missing map fails closed.
 - Callers cache the map per tenant, role and version for up to 5 minutes, and apply it when they
   serialize a response.
-- The map is tenant configuration seeded from FRD §3.2. Candidate's local table
-  (`CandidateMasking`) holds the same values until Identity ships, and is then replaced by this call.
+- Candidate's local table (`CandidateMasking`) is a stand-in until Identity ships, and is then
+  replaced by this call.
+
+**`POST /api/v1/identity/decide`** (the PDP, RCU-AUT-003)
+
+- Request: `{ "actor": { "id", "roles": [] }, "action": "string", "resource": { "type", "id", "assigneeIds": [] }, "context": { "mfa": bool } }`
+- Response: `{ "allow": bool, "reasons": [], "policyVersion": "string", "ttlSeconds": 60 }`
+- An unknown action is denied.
+- Action keys are the frontend capability keys plus these:
+  - `offer.approve`
+  - `bgv.decideAdverse`, which needs an MFA step-up for `hrhead` and `mdceo`
+  - `vendor.empanel`, `reports.view`, `ijp.apply`, `referral.submit`
+  - `workflow.task.decide`, which is allowed for the assignee only
+- Callers may cache a decision for `ttlSeconds`.
+
+**`GET /api/v1/identity/me`** provisions the user just in time from the token and returns the frontend
+`User`. **`GET /api/v1/identity/users?role=<role>`** lists the tenant's users by role, which is how
+Workflow and Notification find assignees and recipients.
+
+### Config: matrices and versions (owner: Config)
+
+The `resolve/doa` and `resolve/working-days` endpoints are defined above. Config also exposes:
+
+- **`GET /api/v1/resolve/matrices/{doa|tat|offer|escalation|bgv|calendar}?at=<ISO>[&versionId=<guid>]`**
+  returns `{ configVersionId, matrixType, number, effectiveFrom, content }`.
+- **`GET /api/v1/config/rules`** returns the frontend `RuleConfig`.
+- **`/api/v1/config/{type}/versions`** is version admin: propose, revise, approve and reject, with dual
+  approval. Activation publishes `config.version.activated`.
+
+Keys that other services use:
+
+| Kind | Keys |
+|---|---|
+| Escalation issues | `tat-breach-sourcing`, `adverse-bgv`, `ctc-deviation`, `feedback-delay`, `candidate-grievance`, `vendor-sla-breach` |
+| TAT stages | `mrf-approval`, `sourcing`, `interview`, `bgv`, `offer-issuance`, `offer-to-joining`, `onboarding-day1`, `overall-junior`, `overall-managerial`, `overall-kmp` |
+| Calendar location | `default` when none is given |
 
 ### Vendor: consultant status (owner: Vendor, wave 2; caller: Candidate)
 
