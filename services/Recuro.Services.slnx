@@ -32,12 +32,34 @@
     <Project Path="Candidate/tests/Recuro.Candidate.IntegrationTests/Recuro.Candidate.IntegrationTests.csproj" />
     <Project Path="Candidate/tests/Recuro.Candidate.UnitTests/Recuro.Candidate.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/Config/" />
+  <Folder Name="/Config/src/">
+    <Project Path="Config/src/Recuro.Config.Api/Recuro.Config.Api.csproj" />
+    <Project Path="Config/src/Recuro.Config.Application/Recuro.Config.Application.csproj" />
+    <Project Path="Config/src/Recuro.Config.Domain/Recuro.Config.Domain.csproj" />
+    <Project Path="Config/src/Recuro.Config.Infrastructure/Recuro.Config.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Config/tests/">
+    <Project Path="Config/tests/Recuro.Config.IntegrationTests/Recuro.Config.IntegrationTests.csproj" />
+    <Project Path="Config/tests/Recuro.Config.UnitTests/Recuro.Config.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/Gateway/" />
   <Folder Name="/Gateway/src/">
     <Project Path="Gateway/src/Recuro.Gateway/Recuro.Gateway.csproj" />
   </Folder>
   <Folder Name="/Gateway/tests/">
     <Project Path="Gateway/tests/Recuro.Gateway.Tests/Recuro.Gateway.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Identity/" />
+  <Folder Name="/Identity/src/">
+    <Project Path="Identity/src/Recuro.Identity.Api/Recuro.Identity.Api.csproj" />
+    <Project Path="Identity/src/Recuro.Identity.Application/Recuro.Identity.Application.csproj" />
+    <Project Path="Identity/src/Recuro.Identity.Domain/Recuro.Identity.Domain.csproj" />
+    <Project Path="Identity/src/Recuro.Identity.Infrastructure/Recuro.Identity.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Identity/tests/">
+    <Project Path="Identity/tests/Recuro.Identity.IntegrationTests/Recuro.Identity.IntegrationTests.csproj" />
+    <Project Path="Identity/tests/Recuro.Identity.UnitTests/Recuro.Identity.UnitTests.csproj" />
   </Folder>
   <Folder Name="/Pipeline/" />
   <Folder Name="/Pipeline/src/">

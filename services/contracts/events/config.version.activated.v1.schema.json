@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/config.version.activated.v1.schema.json",
+  "title": "config.version.activated.v1",
+  "description": "A rules matrix version passed dual approval and is in force from effectiveFrom (RCU-CFG-001). Subject: RuleSet/{matrixType}/{versionId}.",
+  "type": "object",
+  "required": ["matrixType", "versionId", "number", "effectiveFrom"],
+  "properties": {
+    "matrixType": { "enum": ["doa", "tat", "offer", "escalation", "bgv", "calendar"] },
+    "versionId": { "type": "string", "format": "uuid", "description": "Pin this as configVersionId (RCU-CFG-003)." },
+    "number": { "type": "integer", "minimum": 1 },
+    "effectiveFrom": { "type": "string", "format": "date-time" }
+  }
+}
