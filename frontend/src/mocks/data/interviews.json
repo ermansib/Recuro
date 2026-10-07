@@ -1,0 +1,74 @@
+[
+  {
+    "id": "int-0386-r2",
+    "appId": "APP-2026-0386",
+    "round": "Round 2 — Functional Interview",
+    "interviewer": "N. Sharma, DVP — Credit",
+    "mode": "Video",
+    "scheduledFor": "2026-07-28T15:00:00+05:30",
+    "feedbackDueAt": "2026-07-30T15:00:00+05:30",
+    "status": "Draft",
+    "ratings": [
+      {
+        "competencyId": "domain",
+        "score": 4,
+        "na": false,
+        "comment": "Strong structuring; product knowledge clear"
+      },
+      {
+        "competencyId": "communication",
+        "score": 3,
+        "na": false,
+        "comment": "Methodical; could push back more with teams"
+      },
+      {
+        "competencyId": "analytical",
+        "score": 5,
+        "na": false,
+        "comment": "Excellent bureau & cash-flow reading in case discussion"
+      },
+      {
+        "competencyId": "integrity",
+        "score": 4,
+        "na": false,
+        "comment": "Candid about prior portfolio episode — positive signal"
+      },
+      {
+        "competencyId": "leadership",
+        "score": 3,
+        "na": false,
+        "comment": "Led 3-member underwriting pod at previous employer"
+      },
+      {
+        "competencyId": "adaptability",
+        "score": 4,
+        "na": false,
+        "comment": "Switched regulatory frameworks twice; quick grasp of norms"
+      }
+    ],
+    "recommendation": "Recommend",
+    "justification": "Recommend. Verify campus claims and last-employer designation during BGV. 90-day notice risk acceptable for M3 role.",
+    "history": [
+      {
+        "round": "R1 — HR Screening",
+        "status": "✓ 4.0",
+        "tone": "green"
+      },
+      {
+        "round": "R2 — Functional (this)",
+        "status": "● pending",
+        "tone": "amber"
+      },
+      {
+        "round": "R3 — Business Fitment",
+        "status": "○ scheduled",
+        "tone": "slate"
+      },
+      {
+        "round": "Case Study",
+        "status": "sent · due 04 Aug",
+        "tone": "gold"
+      }
+    ]
+  }
+]

@@ -1,0 +1,99 @@
+[
+  {
+    "id": "e-1",
+    "recipientRole": "hrta",
+    "tag": "Reminder",
+    "from": "Recuro for Aurora Housing Finance <no-reply@aurora-demo.example>",
+    "to": "a.sharma@aurora-demo.example",
+    "subject": "⏰ Panel feedback due in 6h — REQ-2026-0156 (R2 · A. Kulkarni)",
+    "paragraphs": [
+      "Dear A. Sharma,",
+      "Panel feedback for Amit Kulkarni (REQ-2026-0156, Round 2 — Functional, interviewer N. Sharma) is approaching the 48-hour SLA.",
+      "Outstanding feedback impacts the Panel Feedback TAT Adherence KPI (target ≥90%). At breach, the system escalates to the HOD per the escalation matrix."
+    ],
+    "cta": "Open Assessment Form",
+    "signature": "Aurora Housing Finance Recruitment (automated)",
+    "createdAt": "2026-08-18T03:42:00Z",
+    "unread": true
+  },
+  {
+    "id": "e-2",
+    "recipientRole": "hrta",
+    "tag": "Escalation",
+    "from": "Recuro for Aurora Housing Finance <no-reply@aurora-demo.example>",
+    "to": "a.sharma@aurora-demo.example",
+    "subject": "⚑ TAT breach — Sourcing stage, REQ-2026-0142",
+    "paragraphs": [
+      "Requisition REQ-2026-0142 (Sr Manager — Credit, M3) has exceeded the sourcing TAT: 8 days vs 7-day standard.",
+      "Recommended actions: augment via empanelled consultant, or re-post with revised channels. If unresolved in 48h, escalation proceeds TA-Head → MD/CEO."
+    ],
+    "signature": "Aurora Housing Finance Recruitment (automated)",
+    "createdAt": "2026-08-18T02:30:00Z",
+    "unread": false
+  },
+  {
+    "id": "e-3",
+    "recipientRole": "hrhead",
+    "tag": "Approval",
+    "from": "Recuro for Aurora Housing Finance <no-reply@aurora-demo.example>",
+    "to": "k.iyer@aurora-demo.example",
+    "subject": "[Action Required] MRF REQ-2026-0150 — Sr Manager, Collections (SLA: 2 working days)",
+    "paragraphs": [
+      "Dear K. Iyer,",
+      "A Manpower Requisition requires your approval under the Delegation of Authority: Senior Manager — Collections (M3), Pune RO. Budget: in approved plan ✓. JD benchmarked ✓.",
+      "Sourcing is locked until your decision. Approve via the Approvals inbox."
+    ],
+    "signature": "Aurora Housing Finance Recruitment (automated)",
+    "createdAt": "2026-08-18T04:00:00Z",
+    "unread": true
+  },
+  {
+    "id": "e-4",
+    "recipientRole": "mdceo",
+    "tag": "Annexure D",
+    "from": "Recuro for Aurora Housing Finance <no-reply@aurora-demo.example>",
+    "to": "md.ceo@aurora-demo.example",
+    "subject": "[Decision Requested] CTC deviation — S. Verma ₹24.8L vs cap ₹24L (M3)",
+    "paragraphs": [
+      "A CTC deviation case requires your decision as final authority (Annexure D).",
+      "Proposed ₹24.8L vs band cap ₹24.0L (3.3% over). Panel unanimous · avg 4.3/5 · competing-offer situation.",
+      "Options: approve the deviation, or decline for CTC rework. Your decision is documented and retained."
+    ],
+    "signature": "Aurora Housing Finance Recruitment (automated)",
+    "createdAt": "2026-08-18T04:32:00Z",
+    "unread": true
+  },
+  {
+    "id": "e-5",
+    "recipientRole": "employee",
+    "tag": "Referral",
+    "from": "Aurora Housing Finance Referral Desk <referrals@aurora-demo.example>",
+    "to": "r.sabnis@aurora-demo.example",
+    "subject": "🎉 Your referral Priya Deshmukh is shortlisted",
+    "paragraphs": [
+      "Great news! Priya Deshmukh (your referral, REF-2026-0090) has been shortlisted for Round 1 — Functional.",
+      "Referral bonus remains payable on her joining and completing 90 days of service."
+    ],
+    "signature": "Referral Desk",
+    "createdAt": "2026-08-18T03:10:00Z",
+    "unread": true
+  },
+  {
+    "id": "e-6",
+    "recipientRole": "candidate",
+    "tag": "Confirmation",
+    "from": "Aurora Housing Finance — Careers <careers@aurora-demo.example>",
+    "to": "candidate@email.example",
+    "subject": "Application received — Senior Manager, Credit [APP-2026-0417]",
+    "paragraphs": [
+      "Dear Candidate,",
+      "Thank you for applying to Aurora Housing Finance. Application reference: APP-2026-0417 · Senior Manager — Credit, HQ Mumbai.",
+      "What happens next: HR — Talent Acquisition reviews your profile within ~7 working days. If shortlisted, our team will contact you to schedule a screening call. Track your status anytime with your Application ID on the careers page.",
+      "Unsuccessful candidatures are retained for 1 year for audit and grievance redressal, then purged."
+    ],
+    "cta": "Track Application Status",
+    "signature": "Talent Acquisition Team · Aurora Housing Finance",
+    "createdAt": "2026-08-18T03:01:00Z",
+    "unread": true
+  }
+]

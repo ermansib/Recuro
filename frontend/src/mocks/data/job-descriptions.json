@@ -1,0 +1,52 @@
+[
+  {
+    "id": "jd-0156",
+    "reqId": "REQ-2026-0156",
+    "version": 3,
+    "status": "Draft",
+    "purpose": "Own end-to-end credit appraisal for lending proposals, ensuring portfolio quality, TAT adherence and regulatory compliance.",
+    "responsibilities": [
+      "Appraise lending proposals — financials, collateral, valuation & bureau data",
+      "Recommend sanctions within delegated credit authority; flag deviations",
+      "Monitor portfolio quality of assigned cluster; early-warning triggers"
+    ],
+    "reportsTo": "N. Sharma — DVP, Credit",
+    "teamSize": "None (Individual Contributor)",
+    "location": "HQ — Mumbai",
+    "minQualification": "CA / MBA-Finance",
+    "experience": "6–9 years · BFSI credit",
+    "grade": "M3",
+    "competencies": [
+      "domain",
+      "analytical",
+      "communication",
+      "integrity",
+      "adaptability"
+    ],
+    "assessments": [
+      "Case study / business simulation — domain ops",
+      "Technical test — credit appraisal & financial analysis"
+    ],
+    "benchmark": "≥ 65% · panel review if 55–65%",
+    "history": [
+      {
+        "version": 3,
+        "note": "competency set revised",
+        "by": "HR-TA",
+        "at": "2026-08-12"
+      },
+      {
+        "version": 2,
+        "note": "benchmarking notes added",
+        "by": "HOD",
+        "at": "2026-08-08"
+      },
+      {
+        "version": 1,
+        "note": "initial draft from MRF",
+        "by": "HOD",
+        "at": "2026-08-05"
+      }
+    ]
+  }
+]

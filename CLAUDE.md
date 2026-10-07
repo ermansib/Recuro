@@ -12,6 +12,12 @@ The long-term vision is a **domain-neutral recruitment CRM**. Build every featur
 that: anything industry- or tenant-specific (departments, grades, bands, checks, approval routes, TATs,
 branding) is **configuration, not code**.
 
+Recuro is a **white-label, multi-tenant** product. The same portal is used by in-house HR teams and by
+staffing agencies, for many companies, domains and areas of recruitment. "Recuro" is the product
+brand; each tenant brings its own name, careers copy, theme, locale and rules. The demo tenant is the
+fictional "Aurora Housing Finance" (`src/mocks/data/tenant.json`). Never hard-code a tenant's name,
+policy wording or branding in components.
+
 ## Stack and build order
 
 1. **Frontend first (current phase):** React.js + TypeScript. Not Next.js.
@@ -31,8 +37,42 @@ Rules that follow from this:
 - Role-based UI (hiding buttons, masking CTC/PII) is a convenience only. The real enforcement will live
   in the .NET services; never assume the UI is the security boundary.
 
-Project tooling (bundler, router, state/data library, UI kit, test runner) is recorded here once
-chosen. Update this section when it is.
+Current scope: **P0 (MVP) stories only**, UI only. Data comes from static JSON mocks shaped like the
+future .NET DTOs. P1 screens (Onboarding, Vendors, Reports, Internal Careers) are placeholders.
+
+## Tooling and layout
+
+Monorepo: `frontend/` now, `services/` (.NET Core) later.
+
+| Concern | Choice |
+|---|---|
+| Bundler / dev server | Vite |
+| Routing | react-router-dom |
+| Server state | @tanstack/react-query (hooks in `src/api/hooks.ts`) |
+| i18n | i18next + react-i18next, English only for now, one JSON per feature in `src/i18n/en` |
+| Styling | Plain CSS ported from the `HR.html` prototype (`src/styles`). No component library. |
+| Tests | Vitest + jsdom + Testing Library |
+| Lint | oxlint; TypeScript `strict` + `noUncheckedIndexedAccess` |
+
+```
+frontend/src/
+  api/contract.ts     ApiClient interface: the one seam to the backend
+  api/client.ts       picks the implementation (mock today, HTTP later)
+  api/mock/           in-memory mock that enforces RBAC, state machines and rules
+  mocks/data/*.json   static seed data (camelCase, like ASP.NET Core DTOs)
+  domain/             types, state machines, pure rule functions (DOA, offer matrix, BGV gate)
+  auth/               session (persona switcher stands in for SSO) and the RBAC capability matrix
+  config/tenant.ts    white-label tenant config and theme
+  components/         layout, topbar, notification drawer, shared UI
+  features/<screen>/  one folder per screen
+```
+
+The mock returns the same errors the services should (400 validation, 403 RBAC, 409 illegal
+transition or locked state) and writes audit events, notifications and emails. When the .NET services
+exist, add an HTTP `ApiClient` and switch `api` in `src/api/client.ts`; components don't change.
+
+Commands (run in `frontend/`): `npm install`, `npm run dev`, `npm test`, `npm run lint`,
+`npm run typecheck`, `npm run build`.
 
 ## Source documents
 
@@ -104,9 +144,10 @@ Build in priority order within each module: **P0 (MVP) → P1 → P2**, per FRD 
 
 ## Frontend conventions
 
-- Design tokens come from the prototype's `:root` variables (navy `#1e3a5f`, gold `#b9975b`, red
-  `#d7402f`, green `#2e9e5b`, amber `#e8a33d`, teal `#0e8f8f`, purple `#7b5ea7`, background
-  `#f2f5f9`, radius 12px). Keep them in one theme file so tenants can rebrand (RCU-PLT-006).
+- Design tokens come from the Recuro prototype's `:root` variables and live in
+  `src/styles/tokens.css` (navy `#1E2A5E`, cyan `#22D3EE`, violet accent `#7C3AED`, background
+  `#F4F6FB`, radius 12px). Tenants override them through `theme` in their config (RCU-PLT-006).
+- Role visibility is decided in React with `can(role, capability)`, not with CSS selectors.
 - No hard-coded user-facing strings in components; externalise them so i18n (NFR-07) is possible.
 - Accessibility target is WCAG 2.1 AA (NFR-06): labelled forms, keyboard-operable kanban, visible
   focus, contrast ≥ 4.5:1.

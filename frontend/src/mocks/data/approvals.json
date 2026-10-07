@@ -1,0 +1,359 @@
+[
+  {
+    "id": "apr-001",
+    "assigneeRole": "hrta",
+    "kind": "Task",
+    "tone": "task",
+    "title": "⚑ TAT Breach — Sourcing Stage · REQ-2026-0142",
+    "chip": {
+      "text": "8d / 7d TAT",
+      "tone": "amber"
+    },
+    "meta": "Sr Manager — Credit · M3 · HQ Mumbai · Shortlist still 0 — portal responses low.",
+    "route": "Escalation: TA-Head (you) → MD/CEO if unresolved in 48h",
+    "entity": {
+      "type": "Requisition",
+      "id": "REQ-2026-0142"
+    },
+    "actions": [
+      {
+        "id": "open-req-&-log-update",
+        "label": "Open Req & Log Update",
+        "style": "primary",
+        "effect": "resolve",
+        "resultText": "Update logged — consultant augment requested, TAT clock annotated"
+      },
+      {
+        "id": "reassign-consultant",
+        "label": "Reassign Consultant",
+        "style": "ghost",
+        "effect": "query"
+      }
+    ],
+    "createdAt": "2026-08-18T08:00:00Z"
+  },
+  {
+    "id": "apr-002",
+    "assigneeRole": "hrta",
+    "kind": "Task",
+    "tone": "task",
+    "title": "⏱ Panel Feedback Overdue — REQ-2026-0131",
+    "chip": {
+      "text": "52h / 48h",
+      "tone": "amber"
+    },
+    "meta": "Manager — Sales · M1 · R2 interviewer (HOD) yet to submit Annexure B feedback.",
+    "route": "Escalation: HOD · KPI impact: Panel Feedback TAT Adherence",
+    "actions": [
+      {
+        "id": "nudge-panel",
+        "label": "Nudge Panel",
+        "style": "primary",
+        "effect": "resolve",
+        "resultText": "Reminder re-sent to panel; HOD notified — logged"
+      },
+      {
+        "id": "reassign-interviewer",
+        "label": "Reassign Interviewer",
+        "style": "ghost",
+        "effect": "query"
+      }
+    ],
+    "createdAt": "2026-08-18T07:00:00Z"
+  },
+  {
+    "id": "apr-003",
+    "assigneeRole": "hrta",
+    "kind": "Task",
+    "tone": "task",
+    "title": "📮 Candidate Grievance — K. Sood (Rejected 07/08)",
+    "chip": {
+      "text": "Grievance",
+      "tone": "slate"
+    },
+    "meta": "Complaint: regret communication not received within 3 working days.",
+    "route": "Escalation: TA-Head (you) → MD/CEO · retain correspondence 1 yr",
+    "actions": [
+      {
+        "id": "respond-&-resolve",
+        "label": "Respond & Resolve",
+        "style": "primary",
+        "effect": "resolve",
+        "resultText": "Resolution logged — regret email issued with apology; grievance closed"
+      },
+      {
+        "id": "view-thread",
+        "label": "View Thread",
+        "style": "ghost",
+        "effect": "query"
+      }
+    ],
+    "createdAt": "2026-08-17T07:00:00Z"
+  },
+  {
+    "id": "apr-004",
+    "assigneeRole": "hrhead",
+    "kind": "MRF",
+    "tone": "default",
+    "title": "MRF Approval — REQ-2026-0150",
+    "chip": {
+      "text": "⏱ 1d / 2d SLA",
+      "tone": "amber"
+    },
+    "meta": "Senior Manager — Collections · M3 · Pune RO · 1 position · In-budget ✓ · JD benchmarked ✓",
+    "route": "Route: HOD → Function Head ✓ → HR Head (you) · Annexure A attached",
+    "entity": {
+      "type": "Requisition",
+      "id": "REQ-2026-0150"
+    },
+    "actions": [
+      {
+        "id": "approve",
+        "label": "Approve",
+        "style": "primary",
+        "effect": "resolve",
+        "resultText": "MRF approved — sourcing unlocked; requisition logged in central tracker"
+      },
+      {
+        "id": "reject",
+        "label": "Reject",
+        "style": "danger",
+        "effect": "reject"
+      },
+      {
+        "id": "query--rfi",
+        "label": "Query / RFI",
+        "style": "ghost",
+        "effect": "query"
+      }
+    ],
+    "createdAt": "2026-08-17T09:30:00Z"
+  },
+  {
+    "id": "apr-005",
+    "assigneeRole": "hrhead",
+    "kind": "Offer",
+    "tone": "default",
+    "title": "Offer Sign-off (Within Band) — J. Nair",
+    "chip": {
+      "text": "Annexure D",
+      "tone": "navy"
+    },
+    "meta": "Sr Manager — Credit · M3 · within band ₹18–24L ✓ · BGV cleared ✓",
+    "sensitive": {
+      "label": "CTC",
+      "value": "₹21.5L"
+    },
+    "route": "Within band, M3 level → HR Head sign-off (Annexure D)",
+    "actions": [
+      {
+        "id": "sign-off",
+        "label": "Sign-off",
+        "style": "primary",
+        "effect": "resolve",
+        "resultText": "Offer signed off — release authorised to candidate"
+      },
+      {
+        "id": "return-to-ta",
+        "label": "Return to TA",
+        "style": "ghost",
+        "effect": "query"
+      }
+    ],
+    "createdAt": "2026-08-17T16:20:00Z"
+  },
+  {
+    "id": "apr-006",
+    "assigneeRole": "hrhead",
+    "kind": "AdverseBgv",
+    "tone": "adverse",
+    "title": "⚑ Adverse BGV Finding — Branch Sales, Kolhapur (REQ-0098)",
+    "chip": {
+      "text": "Police check",
+      "tone": "red"
+    },
+    "meta": "Vendor report: address mismatch + pending case reference. Candidate claims clerical error.",
+    "route": "First escalation: HR Head + Compliance → final: MD/CEO. Offer on hold.",
+    "actions": [
+      {
+        "id": "escalate-to-mdceo",
+        "label": "Escalate to MD/CEO",
+        "style": "danger",
+        "effect": "resolve",
+        "resultText": "Escalated to MD/CEO with Compliance note — recommendation: rescind"
+      },
+      {
+        "id": "seek-vendor-clarificatio",
+        "label": "Seek Vendor Clarification",
+        "style": "ghost",
+        "effect": "query"
+      }
+    ],
+    "createdAt": "2026-08-17T11:05:00Z"
+  },
+  {
+    "id": "apr-007",
+    "assigneeRole": "hrhead",
+    "kind": "Vendor",
+    "tone": "default",
+    "title": "Vendor Empanelment — VerifyPro (Renewal)",
+    "chip": {
+      "text": "Vendor",
+      "tone": "purple"
+    },
+    "meta": "BGV agency · revised fee ₹1,050/case · SLA commitment 95% · NDA & Data Privacy ack on file ✓ · last annual rating: B (watchlist)",
+    "route": "Empanelment approval: HR Head",
+    "actions": [
+      {
+        "id": "approve-renewal",
+        "label": "Approve Renewal",
+        "style": "primary",
+        "effect": "resolve",
+        "resultText": "Empanelment renewed — 90-day replacement guarantee clause verified ✓"
+      },
+      {
+        "id": "de-empanel",
+        "label": "De-empanel",
+        "style": "danger",
+        "effect": "resolve",
+        "resultText": "De-empanelled — vendor notified; live cases reassigned to AuthBridge"
+      }
+    ],
+    "createdAt": "2026-08-14T10:00:00Z"
+  },
+  {
+    "id": "apr-008",
+    "assigneeRole": "mdceo",
+    "kind": "MRF",
+    "tone": "dev",
+    "title": "MRF — AVP, Risk (Out-of-Budget) · REQ-2026-0149",
+    "chip": {
+      "text": "⚠ OOB",
+      "tone": "amber"
+    },
+    "meta": "VP grade · HQ Mumbai · Justification: Risk function upgradation per Board audit observation FY25.",
+    "sensitive": {
+      "label": "Band",
+      "value": "₹30–45L"
+    },
+    "route": "Route: Function Head → HR Head ✓ → MD/CEO (you) — out-of-budget requires additional approval",
+    "entity": {
+      "type": "Requisition",
+      "id": "REQ-2026-0149"
+    },
+    "actions": [
+      {
+        "id": "approve",
+        "label": "Approve",
+        "style": "primary",
+        "effect": "resolve",
+        "resultText": "Approved with OOB justification recorded — routed to Finance for budget amendment note"
+      },
+      {
+        "id": "reject",
+        "label": "Reject",
+        "style": "danger",
+        "effect": "reject"
+      },
+      {
+        "id": "query--rfi",
+        "label": "Query / RFI",
+        "style": "ghost",
+        "effect": "query"
+      }
+    ],
+    "createdAt": "2026-08-17T09:15:00Z"
+  },
+  {
+    "id": "apr-009",
+    "assigneeRole": "mdceo",
+    "kind": "Deviation",
+    "tone": "dev",
+    "title": "CTC Deviation — S. Verma, Sr Manager Credit",
+    "chip": {
+      "text": "+₹0.8L over band",
+      "tone": "red"
+    },
+    "meta": "Proposed ₹24.8L vs band cap ₹24L (M3) — 3.3% deviation · Panel unanimous · Avg 4.3/5",
+    "route": "Deviation from approved band, Sr Mgr–VP level → MD/CEO approval (Annexure D) · linked to Offer Desk",
+    "entity": {
+      "type": "Offer",
+      "id": "off-0388"
+    },
+    "actions": [
+      {
+        "id": "approve-deviation",
+        "label": "Approve Deviation",
+        "style": "primary",
+        "effect": "resolve",
+        "resultText": "Deviation approved (Annexure D) — offer may release at ₹24.8L"
+      },
+      {
+        "id": "decline-→-rework-ctc",
+        "label": "Decline → rework CTC",
+        "style": "danger",
+        "effect": "reject"
+      }
+    ],
+    "createdAt": "2026-08-18T10:02:00Z"
+  },
+  {
+    "id": "apr-010",
+    "assigneeRole": "mdceo",
+    "kind": "AdverseBgv",
+    "tone": "adverse",
+    "title": "⚑ Final Escalation — Adverse BGV · Branch Sales, Kolhapur",
+    "chip": {
+      "text": "Police check",
+      "tone": "red"
+    },
+    "meta": "HR Head + Compliance recommendation: Rescind offer — discrepancy material to cash-handling role.",
+    "route": "Final authority: MD/CEO · reasons to be documented & retained on file",
+    "actions": [
+      {
+        "id": "accept-—-rescind",
+        "label": "Accept — Rescind",
+        "style": "danger",
+        "effect": "resolve",
+        "resultText": "Decision recorded: offer rescinded. Candidate & vendor notified; documentation retained."
+      },
+      {
+        "id": "override-—-proceed",
+        "label": "Override — Proceed",
+        "style": "ghost",
+        "effect": "resolve",
+        "resultText": "Decision recorded: override — proceed with enhanced verification; rationale documented"
+      }
+    ],
+    "createdAt": "2026-08-17T12:00:00Z"
+  },
+  {
+    "id": "apr-011",
+    "assigneeRole": "mdceo",
+    "kind": "Kmp",
+    "tone": "default",
+    "title": "KMP Appointment — Chief Financial Officer",
+    "chip": {
+      "text": "NRC → Board",
+      "tone": "purple"
+    },
+    "meta": "NRC reviewed Fit & Proper declarations ✓ (integrity, absence of disqualification, financial soundness).",
+    "route": "Final approval: Board / NRC · your acknowledgement forwards the papers to Board agenda.",
+    "actions": [
+      {
+        "id": "acknowledge-→-board",
+        "label": "Acknowledge → Board",
+        "style": "primary",
+        "effect": "resolve",
+        "resultText": "Acknowledged — Fit & Proper file forwarded to Board / NRC agenda"
+      },
+      {
+        "id": "view-fit-&-proper-file-🔒",
+        "label": "View Fit & Proper File 🔒",
+        "style": "ghost",
+        "effect": "query"
+      }
+    ],
+    "createdAt": "2026-08-15T10:00:00Z"
+  }
+]

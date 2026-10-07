@@ -1,0 +1,34 @@
+{
+  "title": "Approvals — {{role}}",
+  "policy": "Policy §8 · §9.6 · §15 · §16",
+  "crumb": "Home / Approvals · decisions are immutable & audit-logged",
+  "pending": "{{count}} pending",
+  "subtitle": {
+    "hrta": "Task inbox: TAT breaches, panel feedback collection & candidate grievances routed to TA-Head (§16).",
+    "hrhead": "You approve: MRFs (Manager+), within-band offers, adverse BGV (1st escalation), vendor empanelment.",
+    "mdceo": "You approve: out-of-budget MRFs, AVP/VP & KMP hiring, CTC deviations (Sr Mgr–VP), adverse BGV final authority. Candidate CTC & personal data are masked."
+  },
+  "demo": "Demo: switch personas via the top-right control",
+  "empty": "Nothing waiting on you. 🎉",
+  "new": "NEW",
+  "reasonPlaceholder": "Documented reason (required, §16)",
+  "reasonLabel": "Reason for decision",
+  "confirm": "Confirm",
+  "reasonRequired": "A documented reason is mandatory (§16).",
+  "querySent": "Query / RFI sent to initiator — SLA clock paused & logged (§16).",
+  "decided": "✓ {{text}} — {{time}} · audit-logged",
+  "sla": { "title": "SLA Health", "mrf": "MRF approvals", "mrfSub": "TAT 2 working days", "offer": "Offer approvals", "offerSub": "Annexure D routing", "adverse": "Adverse decisions", "adverseSub": "§16 final authority" },
+  "matrix": {
+    "title": "Escalation Matrix",
+    "issue": "Issue", "first": "1st", "final": "Final",
+    "rows": [
+      ["TAT breach (sourcing)", "TA-Head", "MD/CEO"],
+      ["Adverse BGV", "HR Head+Comp", "MD/CEO"],
+      ["CTC deviation", "MD/CEO", "MD/CEO"],
+      ["Panel delay", "HOD", "HR Head"],
+      ["Grievance", "TA-Head", "MD/CEO"],
+      ["Vendor SLA", "TA Lead", "HR Head"]
+    ]
+  },
+  "audit": "🔐 Every approve / reject / query on this page writes an immutable audit entry (user, timestamp, IP) — exportable for internal audit and compliance review."
+}

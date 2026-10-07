@@ -1,0 +1,27 @@
+{
+  "title": "Talent Acquisition Dashboard",
+  "policy": "Policy §11 · §12 · §16",
+  "crumb": "Home / Dashboard · {{date}}",
+  "newMrf": "+ New MRF",
+  "quick": {
+    "raiseMrf": "Raise MRF",
+    "jd": "JD Builder",
+    "approvals": "Approvals ({{count}})",
+    "pipeline": "Open Pipeline",
+    "offer": "Offer Desk",
+    "bgv": "BGV Tracker",
+    "careers": "Career Site"
+  },
+  "tat": {
+    "title": "⚑ TAT Breach Alerts",
+    "sub": "— escalation matrix auto-triggered",
+    "active": "{{count}} active",
+    "requisition": "Requisition",
+    "stage": "Stage / Variance",
+    "escalation": "Escalation Path",
+    "open": "Open"
+  },
+  "pipeline": { "title": "Pipeline Snapshot", "sub": "— all active requisitions", "total": "{{count}} candidates" },
+  "kpis": { "title": "KPIs — {{period}}", "sub": "§12 targets", "onTrack": "{{ok}} / {{total}} on track" },
+  "upcoming": { "title": "Upcoming Interviews", "sub": "next 7 days", "open": "Open" }
+}

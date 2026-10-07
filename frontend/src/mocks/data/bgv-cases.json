@@ -1,0 +1,87 @@
+[
+  {
+    "id": "bgv-0390",
+    "appId": "APP-2026-0390",
+    "vendor": "AuthBridge",
+    "vendorCaseRef": "AB-88213",
+    "consentAt": "2026-08-04T10:00:00Z",
+    "initiatedAt": "2026-08-04",
+    "tatDay": 8,
+    "tatTotal": 15,
+    "checks": [
+      {
+        "type": "identity",
+        "label": "Identity & Address",
+        "detail": "National ID, tax ID + 1 address proof",
+        "status": "Cleared",
+        "note": "Match — all documents",
+        "date": "2026-08-07"
+      },
+      {
+        "type": "education",
+        "label": "Educational Qualification",
+        "detail": "Recognised-bureau verification",
+        "status": "Cleared",
+        "note": "MBA (Fin), Pune Univ ✓",
+        "date": "2026-08-11"
+      },
+      {
+        "type": "employment",
+        "label": "Employment / Reference",
+        "detail": "Last 2 employers; salary & reason for leaving",
+        "status": "Cleared",
+        "note": "2/2 confirmed · Annexure C logged · Would rehire: Y",
+        "date": "2026-08-12",
+        "sensitiveNote": "last drawn ₹18.2L ✓"
+      },
+      {
+        "type": "police",
+        "label": "Police / Antecedent",
+        "detail": "Mandatory — customer-facing applicability",
+        "status": "InProgress",
+        "note": "Dispatched to local station 12/08",
+        "date": null
+      },
+      {
+        "type": "credit",
+        "label": "Credit / Bureau Check",
+        "detail": "Mandatory — finance-function role",
+        "status": "InProgress",
+        "note": "Consent 10/08 · bureau pull queued",
+        "date": null
+      },
+      {
+        "type": "court",
+        "label": "Court Record / Litigation",
+        "detail": "Risk-based — senior & customer-facing",
+        "status": "Pending",
+        "note": "Queued with vendor",
+        "date": null
+      },
+      {
+        "type": "fitProper",
+        "label": "Fit & Proper Declaration",
+        "detail": "Directors / KMP / Sr Mgmt only",
+        "status": "NotApplicable",
+        "note": "Not applicable (M3)",
+        "date": null
+      },
+      {
+        "type": "social",
+        "label": "Social Media / Digital",
+        "detail": "Optional — Sr Mgmt roles",
+        "status": "NotApplicable",
+        "note": "Not applicable",
+        "date": null
+      },
+      {
+        "type": "coi",
+        "label": "Conflict of Interest",
+        "detail": "Relationship with employees/Directors",
+        "status": "Cleared",
+        "note": "None declared",
+        "date": "2026-08-07"
+      }
+    ]
+  }
+]

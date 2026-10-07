@@ -1,0 +1,244 @@
+[
+  {
+    "appId": "APP-2026-0380",
+    "reqId": "REQ-2026-0156",
+    "candidateId": "cand-001",
+    "stage": "Sourced",
+    "stageHistory": [
+      {
+        "from": null,
+        "to": "Sourced",
+        "by": "A. Sharma",
+        "at": "2026-08-10T09:00:00Z"
+      }
+    ],
+    "note": "Notice 30d"
+  },
+  {
+    "appId": "APP-2026-0381",
+    "reqId": "REQ-2026-0156",
+    "candidateId": "cand-002",
+    "stage": "Sourced",
+    "stageHistory": [
+      {
+        "from": null,
+        "to": "Sourced",
+        "by": "A. Sharma",
+        "at": "2026-08-10T09:00:00Z"
+      }
+    ],
+    "note": "Current: AM-Credit (M1) · 4 yrs tenure · Eligible ✓ · abridged process"
+  },
+  {
+    "appId": "APP-2026-0382",
+    "reqId": "REQ-2026-0156",
+    "candidateId": "cand-003",
+    "stage": "Sourced",
+    "stageHistory": [
+      {
+        "from": null,
+        "to": "Sourced",
+        "by": "A. Sharma",
+        "at": "2026-08-10T09:00:00Z"
+      }
+    ],
+    "note": "Notice 60d"
+  },
+  {
+    "appId": "APP-2026-0417",
+    "reqId": "REQ-2026-0156",
+    "candidateId": "cand-013",
+    "stage": "Sourced",
+    "stageHistory": [
+      {
+        "from": null,
+        "to": "Sourced",
+        "by": "Career portal",
+        "at": "2026-08-18T03:01:00Z"
+      }
+    ],
+    "note": "Applied via career portal · consents captured"
+  },
+  {
+    "appId": "APP-2026-0383",
+    "reqId": "REQ-2026-0156",
+    "candidateId": "cand-004",
+    "stage": "Screened",
+    "stageHistory": [
+      {
+        "from": null,
+        "to": "Sourced",
+        "by": "A. Sharma",
+        "at": "2026-08-10T09:00:00Z"
+      }
+    ],
+    "note": "HR Screen ✓ 4.2/5 · referral bonus eligible"
+  },
+  {
+    "appId": "APP-2026-0384",
+    "reqId": "REQ-2026-0156",
+    "candidateId": "cand-005",
+    "stage": "Screened",
+    "stageHistory": [
+      {
+        "from": null,
+        "to": "Sourced",
+        "by": "A. Sharma",
+        "at": "2026-08-10T09:00:00Z"
+      }
+    ],
+    "note": "HR Screen ✓ 3.6/5 · Domain switch risk flagged"
+  },
+  {
+    "appId": "APP-2026-0385",
+    "reqId": "REQ-2026-0156",
+    "candidateId": "cand-006",
+    "stage": "Screened",
+    "stageHistory": [
+      {
+        "from": null,
+        "to": "Sourced",
+        "by": "A. Sharma",
+        "at": "2026-08-10T09:00:00Z"
+      }
+    ],
+    "note": "HR Screen ✓ 4.4/5 · Notice 90d ⚠ long"
+  },
+  {
+    "appId": "APP-2026-0386",
+    "reqId": "REQ-2026-0156",
+    "candidateId": "cand-007",
+    "stage": "Interview",
+    "stageHistory": [
+      {
+        "from": null,
+        "to": "Sourced",
+        "by": "A. Sharma",
+        "at": "2026-08-10T09:00:00Z"
+      }
+    ],
+    "note": "R1 ✓ 4.0 · Case study sent · R2 on 05 Aug · feedback due 31h"
+  },
+  {
+    "appId": "APP-2026-0387",
+    "reqId": "REQ-2026-0156",
+    "candidateId": "cand-008",
+    "stage": "Rejected",
+    "stageHistory": [
+      {
+        "from": null,
+        "to": "Sourced",
+        "by": "A. Sharma",
+        "at": "2026-08-10T09:00:00Z"
+      },
+      {
+        "from": "Sourced",
+        "to": "Screened",
+        "by": "A. Sharma",
+        "at": "2026-08-11T09:00:00Z"
+      },
+      {
+        "from": "Screened",
+        "to": "Interview",
+        "by": "A. Sharma",
+        "at": "2026-08-12T09:00:00Z"
+      },
+      {
+        "from": "Interview",
+        "to": "Rejected",
+        "by": "A. Sharma",
+        "at": "2026-08-07T09:00:00Z"
+      }
+    ],
+    "note": "Panel: Do Not Recommend — domain depth below bar",
+    "rejection": {
+      "reason": "Domain depth below bar (R2)",
+      "regretDueBy": "2026-08-12",
+      "retainUntil": "2027-08-07"
+    }
+  },
+  {
+    "appId": "APP-2026-0388",
+    "reqId": "REQ-2026-0156",
+    "candidateId": "cand-009",
+    "stage": "Selection",
+    "stageHistory": [
+      {
+        "from": null,
+        "to": "Sourced",
+        "by": "A. Sharma",
+        "at": "2026-08-10T09:00:00Z"
+      }
+    ],
+    "note": "Avg 4.3/5 · Panel unanimous · Selection Summary ready"
+  },
+  {
+    "appId": "APP-2026-0389",
+    "reqId": "REQ-2026-0156",
+    "candidateId": "cand-010",
+    "stage": "Hold",
+    "stageHistory": [
+      {
+        "from": null,
+        "to": "Sourced",
+        "by": "A. Sharma",
+        "at": "2026-08-10T09:00:00Z"
+      },
+      {
+        "from": "Sourced",
+        "to": "Screened",
+        "by": "A. Sharma",
+        "at": "2026-08-11T09:00:00Z"
+      },
+      {
+        "from": "Screened",
+        "to": "Interview",
+        "by": "A. Sharma",
+        "at": "2026-08-12T09:00:00Z"
+      },
+      {
+        "from": "Interview",
+        "to": "Selection",
+        "by": "A. Sharma",
+        "at": "2026-08-14T09:00:00Z"
+      },
+      {
+        "from": "Selection",
+        "to": "Hold",
+        "by": "A. Sharma",
+        "at": "2026-08-15T09:00:00Z"
+      }
+    ],
+    "note": "Backup candidate — Rec. with Reservations (R1)"
+  },
+  {
+    "appId": "APP-2026-0390",
+    "reqId": "REQ-2026-0156",
+    "candidateId": "cand-011",
+    "stage": "BGV",
+    "stageHistory": [
+      {
+        "from": null,
+        "to": "Sourced",
+        "by": "A. Sharma",
+        "at": "2026-08-10T09:00:00Z"
+      }
+    ],
+    "note": "Vendor: AuthBridge · Police + bureau in progress"
+  },
+  {
+    "appId": "APP-2026-0391",
+    "reqId": "REQ-2026-0156",
+    "candidateId": "cand-012",
+    "stage": "Offer",
+    "stageHistory": [
+      {
+        "from": null,
+        "to": "Sourced",
+        "by": "A. Sharma",
+        "at": "2026-08-10T09:00:00Z"
+      }
+    ],
+    "note": "Join 01 Oct · Offer sent 08 Aug · acceptance chase in 3d"
+  }
+]

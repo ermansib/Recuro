@@ -1,0 +1,74 @@
+[
+  {
+    "id": "off-0388",
+    "appId": "APP-2026-0388",
+    "reqId": "REQ-2026-0156",
+    "candidateName": "Sandeep Verma",
+    "designation": "Senior Manager — Credit",
+    "grade": "M3",
+    "location": "HQ — Mumbai",
+    "reportingManager": "N. Sharma, DVP — Credit",
+    "joiningDate": "2026-10-01",
+    "probationMonths": 6,
+    "components": {
+      "fixed": 19.6,
+      "variable": 3.2,
+      "benefits": 2.0
+    },
+    "band": {
+      "min": 18,
+      "max": 24
+    },
+    "state": "PendingApproval",
+    "letterVersion": 2,
+    "trail": [
+      {
+        "title": "CTC revised to ₹24.8L — candidate negotiation (v2)",
+        "detail": "HR-TA · 10 Aug, 16:40 · reason: competing offer; within deviation threshold for review"
+      },
+      {
+        "title": "Verbal offer v1 at ₹24.2L — declined by candidate",
+        "detail": "HR-TA · 09 Aug, 11:15 · logged"
+      },
+      {
+        "title": "Selection ratified by HR Head",
+        "detail": "K. Iyer · 08 Aug · panel avg 4.3/5"
+      }
+    ]
+  },
+  {
+    "id": "off-0391",
+    "appId": "APP-2026-0391",
+    "reqId": "REQ-2026-0156",
+    "candidateName": "J. Nair",
+    "designation": "Senior Manager — Credit",
+    "grade": "M3",
+    "location": "HQ — Mumbai",
+    "reportingManager": "N. Sharma, DVP — Credit",
+    "joiningDate": "2026-10-01",
+    "probationMonths": 6,
+    "components": {
+      "fixed": 17.0,
+      "variable": 2.8,
+      "benefits": 1.7
+    },
+    "band": {
+      "min": 18,
+      "max": 24
+    },
+    "state": "Sent",
+    "letterVersion": 1,
+    "trail": [
+      {
+        "title": "Offer sent to candidate",
+        "detail": "HR-TA · 08 Aug · e-sign requested",
+        "approved": true
+      },
+      {
+        "title": "Signed off by HR Head (within band)",
+        "detail": "K. Iyer · 07 Aug",
+        "approved": true
+      }
+    ]
+  }
+]

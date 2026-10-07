@@ -1,0 +1,58 @@
+{
+  "title": "Candidate Pipeline",
+  "policy": "Policy §9.2 – §9.6",
+  "crumb": "Requisitions / {{reqId}} / Pipeline",
+  "readOnly": "👁 Read-only — stage changes restricted to HR roles",
+  "log": "+ Log Candidate",
+  "requisition": "Requisition",
+  "band": "CTC Band {{band}}",
+  "approver": "Approver: {{approver}}",
+  "age": "⏱ Req age {{age}}d / {{tat}} overall",
+  "locked": "🔒 Sourcing locked — {{state}}",
+  "dragHint": "Drag cards between stages, or use “Move to” on a card — every move is audit-logged",
+  "stages": {
+    "Sourced": "Sourced", "Screened": "Screened", "Interview": "Interview", "Selection": "Selection", "BGV": "BGV", "Offer": "Offer",
+    "PreBoarding": "Pre-boarding", "Onboarded": "Onboarded", "Confirmed": "Confirmed", "Rejected": "Rejected", "Withdrawn": "Withdrawn", "Hold": "Hold"
+  },
+  "states": {
+    "Draft": "Draft", "PendingApproval": "Pending approval", "Approved": "Approved", "Sourcing": "Sourcing", "Interviewing": "Interviewing", "Selection": "Selection",
+    "BGV": "BGV", "Offer": "Offer", "Filled": "Filled", "Rejected": "Rejected", "OnHold": "On hold", "Cancelled": "Cancelled"
+  },
+  "column": "{{stage}} column, {{count}} candidates",
+  "moveTo": "Move to…",
+  "moveLabel": "Move {{name}} to stage",
+  "moved": "{{name}} moved to “{{stage}}” — audit-logged",
+  "advance": "{{stage}} →",
+  "reject": "Reject",
+  "feedback": "Feedback",
+  "viewChecks": "View Checks",
+  "offerDesk": "Offer Desk",
+  "rejected": "Rejected",
+  "hold": "Hold",
+  "ctc": "CTC",
+  "expected": "Exp",
+  "notice": "Notice",
+  "noticeDays": "{{days}}d",
+  "empty": "No candidates",
+  "foot": { "mix": "Source mix (this req):", "summary": "Selection Summary", "summaryToast": "Selection Summary report generated (§9.6)" },
+  "rejectModal": {
+    "title": "Reject candidate — {{name}}",
+    "reason": "Rejection reason",
+    "placeholder": "Documented reason (kept on record, never shown to the candidate)",
+    "note": "A regret email is queued to the candidate within 3 working days and the record is retained for 1 year (§9.6, §14).",
+    "confirm": "Reject & queue regret email",
+    "required": "Rejection reason required (§9.6).",
+    "done": "{{name}} rejected — regret email queued; record retained until {{until}}"
+  },
+  "logModal": {
+    "title": "Log Candidate — {{reqId}}",
+    "name": "Full name",
+    "email": "Email",
+    "phone": "Mobile",
+    "experience": "Total experience (yrs)",
+    "source": "Source",
+    "consent": "Candidate has given data-privacy consent (§14). Consent is stored with a timestamp.",
+    "submit": "Log Candidate",
+    "done": "{{name}} logged as {{appId}} (source: {{source}})"
+  }
+}
