@@ -48,6 +48,17 @@ internal sealed class RequisitionRepository(RequisitionDbContext db) : IRequisit
         return await query.OrderByDescending(r => r.CreatedAt).Take(filter.Limit).ToListAsync(ct);
     }
 
+    public async Task<(int Total, int RaisedSince)> CountAsync(IReadOnlyCollection<RequisitionState> states, DateTimeOffset since, CancellationToken ct)
+    {
+        var stateList = states.ToList();
+        var counts = await db.Requisitions
+            .Where(r => stateList.Contains(r.State))
+            .GroupBy(_ => 1)
+            .Select(g => new { Total = g.Count(), RaisedSince = g.Count(r => r.CreatedAt >= since) })
+            .FirstOrDefaultAsync(ct);
+        return counts is null ? (0, 0) : (counts.Total, counts.RaisedSince);
+    }
+
     private static string EscapeLike(string value) =>
         value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("%", "\\%", StringComparison.Ordinal).Replace("_", "\\_", StringComparison.Ordinal);
 }

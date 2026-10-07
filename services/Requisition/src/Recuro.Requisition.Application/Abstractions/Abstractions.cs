@@ -13,6 +13,9 @@ public interface IRequisitionRepository
     void Add(ManpowerRequisition requisition);
 
     Task<IReadOnlyList<ManpowerRequisition>> ListAsync(RequisitionFilter filter, CancellationToken ct);
+
+    /// <summary>Requisitions in any of <paramref name="states"/>, and how many of them were raised since <paramref name="since"/>.</summary>
+    Task<(int Total, int RaisedSince)> CountAsync(IReadOnlyCollection<RequisitionState> states, DateTimeOffset since, CancellationToken ct);
 }
 
 /// <summary>Tracker filters (RCU-REQ-007).</summary>

@@ -303,4 +303,22 @@ public sealed class RequisitionApiTests(RequisitionApiFactory api) : IClassFixtu
         Assert.Equal("in", envelope.RootElement.GetProperty("data").GetProperty("budgetStatus").GetString());
         Assert.Equal(reqId, envelope.RootElement.GetProperty("data").GetProperty("reqId").GetString());
     }
+
+    [Fact]
+    public async Task The_ta_dashboard_counts_open_mrfs_for_the_callers_tenant()
+    {
+        var tenant = Guid.NewGuid();
+        var empty = await HrTa(tenant).GetFromJsonAsync<JsonElement>($"{Requisitions}/dashboard/ta");
+        Assert.Equal("0", empty.GetProperty("stats")[0].GetProperty("value").GetString());
+
+        await RaiseAsync(tenant: tenant);
+        var draft = await HrTa(tenant).PostAsJsonAsync($"{Requisitions}?draft=true", Input());
+        Assert.Equal(HttpStatusCode.Created, draft.StatusCode);
+
+        var tile = (await HrTa(tenant).GetFromJsonAsync<JsonElement>($"{Requisitions}/dashboard/ta")).GetProperty("stats")[0];
+        Assert.Equal("Open MRFs", tile.GetProperty("label").GetString());
+        Assert.Equal("1", tile.GetProperty("value").GetString());
+        Assert.Equal("▲ +1 this week", tile.GetProperty("trend").GetString());
+        Assert.Equal(string.Empty, tile.GetProperty("tone").GetString());
+    }
 }

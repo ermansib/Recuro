@@ -3,6 +3,7 @@ using Recuro.BuildingBlocks.Application.Messaging;
 using Recuro.BuildingBlocks.Domain;
 using Recuro.BuildingBlocks.Web.Http;
 using Recuro.Requisition.Api.Http;
+using Recuro.Requisition.Application.Dashboard;
 using Recuro.Requisition.Application.JobDescriptions;
 using Recuro.Requisition.Application.Requisitions;
 using Recuro.Requisition.Application.Requisitions.Commands;
@@ -21,6 +22,10 @@ internal static class RequisitionEndpoints
         requisitions.MapGet("/", ListAsync)
             .RequireAuthorization(RequisitionPolicies.Read)
             .WithSummary("RCU-REQ-007: the requisition tracker, newest first (frontend listRequisitions).");
+
+        requisitions.MapGet("/dashboard/ta", TaDashboardAsync)
+            .RequireAuthorization(RequisitionPolicies.Read)
+            .WithSummary("RCU-DSH-001: the Open MRFs tile for the gateway's TA dashboard (/bff/dashboard/ta).");
 
         requisitions.MapGet("/{reqId}", GetAsync)
             .RequireAuthorization(RequisitionPolicies.Read)
@@ -67,6 +72,9 @@ internal static class RequisitionEndpoints
         IQueryHandler<ListRequisitionsQuery, IReadOnlyList<RequisitionDto>> handler,
         CancellationToken ct) =>
         (await handler.Handle(new ListRequisitionsQuery(state, grade, location, q, limit), ct)).ToHttpResult();
+
+    private static async Task<IResult> TaDashboardAsync(IQueryHandler<GetTaDashboardQuery, DashboardFragmentDto> handler, CancellationToken ct) =>
+        (await handler.Handle(new GetTaDashboardQuery(), ct)).ToHttpResult();
 
     private static async Task<IResult> GetAsync(
         string reqId,
