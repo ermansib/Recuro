@@ -1,0 +1,118 @@
+using System.Text.Json;
+using Recuro.BuildingBlocks.Application.IntegrationEvents;
+using Recuro.Notification.Application.Abstractions;
+using Recuro.Notification.Domain.Directory;
+using Recuro.Notification.Domain.Feed;
+using Recuro.Notification.Domain.Matrix;
+
+namespace Recuro.Notification.Application.Events;
+
+/// <summary>Who receives one rule's notification in the bell, and who gets an email.</summary>
+public sealed record ResolvedRecipients(IReadOnlyList<Recipient> InApp, IReadOnlyList<Recipient> Email);
+
+/// <summary>
+/// Turns a matrix <see cref="RecipientRule"/> into people (RCU-NTF-001 "role-in-context"). A role gets
+/// one role-wide bell item and one email per person the directory knows in that role; a named user gets
+/// both addressed to them. People the directory does not know yet still get their bell item; their
+/// email is logged as suppressed for lack of an address.
+/// </summary>
+public sealed class RecipientResolver(INotificationStore store)
+{
+    public async Task<ResolvedRecipients> ResolveAsync(RecipientRule rule, EventMetadata metadata, JsonElement data, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(rule);
+        ArgumentNullException.ThrowIfNull(metadata);
+        var userIds = rule.Kind switch
+        {
+            RecipientKind.Role => null,
+            RecipientKind.Actor => Single(metadata.ActorId),
+            RecipientKind.PayloadUser => Single(EventPayload.ReadString(data, rule.Field)),
+            RecipientKind.PayloadUsers => EventPayload.ReadStrings(data, rule.Field),
+            RecipientKind.SubjectOwner => Single((await store.FindOwnerAsync(metadata.Subject, ct))?.UserId),
+            _ => throw new ArgumentOutOfRangeException(nameof(rule), rule.Kind, "Unknown recipient kind."),
+        };
+
+        if (userIds is null || (userIds.Count == 0 && rule.FallbackToRole))
+        {
+            return await ForRoleAsync(rule.Role, ct);
+        }
+
+        var people = new List<Recipient>();
+        foreach (var userId in userIds.Distinct(StringComparer.Ordinal))
+        {
+            var known = await store.FindUserAsync(userId, ct);
+            var name = known?.Name ?? (userId == metadata.ActorId ? metadata.ActorName : null);
+            people.Add(new Recipient(rule.Role, userId, name, known?.Email));
+        }
+
+        return new ResolvedRecipients(people, people);
+    }
+
+    private async Task<ResolvedRecipients> ForRoleAsync(string role, CancellationToken ct)
+    {
+        var members = await store.UsersInRoleAsync(role, ct);
+        IReadOnlyList<Recipient> email = members.Count == 0
+            ? [Recipient.Everyone(role)]
+            : members.Select(m => ToRecipient(role, m)).ToList();
+        return new ResolvedRecipients([Recipient.Everyone(role)], email);
+    }
+
+    private static Recipient ToRecipient(string role, DirectoryUser user) => new(role, user.UserId, user.Name, user.Email);
+
+    private static List<string> Single(string? userId) => string.IsNullOrWhiteSpace(userId) ? [] : [userId];
+}
+
+/// <summary>Tolerant reads of event payload fields (each consumer reads only what it needs).</summary>
+public static class EventPayload
+{
+    public static string? ReadString(JsonElement data, string? field) =>
+        field is not null && data.ValueKind == JsonValueKind.Object && data.TryGetProperty(field, out var value)
+            ? AsText(value)
+            : null;
+
+    public static List<string> ReadStrings(JsonElement data, string? field)
+    {
+        if (field is null || data.ValueKind != JsonValueKind.Object || !data.TryGetProperty(field, out var value))
+        {
+            return [];
+        }
+
+        return value.ValueKind == JsonValueKind.Array
+            ? value.EnumerateArray().Select(AsText).OfType<string>().ToList()
+            : AsText(value) is { } single ? [single] : [];
+    }
+
+    /// <summary>Template values: the payload's top-level scalar fields plus the subject id and actor name.</summary>
+    public static IReadOnlyDictionary<string, string> TemplateValues(EventMetadata metadata, JsonElement data)
+    {
+        ArgumentNullException.ThrowIfNull(metadata);
+        var values = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["subjectId"] = metadata.Subject[(metadata.Subject.LastIndexOf('/') + 1)..],
+            ["actorName"] = metadata.ActorName ?? string.Empty,
+        };
+
+        if (data.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in data.EnumerateObject())
+            {
+                var text = property.Value.ValueKind == JsonValueKind.Array
+                    ? string.Join(", ", property.Value.EnumerateArray().Select(AsText).OfType<string>())
+                    : AsText(property.Value);
+                if (text is not null)
+                {
+                    values[property.Name] = text;
+                }
+            }
+        }
+
+        return values;
+    }
+
+    private static string? AsText(JsonElement value) => value.ValueKind switch
+    {
+        JsonValueKind.String => value.GetString(),
+        JsonValueKind.Number or JsonValueKind.True or JsonValueKind.False => value.GetRawText(),
+        _ => null,
+    };
+}

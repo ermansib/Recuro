@@ -39,6 +39,17 @@
   <Folder Name="/Gateway/tests/">
     <Project Path="Gateway/tests/Recuro.Gateway.Tests/Recuro.Gateway.Tests.csproj" />
   </Folder>
+  <Folder Name="/Notification/" />
+  <Folder Name="/Notification/src/">
+    <Project Path="Notification/src/Recuro.Notification.Api/Recuro.Notification.Api.csproj" />
+    <Project Path="Notification/src/Recuro.Notification.Application/Recuro.Notification.Application.csproj" />
+    <Project Path="Notification/src/Recuro.Notification.Domain/Recuro.Notification.Domain.csproj" />
+    <Project Path="Notification/src/Recuro.Notification.Infrastructure/Recuro.Notification.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Notification/tests/">
+    <Project Path="Notification/tests/Recuro.Notification.IntegrationTests/Recuro.Notification.IntegrationTests.csproj" />
+    <Project Path="Notification/tests/Recuro.Notification.UnitTests/Recuro.Notification.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/Pipeline/" />
   <Folder Name="/Pipeline/src/">
     <Project Path="Pipeline/src/Recuro.Pipeline.Api/Recuro.Pipeline.Api.csproj" />

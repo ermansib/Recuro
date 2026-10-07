@@ -1,11 +1,13 @@
 using Recuro.BuildingBlocks.Web;
 using Recuro.Gateway;
+using Recuro.Gateway.Bff;
 using Yarp.ReverseProxy.Transforms;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddRecuroServiceDefaults("gateway");
 builder.Services.AddGatewayRateLimits(builder.Configuration);
+builder.Services.AddDashboardBff();
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
     .AddTransforms(transforms =>
@@ -22,6 +24,7 @@ var app = builder.Build();
 // routes opt out with AuthorizationPolicy "anonymous" (public careers endpoints).
 app.UseRecuroServiceDefaults(idempotency: false);
 app.UseRateLimiter();
+app.MapDashboardBff();
 app.MapReverseProxy();
 
 await app.RunAsync();
