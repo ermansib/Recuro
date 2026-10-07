@@ -10,13 +10,17 @@ namespace Recuro.Notification.Application.Templates;
 /// </summary>
 public sealed class DefaultTemplates : ITemplateSource
 {
-    public const string Version = "default-2026.10.1";
+    public const string Version = "default-2026.10.2";
 
     private static readonly IReadOnlyDictionary<string, NotificationTemplate> Catalog = new[]
     {
         T("approval.task.assigned", "📋", "Approval needed — {subjectId}", "{type} task waiting for your decision.", "/approvals",
             "Approval", "Approval needed — {subjectId}",
             ["A {type} approval is waiting for you ({subjectId}).", "Please decide within the SLA. Breaches escalate automatically per the escalation matrix."],
+            "Open Approvals"),
+        T("approval.task.reminder", "⏳", "Approval reminder — {subjectId}", "{thresholdPercent}% of the SLA used · due {dueAt}.", "/approvals",
+            "Reminder", "⏳ Approval reminder — {subjectId}",
+            ["An approval for {subjectId} is still waiting for your decision ({thresholdPercent}% of its SLA used).", "It is due {dueAt}. Breaches escalate automatically per the escalation matrix."],
             "Open Approvals"),
         T("mrf.approved", "✅", "MRF approved — {reqId}", "Sourcing is unlocked.", "/mrf",
             "Approved", "✅ MRF approved — {reqId}",
@@ -44,6 +48,9 @@ public sealed class DefaultTemplates : ITemplateSource
         T("interview.scheduled", "📅", "Interview scheduled — {appId}", "Round {roundId} · {dueAt}", "/assessment",
             "Interview", "📅 Interview scheduled — {appId}",
             ["You are on the panel for round {roundId} of application {appId}.", "Scheduled for {dueAt}. A calendar invite follows separately."], "Open Assessment Form"),
+        T("interview.feedback.reminder", "⏰", "Feedback reminder — {appId}", "Round {round} · becomes overdue {overdueAt}", "/assessment",
+            "Reminder", "⏰ Feedback reminder — {appId}",
+            ["Your feedback for round {round} of application {appId} has not been submitted yet.", "It becomes overdue {overdueAt} and then escalates per the escalation matrix."], "Open Assessment Form"),
         T("interview.feedback.overdue", "⏱", "Panel feedback overdue — {appId}", "Round {roundId} · due {dueAt}", "/assessment",
             "Reminder", "⏰ Panel feedback overdue — {appId}",
             ["Feedback for round {roundId} of application {appId} was due {dueAt}.", "Outstanding feedback escalates to the HOD per the escalation matrix."], "Open Assessment Form"),
@@ -60,6 +67,12 @@ public sealed class DefaultTemplates : ITemplateSource
             "Offer", "Offer accepted — {offerId}", ["Offer {offerId} was accepted."], null),
         T("offer.declined", "✉", "Offer declined — {offerId}", "Acknowledgement needed.", "/approvals",
             "Offer", "Offer declined — {offerId}", ["Offer {offerId} for {appId} was declined."], "Open Approvals"),
+        T("offer.chase", "📨", "Offer awaiting response — {offerId}", "Chase #{chaseNumber} sent · expires {expiresAt}.", "/offer",
+            "Offer", "Offer awaiting response — {offerId}", ["Offer {offerId} for {appId} is still unanswered.", "Chase #{chaseNumber} was sent to the candidate. The offer expires {expiresAt}."], "Open Offer"),
+        T("offer.chase.candidate", "📨", "Your offer is awaiting your response", "Reminder #{chaseNumber}.", null,
+            "Offer", "Your offer is awaiting your response",
+            ["This is a friendly reminder that your offer for application {appId} is waiting for your response.", "The offer is valid until {expiresAt}. Please accept or decline it before then, or contact us if you have questions."],
+            null),
         T("ijp.applied", "🔁", "IJP application — {reqId}", "Employee {employeeId} applied internally.", "/pipeline",
             "IJP", "IJP application — {reqId}", ["An internal application was submitted for {reqId}."], "Open Pipeline"),
         T("ijp.applied.confirmation", "✅", "IJP application received — {reqId}", "HR-TA will review it.", "/internal-careers",
