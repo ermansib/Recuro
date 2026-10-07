@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddRecuroServiceDefaults("gateway");
 builder.Services.AddGatewayRateLimits(builder.Configuration);
 builder.Services.AddDashboardBff();
+builder.Services.AddLogCandidateBff();
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
     .AddTransforms(transforms =>
@@ -25,6 +26,7 @@ var app = builder.Build();
 app.UseRecuroServiceDefaults(idempotency: false);
 app.UseRateLimiter();
 app.MapDashboardBff();
+app.MapLogCandidateBff();
 app.MapReverseProxy();
 
 await app.RunAsync();

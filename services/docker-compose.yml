@@ -87,6 +87,9 @@ services:
       ReverseProxy__Clusters__candidate__Destinations__primary__Address: http://candidate:8080/
       ReverseProxy__Clusters__pipeline__Destinations__primary__Address: http://pipeline:8080/
       ReverseProxy__Clusters__notification__Destinations__primary__Address: http://notification:8080/
+      Bff__Candidates__CandidatesUrl: http://candidate:8080/api/v1/candidates
+      Bff__Candidates__ApplicationsUrl: http://pipeline:8080/api/v1/pipeline/applications
+      Bff__Dashboard__Sources__pipeline__Url: http://pipeline:8080/api/v1/pipeline/dashboard/ta
     ports:
       - "5100:8080"
     depends_on: [redis, keycloak, audit, identity, config, candidate, pipeline, notification]
