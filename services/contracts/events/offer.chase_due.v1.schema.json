@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/offer.chase_due.v1.schema.json",
+  "title": "offer.chase_due.v1",
+  "description": "Producer: Offer. A sent offer is still unanswered: first after 3 working days, then weekly until it is accepted, declined, withdrawn or expires (RCU-OFR-006). Notification chases the candidate and tells HR-TA. Ids only. Subject: Offer/<offerId>.",
+  "type": "object",
+  "properties": {
+    "offerId": {
+      "type": "string"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "sentAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "chaseNumber": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "offerId",
+    "appId",
+    "reqId",
+    "candidateId",
+    "sentAt",
+    "chaseNumber",
+    "expiresAt"
+  ],
+  "additionalProperties": true
+}
