@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/candidate.created.v1.schema.json",
+  "title": "candidate.created.v1",
+  "description": "Producer: Candidate. A candidate profile was created (RCU-CAN-001). Ids only, no personal data.",
+  "type": "object",
+  "required": [
+    "candidateId",
+    "source"
+  ],
+  "properties": {
+    "candidateId": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "description": "Frontend CandidateSource spelling, e.g. Portal, Walk-in, IJP."
+    }
+  },
+  "additionalProperties": true
+}

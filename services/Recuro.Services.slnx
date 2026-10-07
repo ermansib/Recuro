@@ -21,6 +21,17 @@
     <Project Path="BuildingBlocks/tests/Recuro.BuildingBlocks.IntegrationTests/Recuro.BuildingBlocks.IntegrationTests.csproj" />
     <Project Path="BuildingBlocks/tests/Recuro.BuildingBlocks.UnitTests/Recuro.BuildingBlocks.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/Candidate/" />
+  <Folder Name="/Candidate/src/">
+    <Project Path="Candidate/src/Recuro.Candidate.Api/Recuro.Candidate.Api.csproj" />
+    <Project Path="Candidate/src/Recuro.Candidate.Application/Recuro.Candidate.Application.csproj" />
+    <Project Path="Candidate/src/Recuro.Candidate.Domain/Recuro.Candidate.Domain.csproj" />
+    <Project Path="Candidate/src/Recuro.Candidate.Infrastructure/Recuro.Candidate.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Candidate/tests/">
+    <Project Path="Candidate/tests/Recuro.Candidate.IntegrationTests/Recuro.Candidate.IntegrationTests.csproj" />
+    <Project Path="Candidate/tests/Recuro.Candidate.UnitTests/Recuro.Candidate.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/Config/" />
   <Folder Name="/Config/src/">
     <Project Path="Config/src/Recuro.Config.Api/Recuro.Config.Api.csproj" />
@@ -49,6 +60,17 @@
   <Folder Name="/Identity/tests/">
     <Project Path="Identity/tests/Recuro.Identity.IntegrationTests/Recuro.Identity.IntegrationTests.csproj" />
     <Project Path="Identity/tests/Recuro.Identity.UnitTests/Recuro.Identity.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/Pipeline/" />
+  <Folder Name="/Pipeline/src/">
+    <Project Path="Pipeline/src/Recuro.Pipeline.Api/Recuro.Pipeline.Api.csproj" />
+    <Project Path="Pipeline/src/Recuro.Pipeline.Application/Recuro.Pipeline.Application.csproj" />
+    <Project Path="Pipeline/src/Recuro.Pipeline.Domain/Recuro.Pipeline.Domain.csproj" />
+    <Project Path="Pipeline/src/Recuro.Pipeline.Infrastructure/Recuro.Pipeline.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Pipeline/tests/">
+    <Project Path="Pipeline/tests/Recuro.Pipeline.IntegrationTests/Recuro.Pipeline.IntegrationTests.csproj" />
+    <Project Path="Pipeline/tests/Recuro.Pipeline.UnitTests/Recuro.Pipeline.UnitTests.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Recuro.ArchitectureTests/Recuro.ArchitectureTests.csproj" />

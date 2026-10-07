@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/pipeline.tat.breached.v1.schema.json",
+  "title": "pipeline.tat.breached.v1",
+  "description": "Producer: Pipeline. A stage overran its TAT; raised once per stage (RCU-PPL-005).",
+  "type": "object",
+  "required": [
+    "entity",
+    "appId",
+    "reqId",
+    "stage",
+    "dueAt",
+    "varianceMs"
+  ],
+  "properties": {
+    "entity": {
+      "type": "string",
+      "description": "Entity reference, Application/<appId>.",
+      "pattern": "^Application/"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "Sourced",
+        "Screened",
+        "Interview",
+        "Selection",
+        "BGV",
+        "Offer",
+        "PreBoarding",
+        "Onboarded",
+        "Confirmed",
+        "Rejected",
+        "Withdrawn",
+        "Hold"
+      ]
+    },
+    "dueAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "varianceMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "escalationPath": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

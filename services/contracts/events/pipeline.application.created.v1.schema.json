@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/pipeline.application.created.v1.schema.json",
+  "title": "pipeline.application.created.v1",
+  "description": "Producer: Pipeline. An application was created at Sourced (RCU-PPL-001).",
+  "type": "object",
+  "required": [
+    "appId",
+    "reqId",
+    "candidateId",
+    "source"
+  ],
+  "properties": {
+    "appId": {
+      "type": "string",
+      "description": "APP-YYYY-####"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}
