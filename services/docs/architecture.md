@@ -19,8 +19,13 @@ the project files as `recuro/backenduserstories.html`). Decisions behind this ma
 5. **Multi-tenant from day one.** Every tenant-owned row implements `ITenantOwned`; `RecuroDbContext`
    filters and stamps `TenantId`. Tests prove tenant A cannot see tenant B.
 6. **API responses match the frontend mocks** (`frontend/src/domain/types.ts`) field for field.
-7. **Tenant configuration lives in the admin portal** (`/admin`): branding, themes, screens, fields.
-   Services read it from the admin API; they don't copy it.
+7. **Tenant configuration is split in two** (decided by the product owner on 2026-10-07):
+   - **Presentation config lives in the admin portal** (`/admin`): branding, themes, screens, fields,
+     labels and email-template overrides. Services read it from the admin API; they don't copy it.
+   - **Business rules live in the Config service** (`services/Config`): DOA, TAT, offer, escalation and
+     BGV matrices plus business calendars, versioned and pinned per workflow. Services resolve rules
+     through the Config API and react to `config.version.activated`; none of them keeps its own copy
+     of a matrix or hard-codes a rule. This may be revisited later; if it moves, only Config changes.
 8. **Free / open-source only.** CI runs a licence check.
 
 ## Service map
