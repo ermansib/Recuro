@@ -1,0 +1,293 @@
+{
+  "version": "v1.0",
+  "effectiveFrom": "2026-04-01",
+  "doa": [
+    {
+      "grade": "E",
+      "initiating": "Branch Manager",
+      "recommending": "Regional HR",
+      "approving": "Zonal Business Head",
+      "approverRole": "hrhead",
+      "bandLabel": "₹3.5L – ₹6L",
+      "overallTat": {
+        "minDays": 15,
+        "maxDays": 20,
+        "label": "15–20 wd (junior)"
+      }
+    },
+    {
+      "grade": "M1",
+      "initiating": "Reporting Manager",
+      "recommending": "HOD",
+      "approving": "Zonal Head + HR Head",
+      "approverRole": "hrhead",
+      "bandLabel": "₹6L – ₹12L",
+      "overallTat": {
+        "minDays": 25,
+        "maxDays": 35,
+        "label": "25–35 wd (managerial)"
+      }
+    },
+    {
+      "grade": "M3",
+      "initiating": "HOD",
+      "recommending": "Function Head",
+      "approving": "HR Head",
+      "approverRole": "hrhead",
+      "bandLabel": "₹18L – ₹24L",
+      "overallTat": {
+        "minDays": 25,
+        "maxDays": 35,
+        "label": "25–35 wd (managerial)"
+      }
+    },
+    {
+      "grade": "VP",
+      "initiating": "Function Head",
+      "recommending": "HR Head",
+      "approving": "MD/CEO",
+      "approverRole": "mdceo",
+      "bandLabel": "₹30L – ₹45L",
+      "overallTat": {
+        "minDays": 25,
+        "maxDays": 35,
+        "label": "25–35 wd (managerial)"
+      }
+    },
+    {
+      "grade": "KMP",
+      "initiating": "MD/CEO",
+      "recommending": "HR Head + NRC",
+      "approving": "Board / NRC",
+      "approverRole": "mdceo",
+      "bandLabel": "Board-approved",
+      "overallTat": {
+        "minDays": 45,
+        "maxDays": 60,
+        "label": "45–60 wd (Sr Mgmt/KMP)"
+      }
+    }
+  ],
+  "offerMatrix": [
+    {
+      "levels": [
+        "E",
+        "M1"
+      ],
+      "withinBand": {
+        "label": "Within band → HR-TA + HOD sign-off",
+        "approverRole": "hrhead"
+      },
+      "deviation": {
+        "label": "Deviation → HR Head approval",
+        "approverRole": "hrhead"
+      }
+    },
+    {
+      "levels": [
+        "M3",
+        "VP"
+      ],
+      "withinBand": {
+        "label": "Within band → HR Head sign-off",
+        "approverRole": "hrhead"
+      },
+      "deviation": {
+        "label": "Deviation → MD/CEO approval",
+        "approverRole": "mdceo"
+      }
+    },
+    {
+      "levels": [
+        "KMP"
+      ],
+      "withinBand": {
+        "label": "Within band → MD/CEO + NRC recommendation",
+        "approverRole": "mdceo"
+      },
+      "deviation": {
+        "label": "Deviation → Board approval",
+        "approverRole": "mdceo"
+      }
+    }
+  ],
+  "bgvChecks": [
+    {
+      "type": "identity",
+      "label": "Identity & Address",
+      "detail": "National ID, tax ID + 1 address proof",
+      "condition": "All employees — always"
+    },
+    {
+      "type": "education",
+      "label": "Educational Qualification",
+      "detail": "Recognised-bureau verification",
+      "condition": "All roles"
+    },
+    {
+      "type": "employment",
+      "label": "Employment / Reference",
+      "detail": "Last 2 employers; salary & reason for leaving",
+      "condition": "All lateral hires"
+    },
+    {
+      "type": "police",
+      "label": "Police / Antecedent",
+      "detail": "Customer-facing / cash-handling roles",
+      "condition": "Flagged roles"
+    },
+    {
+      "type": "credit",
+      "label": "Credit / Bureau Check",
+      "detail": "Finance-function roles",
+      "condition": "Credit, Collections, Finance + Fit & Proper"
+    },
+    {
+      "type": "court",
+      "label": "Court Record / Litigation",
+      "detail": "Risk-based — senior & customer-facing",
+      "condition": "Senior + customer-facing"
+    },
+    {
+      "type": "fitProper",
+      "label": "Fit & Proper Declaration",
+      "detail": "Directors / KMP / Sr Mgmt only",
+      "condition": "KMP / Senior Management"
+    },
+    {
+      "type": "social",
+      "label": "Social Media / Digital",
+      "detail": "Optional — Sr Mgmt roles",
+      "condition": "Senior Management (optional)"
+    },
+    {
+      "type": "coi",
+      "label": "Conflict of Interest",
+      "detail": "Relationship with employees/Directors",
+      "condition": "All"
+    }
+  ],
+  "competencies": [
+    {
+      "id": "domain",
+      "name": "Domain / Technical Knowledge",
+      "hint": "Products, appraisal, portfolio quality"
+    },
+    {
+      "id": "analytical",
+      "name": "Analytical & Risk Judgment",
+      "hint": "Assessment rigor, risk flags, decisions under ambiguity"
+    },
+    {
+      "id": "communication",
+      "name": "Communication & Interpersonal",
+      "hint": "Clarity, listening, stakeholder management"
+    },
+    {
+      "id": "integrity",
+      "name": "Integrity & Ethical Conduct",
+      "hint": "Compliance track record, honest disclosure"
+    },
+    {
+      "id": "adaptability",
+      "name": "Adaptability & Learning Agility",
+      "hint": "Working in a regulated, evolving environment"
+    },
+    {
+      "id": "leadership",
+      "name": "Leadership & People Management",
+      "hint": "Team handling, mentoring — if applicable"
+    },
+    {
+      "id": "sales",
+      "name": "Sales & Customer Orientation",
+      "hint": "Customer focus, target ownership"
+    }
+  ],
+  "departments": [
+    "Credit & Risk",
+    "Sales & Distribution",
+    "Operations",
+    "Finance & Accounts",
+    "Human Resources",
+    "Engineering & Technology",
+    "Healthcare Operations",
+    "Supply Chain & Logistics",
+    "Information Technology",
+    "Legal & Compliance"
+  ],
+  "designations": [
+    "Branch Sales Executive",
+    "Credit Analyst",
+    "Software Engineer II — Platform",
+    "Registered Nurse — Ward Ops",
+    "Warehouse Operations Lead",
+    "Deputy Manager — Operations",
+    "Senior Manager — Credit",
+    "AVP — Risk",
+    "Chief Financial Officer (KMP)"
+  ],
+  "locations": [
+    "HQ — Mumbai",
+    "Regional Office — Pune",
+    "Tech Center — Bengaluru",
+    "Care Unit — Delhi NCR",
+    "Branch — Jaipur",
+    "Branch — Kolhapur",
+    "Branch — Indore"
+  ],
+  "reportingManagers": [
+    "N. Sharma — DVP, Credit",
+    "K. Iyer — HR Head",
+    "R. Menon — Zonal Head (West)",
+    "S. Gupta — Function Head, Risk",
+    "P. Nair — Eng Director, Platform"
+  ],
+  "sourcingChannels": [
+    "Internal Job Posting",
+    "Employee Referral",
+    "Job Portals",
+    "Campus",
+    "Walk-in Drive",
+    "Consultant",
+    "Social Media"
+  ],
+  "candidateSources": [
+    "IJP",
+    "Referral",
+    "Portal",
+    "Campus",
+    "Walk-in",
+    "Consultant",
+    "Social",
+    "LinkedIn",
+    "Direct"
+  ],
+  "bands": [
+    {
+      "label": "₹3.5L – ₹6L",
+      "min": 3.5,
+      "max": 6
+    },
+    {
+      "label": "₹6L – ₹12L",
+      "min": 6,
+      "max": 12
+    },
+    {
+      "label": "₹18L – ₹24L",
+      "min": 18,
+      "max": 24
+    },
+    {
+      "label": "₹30L – ₹45L",
+      "min": 30,
+      "max": 45
+    },
+    {
+      "label": "Board-approved",
+      "min": 0,
+      "max": 0
+    }
+  ]
+}

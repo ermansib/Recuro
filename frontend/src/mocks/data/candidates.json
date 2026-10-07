@@ -1,0 +1,317 @@
+[
+  {
+    "id": "cand-001",
+    "name": "Rahul Mehta",
+    "email": "rahul.mehta@email.example",
+    "phone": "+91 98200 40001",
+    "experienceYears": 8,
+    "summary": "8 yrs · BFSI Credit",
+    "currentCtc": 19,
+    "expectedCtc": 21,
+    "noticeDays": 30,
+    "source": "Portal",
+    "consents": [
+      {
+        "type": "DataPrivacy",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      },
+      {
+        "type": "ConflictOfInterest",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "cand-002",
+    "name": "Devika Rao",
+    "email": "devika.rao@aurora-demo.example",
+    "phone": "+91 98200 40002",
+    "experienceYears": 4,
+    "summary": "Internal — Credit Ops",
+    "currentCtc": null,
+    "expectedCtc": null,
+    "noticeDays": null,
+    "source": "IJP",
+    "sourceRef": "E1877",
+    "consents": [
+      {
+        "type": "DataPrivacy",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      },
+      {
+        "type": "ConflictOfInterest",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "cand-003",
+    "name": "Farhan Ghani",
+    "email": "farhan.g@email.example",
+    "phone": "+91 98200 40003",
+    "experienceYears": 7,
+    "summary": "7 yrs · Risk Underwriting",
+    "currentCtc": 17.5,
+    "expectedCtc": 20,
+    "noticeDays": 60,
+    "source": "Portal",
+    "consents": [
+      {
+        "type": "DataPrivacy",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      },
+      {
+        "type": "ConflictOfInterest",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "cand-004",
+    "name": "Priya Deshmukh",
+    "email": "priya.d@email.example",
+    "phone": "+91 98200 40004",
+    "experienceYears": 7,
+    "summary": "7 yrs · Lending + Portfolio",
+    "currentCtc": 18,
+    "expectedCtc": 22,
+    "noticeDays": 60,
+    "source": "Referral",
+    "sourceRef": "E2041 (R. Sabnis)",
+    "consents": [
+      {
+        "type": "DataPrivacy",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      },
+      {
+        "type": "ConflictOfInterest",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "cand-005",
+    "name": "Manish Tandon",
+    "email": "manish.t@email.example",
+    "phone": "+91 98200 40005",
+    "experienceYears": 5,
+    "summary": "5 yrs · Credit — Auto",
+    "currentCtc": 12,
+    "expectedCtc": 15,
+    "noticeDays": 30,
+    "source": "Walk-in",
+    "consents": [
+      {
+        "type": "DataPrivacy",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      },
+      {
+        "type": "ConflictOfInterest",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "cand-006",
+    "name": "Gaurav Saxena",
+    "email": "gaurav.s@email.example",
+    "phone": "+91 98200 40006",
+    "experienceYears": 9,
+    "summary": "9 yrs · BFSI Credit",
+    "currentCtc": 20,
+    "expectedCtc": 23,
+    "noticeDays": 90,
+    "source": "LinkedIn",
+    "consents": [
+      {
+        "type": "DataPrivacy",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      },
+      {
+        "type": "ConflictOfInterest",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "cand-007",
+    "name": "Amit Kulkarni",
+    "email": "amit.k@email.example",
+    "phone": "+91 98200 40007",
+    "experienceYears": 9,
+    "summary": "9 yrs · Risk Credit",
+    "currentCtc": 22,
+    "expectedCtc": 25,
+    "noticeDays": 60,
+    "source": "LinkedIn",
+    "consents": [
+      {
+        "type": "DataPrivacy",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      },
+      {
+        "type": "ConflictOfInterest",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "cand-008",
+    "name": "Kavya Sood",
+    "email": "kavya.s@email.example",
+    "phone": "+91 98200 40008",
+    "experienceYears": 6,
+    "summary": "6 yrs · Portal",
+    "currentCtc": 16,
+    "expectedCtc": 19,
+    "noticeDays": 30,
+    "source": "Portal",
+    "consents": [
+      {
+        "type": "DataPrivacy",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      },
+      {
+        "type": "ConflictOfInterest",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "cand-009",
+    "name": "Sandeep Verma",
+    "email": "sandeep.v@email.example",
+    "phone": "+91 98200 40009",
+    "experienceYears": 10,
+    "summary": "10 yrs · Credit — BFSI",
+    "currentCtc": 21,
+    "expectedCtc": 25,
+    "noticeDays": 60,
+    "source": "Consultant",
+    "sourceRef": "ABC Search (fee 8.33%)",
+    "consents": [
+      {
+        "type": "DataPrivacy",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      },
+      {
+        "type": "ConflictOfInterest",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "cand-010",
+    "name": "A. Khan",
+    "email": "a.khan@email.example",
+    "phone": "+91 98200 40010",
+    "experienceYears": 3,
+    "summary": "3 yrs · NBFC credit",
+    "currentCtc": 9,
+    "expectedCtc": 11,
+    "noticeDays": 30,
+    "source": "Portal",
+    "consents": [
+      {
+        "type": "DataPrivacy",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      },
+      {
+        "type": "ConflictOfInterest",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "cand-011",
+    "name": "Rohit Iyer",
+    "email": "rohit.i@email.example",
+    "phone": "+91 98200 40011",
+    "experienceYears": 7,
+    "summary": "7 yrs · BFSI Credit",
+    "currentCtc": 18.2,
+    "expectedCtc": 21,
+    "noticeDays": 30,
+    "source": "Portal",
+    "consents": [
+      {
+        "type": "DataPrivacy",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      },
+      {
+        "type": "ConflictOfInterest",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "cand-012",
+    "name": "J. Nair",
+    "email": "j.nair@email.example",
+    "phone": "+91 98200 40012",
+    "experienceYears": 9,
+    "summary": "Sr Manager — Credit",
+    "currentCtc": 19,
+    "expectedCtc": 22,
+    "noticeDays": 30,
+    "source": "Referral",
+    "consents": [
+      {
+        "type": "DataPrivacy",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      },
+      {
+        "type": "ConflictOfInterest",
+        "textVersion": "v1",
+        "at": "2026-08-01T10:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "cand-013",
+    "name": "Neha Joshi",
+    "email": "neha.joshi@email.example",
+    "phone": "+91 98200 40013",
+    "experienceYears": 6,
+    "summary": "6 yrs · Retail lending",
+    "currentCtc": 16,
+    "expectedCtc": 19,
+    "noticeDays": 30,
+    "source": "Portal",
+    "consents": [
+      {
+        "type": "DataPrivacy",
+        "textVersion": "v1",
+        "at": "2026-08-18T03:01:00Z"
+      },
+      {
+        "type": "ConflictOfInterest",
+        "textVersion": "v1",
+        "at": "2026-08-18T03:01:00Z"
+      }
+    ]
+  }
+]

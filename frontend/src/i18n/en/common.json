@@ -1,0 +1,78 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "newMrf": "New MRF",
+    "jd": "JD Builder",
+    "approvals": "Approvals",
+    "pipeline": "Pipeline",
+    "assessment": "Assessment",
+    "offer": "Offer",
+    "bgv": "BGV",
+    "onboarding": "Onboard",
+    "vendors": "Vendors",
+    "reports": "Reports",
+    "internalCareers": "Internal Careers",
+    "careers": "Careers",
+    "label": "Main navigation"
+  },
+  "persona": {
+    "title": "Switch Persona — Demo Sign-in",
+    "button": "Switch persona, signed in as {{name}}",
+    "viewingAs": "Viewing as {{role}}",
+    "masked": " — CTC & personal data masked"
+  },
+  "roles": {
+    "hrta": "HR-TA",
+    "hrhead": "HR Head",
+    "mdceo": "MD/CEO",
+    "employee": "Employee",
+    "candidate": "Candidate"
+  },
+  "banner": "<b>RECURO</b> · {{tenant}} · White-label recruitment CRM · Phase 0 (MVP) · Demo data",
+  "footer": {
+    "left": "Strictly Confidential — Internal Circulation Only",
+    "right": "Recuro · white-label recruitment CRM · tenant: {{tenant}} · rules {{version}}"
+  },
+  "bell": "Notifications & communications, {{count}} unread",
+  "masked": "🔒 Masked",
+  "readOnly": "👁 Read-only",
+  "loading": "Loading…",
+  "error": "Something went wrong: {{message}}",
+  "cancel": "Cancel",
+  "close": "Close",
+  "back": "← Back",
+  "saveDraft": "Save Draft",
+  "draftSaved": "Draft saved",
+  "required": "Required",
+  "mandatoryNote": "All fields marked <req>*</req> are mandatory",
+  "phase1": {
+    "title": "{{screen}} — planned for Phase 1",
+    "body": "This screen is in the prototype but its user stories are Phase 1 (P1). The MVP covers the core hiring loop first: requisition, approval, sourcing, interviews, BGV, offer and the public career site.",
+    "stories": "Stories: {{stories}}",
+    "screens": {
+      "onboarding": "Onboarding & Probation (S-13)",
+      "vendors": "Vendor & Consultant Management (S-14)",
+      "reports": "Reports & KPIs (S-15)",
+      "internalCareers": "Internal Careers — IJP & Referrals (S-16)"
+    }
+  },
+  "drawer": {
+    "title": "🔔 Notifications & Communications",
+    "notifications": "🔔 Notifications",
+    "emails": "✉ Email Log",
+    "newCount": "({{count}} new)",
+    "all": "All",
+    "unread": "Unread",
+    "markAll": "Mark all read",
+    "markedAll": "All caught up — marked as read.",
+    "emptyNotif": "No notifications here.",
+    "emptyEmail": "No emails in this view.",
+    "simulate": "⚡ Simulate live event",
+    "footNote": "Events triggered in one persona appear for others — try it.",
+    "from": "From",
+    "to": "To",
+    "subject": "Subject",
+    "markRead": "Mark as Read",
+    "markedRead": "Marked as read"
+  }
+}

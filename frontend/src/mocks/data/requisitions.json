@@ -1,0 +1,226 @@
+[
+  {
+    "reqId": "REQ-2026-0156",
+    "department": "Credit & Risk",
+    "designation": "Senior Manager — Credit",
+    "grade": "M3",
+    "location": "HQ — Mumbai",
+    "positions": 1,
+    "reportingManager": "N. Sharma — DVP, Credit",
+    "employmentType": "Permanent",
+    "nature": "NewPosition",
+    "replacementReason": "",
+    "joiningDate": "2026-10-01",
+    "band": "₹18L – ₹24L",
+    "outOfBudget": false,
+    "oobJustification": "",
+    "qualifications": "CA / MBA-Finance; 6–9 years credit appraisal in BFSI.",
+    "sourcingChannels": [
+      "Employee Referral",
+      "Job Portals"
+    ],
+    "state": "Interviewing",
+    "owner": "A. Sharma",
+    "raisedAt": "2026-08-09",
+    "targetClosure": "2026-09-26",
+    "route": {
+      "initiating": "HOD",
+      "recommending": "Function Head",
+      "approving": "HR Head",
+      "approverRole": "hrhead"
+    },
+    "ageDays": 9
+  },
+  {
+    "reqId": "REQ-2026-0153",
+    "department": "Credit & Risk",
+    "designation": "Credit Analyst",
+    "grade": "M1",
+    "location": "Branch — Jaipur",
+    "positions": 1,
+    "reportingManager": "N. Sharma — DVP, Credit",
+    "employmentType": "Permanent",
+    "nature": "NewPosition",
+    "replacementReason": "",
+    "joiningDate": "2026-10-01",
+    "band": "₹6L – ₹12L",
+    "outOfBudget": false,
+    "oobJustification": "",
+    "qualifications": "CA / MBA-Finance; 6–9 years credit appraisal in BFSI.",
+    "sourcingChannels": [
+      "Employee Referral",
+      "Job Portals"
+    ],
+    "state": "Sourcing",
+    "owner": "A. Sharma",
+    "raisedAt": "2026-08-06",
+    "targetClosure": "2026-09-23",
+    "route": {
+      "initiating": "Reporting Manager",
+      "recommending": "HOD",
+      "approving": "Zonal Head + HR Head",
+      "approverRole": "hrhead"
+    },
+    "ageDays": 12
+  },
+  {
+    "reqId": "REQ-2026-0150",
+    "department": "Credit & Risk",
+    "designation": "Senior Manager — Collections",
+    "grade": "M3",
+    "location": "Regional Office — Pune",
+    "positions": 1,
+    "reportingManager": "N. Sharma — DVP, Credit",
+    "employmentType": "Permanent",
+    "nature": "NewPosition",
+    "replacementReason": "",
+    "joiningDate": "2026-10-01",
+    "band": "₹18L – ₹24L",
+    "outOfBudget": false,
+    "oobJustification": "",
+    "qualifications": "CA / MBA-Finance; 6–9 years credit appraisal in BFSI.",
+    "sourcingChannels": [
+      "Employee Referral",
+      "Job Portals"
+    ],
+    "state": "PendingApproval",
+    "owner": "A. Sharma",
+    "raisedAt": "2026-08-17",
+    "targetClosure": "2026-10-05",
+    "route": {
+      "initiating": "HOD",
+      "recommending": "Function Head",
+      "approving": "HR Head",
+      "approverRole": "hrhead"
+    },
+    "ageDays": 1
+  },
+  {
+    "reqId": "REQ-2026-0149",
+    "department": "Credit & Risk",
+    "designation": "AVP — Risk",
+    "grade": "VP",
+    "location": "HQ — Mumbai",
+    "positions": 1,
+    "reportingManager": "N. Sharma — DVP, Credit",
+    "employmentType": "Permanent",
+    "nature": "NewPosition",
+    "replacementReason": "",
+    "joiningDate": "2026-10-01",
+    "band": "₹30L – ₹45L",
+    "outOfBudget": true,
+    "oobJustification": "Risk function upgradation per Board audit observation FY25.",
+    "qualifications": "CA / MBA-Finance; 6–9 years credit appraisal in BFSI.",
+    "sourcingChannels": [
+      "Employee Referral",
+      "Job Portals"
+    ],
+    "state": "PendingApproval",
+    "owner": "A. Sharma",
+    "raisedAt": "2026-08-16",
+    "targetClosure": "2026-10-04",
+    "route": {
+      "initiating": "Function Head",
+      "recommending": "HR Head",
+      "approving": "MD/CEO",
+      "approverRole": "mdceo"
+    },
+    "ageDays": 2
+  },
+  {
+    "reqId": "REQ-2026-0142",
+    "department": "Credit & Risk",
+    "designation": "Senior Manager — Credit",
+    "grade": "M3",
+    "location": "HQ — Mumbai",
+    "positions": 1,
+    "reportingManager": "N. Sharma — DVP, Credit",
+    "employmentType": "Permanent",
+    "nature": "NewPosition",
+    "replacementReason": "",
+    "joiningDate": "2026-10-01",
+    "band": "₹18L – ₹24L",
+    "outOfBudget": false,
+    "oobJustification": "",
+    "qualifications": "CA / MBA-Finance; 6–9 years credit appraisal in BFSI.",
+    "sourcingChannels": [
+      "Employee Referral",
+      "Job Portals"
+    ],
+    "state": "Sourcing",
+    "owner": "A. Sharma",
+    "raisedAt": "2026-08-08",
+    "targetClosure": "2026-09-25",
+    "route": {
+      "initiating": "HOD",
+      "recommending": "Function Head",
+      "approving": "HR Head",
+      "approverRole": "hrhead"
+    },
+    "ageDays": 8
+  },
+  {
+    "reqId": "REQ-2026-0131",
+    "department": "Sales & Distribution",
+    "designation": "Manager — Sales",
+    "grade": "M1",
+    "location": "Regional Office — Pune",
+    "positions": 1,
+    "reportingManager": "N. Sharma — DVP, Credit",
+    "employmentType": "Permanent",
+    "nature": "NewPosition",
+    "replacementReason": "",
+    "joiningDate": "2026-10-01",
+    "band": "₹6L – ₹12L",
+    "outOfBudget": false,
+    "oobJustification": "",
+    "qualifications": "CA / MBA-Finance; 6–9 years credit appraisal in BFSI.",
+    "sourcingChannels": [
+      "Employee Referral",
+      "Job Portals"
+    ],
+    "state": "Interviewing",
+    "owner": "A. Sharma",
+    "raisedAt": "2026-08-01",
+    "targetClosure": "2026-09-18",
+    "route": {
+      "initiating": "Reporting Manager",
+      "recommending": "HOD",
+      "approving": "Zonal Head + HR Head",
+      "approverRole": "hrhead"
+    },
+    "ageDays": 15
+  },
+  {
+    "reqId": "REQ-2026-0098",
+    "department": "Sales & Distribution",
+    "designation": "Branch Sales Executive",
+    "grade": "E",
+    "location": "Branch — Kolhapur",
+    "positions": 1,
+    "reportingManager": "N. Sharma — DVP, Credit",
+    "employmentType": "Permanent",
+    "nature": "NewPosition",
+    "replacementReason": "",
+    "joiningDate": "2026-10-01",
+    "band": "₹3.5L – ₹6L",
+    "outOfBudget": false,
+    "oobJustification": "",
+    "qualifications": "CA / MBA-Finance; 6–9 years credit appraisal in BFSI.",
+    "sourcingChannels": [
+      "Employee Referral",
+      "Job Portals"
+    ],
+    "state": "BGV",
+    "owner": "A. Sharma",
+    "raisedAt": "2026-07-20",
+    "targetClosure": "2026-08-17",
+    "route": {
+      "initiating": "Branch Manager",
+      "recommending": "Regional HR",
+      "approving": "Zonal Business Head",
+      "approverRole": "hrhead"
+    },
+    "ageDays": 24
+  }
+]

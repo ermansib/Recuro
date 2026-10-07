@@ -1,0 +1,47 @@
+[
+  {
+    "id": "u-hrta",
+    "name": "A. Sharma",
+    "initials": "AS",
+    "role": "hrta",
+    "title": "HR — Talent Acquisition",
+    "email": "a.sharma@aurora-demo.example",
+    "summary": "Full ops access · raises MRFs & JDs · owns pipeline, offers, BGV, vendors"
+  },
+  {
+    "id": "u-hrhead",
+    "name": "K. Iyer",
+    "initials": "KI",
+    "role": "hrhead",
+    "title": "Head — Human Resources",
+    "email": "k.iyer@aurora-demo.example",
+    "summary": "Approves MRFs, within-band offers, adverse BGV (1st), vendor empanelment"
+  },
+  {
+    "id": "u-mdceo",
+    "name": "V. Raghavan",
+    "initials": "VR",
+    "role": "mdceo",
+    "title": "Managing Director & CEO",
+    "email": "md.ceo@aurora-demo.example",
+    "summary": "VP/KMP & deviation approvals · CTC & personal data masked"
+  },
+  {
+    "id": "u-emp",
+    "name": "R. Sabnis",
+    "initials": "RS",
+    "role": "employee",
+    "title": "Employee — Credit Analyst (E2041)",
+    "email": "r.sabnis@aurora-demo.example",
+    "summary": "Internal mobility: apply via IJP (5-day window) & refer candidates"
+  },
+  {
+    "id": "u-cand",
+    "name": "Guest",
+    "initials": "GU",
+    "role": "candidate",
+    "title": "External Candidate",
+    "email": "candidate@email.example",
+    "summary": "Public career site: browse openings, apply with data-privacy consent"
+  }
+]

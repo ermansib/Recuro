@@ -1,0 +1,54 @@
+{
+  "tag": "{{tenant}} · Careers",
+  "heading": "{{tagline}} — <hl>Home.</hl>",
+  "search": "Search role, skill or keyword…",
+  "searchLabel": "Search jobs",
+  "allLocations": "All Locations",
+  "locationLabel": "Location",
+  "searchBtn": "Search Jobs",
+  "noResults": "No matching openings — try a different keyword or location.",
+  "apply": "View & Apply",
+  "selected": "Position selected: {{title}} — complete the form below.",
+  "applyTitle": "Apply — <pos>{{position}}</pos>",
+  "selectPosition": "Select a position above",
+  "duration": "Takes ~3 minutes",
+  "fields": {
+    "name": "Full Name", "namePh": "As per ID proof",
+    "email": "Email", "emailPh": "you@email.com",
+    "phone": "Mobile", "phonePh": "+91 ··········",
+    "experience": "Total Experience (yrs)", "experiencePh": "e.g., 7",
+    "currentCtc": "Current CTC (₹ LPA)", "currentCtcPh": "e.g., 18.5",
+    "expectedCtc": "Expected CTC (₹ LPA)", "expectedCtcPh": "e.g., 22",
+    "notice": "Notice Period",
+    "resume": "Resume Upload"
+  },
+  "notices": { "30": "30 days", "60": "60 days", "90": "90 days", "0": "Immediate" },
+  "consent": "<b>Data Privacy Consent (§7.1 / §14):</b> I permit {{tenant}} to collect and process my personal data for recruitment purposes. Unsuccessful-candidate records are retained for 1 year for audit and grievance redressal, then purged per the Data Privacy Policy.",
+  "coi": "<b>Conflict-of-Interest Declaration (§7.1):</b> No relative of mine is employed in the same reporting line, or in Finance / Audit / Compliance reporting into a related employee.",
+  "privacyNote": "🔒 Your data is access-restricted to authorised HR personnel on a need-to-know basis (§14).",
+  "submit": "Submit Application →",
+  "errors": {
+    "position": "Select a position to apply for.",
+    "required": "Name, email and mobile are required.",
+    "resume": "Please attach your resume.",
+    "consent": "Data-privacy consent (§14) is mandatory to submit.",
+    "coi": "Conflict-of-interest declaration (§7.1) is mandatory."
+  },
+  "success": {
+    "title": "✅ Application Submitted",
+    "body": "Thank you, <b>{{name}}</b> — your application for <b>{{position}}</b> has been received and routed to HR — Talent Acquisition. A confirmation email has been sent (see My Communications below or the 🔔 bell).",
+    "toast": "Application {{appId}} submitted — confirmation emailed; HR-TA notified 🔔",
+    "steps": ["Received", "Under HR review", "Screening call", "Interviews", "Decision"],
+    "today": "today",
+    "review": "≤ 7 days"
+  },
+  "status": {
+    "label": "Application ID",
+    "placeholder": "Enter Application ID (e.g., APP-2026-0417)",
+    "check": "Check Status",
+    "notFound": "Application not found — check the ID from your confirmation email.",
+    "enter": "Enter your Application ID to check status."
+  },
+  "comms": { "title": "📬 My Communications", "sub": "— system emails about your applications", "open": "Open Notification Center", "unread": "Unread", "read": "Read", "empty": "No emails yet." },
+  "privacyFooter": "<b>Privacy notice:</b> {{tenant}} handles candidate data per its Information Security & Data Privacy Policy. Data is never shared with third parties other than empanelled BGV/recruitment vendors under signed confidentiality agreements (§14)."
+}

@@ -1,0 +1,210 @@
+{
+  "dateLabel": "Monday, 18 Aug 2026",
+  "kpiPeriodLabel": "Aug 2026",
+  "stats": [
+    {
+      "label": "Open MRFs",
+      "value": "14",
+      "trend": "▲ +2 this week",
+      "tone": ""
+    },
+    {
+      "label": "Offers Pending",
+      "value": "6",
+      "trend": "2 awaiting acceptance ≥3d",
+      "tone": "t"
+    },
+    {
+      "label": "BGV in Progress",
+      "value": "5",
+      "trend": "1 due within 48h",
+      "tone": "a"
+    },
+    {
+      "label": "Joining ≤ 30d",
+      "value": "4",
+      "trend": "IT notified ✓ (T-5d rule)",
+      "tone": "g"
+    },
+    {
+      "label": "TAT Breaches",
+      "value": "3",
+      "trend": "Escalations active",
+      "tone": "r"
+    }
+  ],
+  "tatBreaches": [
+    {
+      "reqId": "REQ-2026-0142",
+      "position": "Sr Manager — Credit · M3",
+      "stage": "Sourcing 8d / 7d TAT",
+      "stageTone": "amber",
+      "escalation": "TA-Head → MD/CEO",
+      "link": "/approvals"
+    },
+    {
+      "reqId": "REQ-2026-0098",
+      "position": "Branch Sales — Kolhapur · E",
+      "stage": "BGV 16d / 15d TAT",
+      "stageTone": "red",
+      "escalation": "HR Head",
+      "link": "/bgv"
+    },
+    {
+      "reqId": "REQ-2026-0131",
+      "position": "Manager — Sales · M1",
+      "stage": "Panel feedback 52h / 48h",
+      "stageTone": "amber",
+      "escalation": "HOD",
+      "link": "/approvals"
+    }
+  ],
+  "pipeline": [
+    {
+      "stage": "Sourced",
+      "count": 12,
+      "color": "var(--slate)"
+    },
+    {
+      "stage": "Screened",
+      "count": 9,
+      "color": "var(--navy-lt)"
+    },
+    {
+      "stage": "Interview",
+      "count": 6,
+      "color": "var(--amber)"
+    },
+    {
+      "stage": "BGV",
+      "count": 11,
+      "color": "var(--teal)"
+    },
+    {
+      "stage": "Offer",
+      "count": 7,
+      "color": "var(--green)"
+    }
+  ],
+  "kpis": [
+    {
+      "name": "Offer-to-Join Ratio",
+      "target": "Target ≥ 85%",
+      "value": "87%",
+      "status": "✓",
+      "tone": "green",
+      "trend": [
+        20,
+        16,
+        17,
+        11,
+        9,
+        10,
+        4
+      ]
+    },
+    {
+      "name": "Panel Feedback ≤ 48h",
+      "target": "Target ≥ 90%",
+      "value": "92%",
+      "status": "✓",
+      "tone": "green",
+      "trend": [
+        18,
+        15,
+        16,
+        12,
+        10,
+        11,
+        6
+      ]
+    },
+    {
+      "name": "Early Attrition",
+      "target": "Target ≤ 10%",
+      "value": "8%",
+      "status": "✓",
+      "tone": "green",
+      "trend": [
+        5,
+        8,
+        7,
+        11,
+        13,
+        14,
+        18
+      ]
+    },
+    {
+      "name": "Time to Hire",
+      "target": "80% of TAT matrix",
+      "value": "21d",
+      "status": "⚠ near",
+      "tone": "amber",
+      "trend": [
+        16,
+        14,
+        15,
+        11,
+        12,
+        8,
+        5
+      ]
+    },
+    {
+      "name": "Quality of Hire",
+      "target": "Target ≥ 80%",
+      "value": "83%",
+      "status": "✓",
+      "tone": "green",
+      "trend": [
+        17,
+        15,
+        13,
+        13,
+        10,
+        9,
+        7
+      ]
+    },
+    {
+      "name": "Cost per Hire",
+      "target": "Q3 budget review",
+      "value": "₹42K",
+      "status": "within",
+      "tone": "slate",
+      "trend": [
+        13,
+        12,
+        14,
+        12,
+        13,
+        12,
+        12
+      ]
+    }
+  ],
+  "upcoming": [
+    {
+      "day": "20",
+      "month": "AUG",
+      "title": "S. Verma — R3 Business Fitment",
+      "detail": "15:30 · HQ Mumbai CR-3B · Panel: Zonal Head",
+      "link": "/assessment"
+    },
+    {
+      "day": "21",
+      "month": "AUG",
+      "title": "A. Khan — R2 Functional",
+      "detail": "11:00 · Video · Panel: DVP-Credit",
+      "link": "/assessment"
+    },
+    {
+      "day": "22",
+      "month": "AUG",
+      "title": "Campus Drive — Pune",
+      "detail": "40 MT candidates · GD + Panel",
+      "link": "/pipeline"
+    }
+  ]
+}

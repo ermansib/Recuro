@@ -1,0 +1,70 @@
+[
+  {
+    "id": "post-0156",
+    "reqId": "REQ-2026-0156",
+    "title": "Senior Manager — Credit",
+    "location": "HQ Mumbai",
+    "locationFilter": "Mumbai",
+    "experience": "6–9 yrs",
+    "qualification": "CA / MBA-Finance",
+    "tags": [
+      {
+        "text": "Full-time",
+        "tone": "navy"
+      },
+      {
+        "text": "LAP · Affordable Housing",
+        "tone": "teal"
+      }
+    ]
+  },
+  {
+    "id": "post-0098",
+    "reqId": "REQ-2026-0098",
+    "title": "Branch Sales Executive — Home Loans",
+    "location": "Branch Kolhapur",
+    "locationFilter": "Kolhapur",
+    "experience": "0–2 yrs",
+    "qualification": "Graduate",
+    "tags": [
+      {
+        "text": "Full-time",
+        "tone": "navy"
+      },
+      {
+        "text": "Field Sales",
+        "tone": "gold"
+      }
+    ]
+  },
+  {
+    "id": "post-campus",
+    "reqId": "REQ-2026-0120",
+    "title": "Management Trainee (Campus Program)",
+    "location": "Pan-India",
+    "locationFilter": "Pan-India",
+    "experience": "Fresh graduates",
+    "qualification": "2026 batch",
+    "tags": [
+      {
+        "text": "Campus",
+        "tone": "purple"
+      }
+    ]
+  },
+  {
+    "id": "post-0153",
+    "reqId": "REQ-2026-0153",
+    "title": "Credit Analyst — Affordable Housing",
+    "location": "Branch Jaipur",
+    "locationFilter": "Jaipur",
+    "experience": "2–4 yrs",
+    "qualification": "MBA-Finance",
+    "tags": [
+      {
+        "text": "Full-time",
+        "tone": "navy"
+      }
+    ]
+  }
+]

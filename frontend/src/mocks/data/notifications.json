@@ -1,0 +1,132 @@
+[
+  {
+    "id": "n-1",
+    "recipientRole": "hrta",
+    "icon": "📥",
+    "title": "New application — Sr Manager, Credit",
+    "body": "K. Sood applied via career portal (APP-2026-0402) · auto-logged to REQ-2026-0156.",
+    "createdAt": "2026-08-18T08:42:00Z",
+    "unread": true,
+    "link": "/pipeline"
+  },
+  {
+    "id": "n-2",
+    "recipientRole": "hrta",
+    "icon": "⏱",
+    "title": "Panel feedback due in 6h",
+    "body": "R2 · A. Kulkarni · interviewer N. Sharma — 48h SLA at risk.",
+    "createdAt": "2026-08-18T08:00:00Z",
+    "unread": true,
+    "link": "/assessment"
+  },
+  {
+    "id": "n-3",
+    "recipientRole": "hrta",
+    "icon": "🛡",
+    "title": "BGV interim report — Rohit Iyer",
+    "body": "6/9 checks cleared · police & bureau in progress (day 8/15).",
+    "createdAt": "2026-08-17T17:45:00Z",
+    "unread": false,
+    "link": "/bgv"
+  },
+  {
+    "id": "n-4",
+    "recipientRole": "hrta",
+    "icon": "✉",
+    "title": "Offer sent — J. Nair",
+    "body": "Acceptance pending since 08 Aug · chase scheduled.",
+    "createdAt": "2026-08-17T12:00:00Z",
+    "unread": false,
+    "link": "/offer"
+  },
+  {
+    "id": "n-5",
+    "recipientRole": "hrta",
+    "icon": "⚑",
+    "title": "TAT breach — REQ-2026-0142",
+    "body": "Sourcing 8d vs 7d TAT · escalation active.",
+    "createdAt": "2026-08-16T08:00:00Z",
+    "unread": false,
+    "link": "/approvals"
+  },
+  {
+    "id": "n-6",
+    "recipientRole": "hrhead",
+    "icon": "📋",
+    "title": "MRF awaiting your approval",
+    "body": "REQ-2026-0150 · Sr Mgr Collections · SLA 2d.",
+    "createdAt": "2026-08-18T06:00:00Z",
+    "unread": true,
+    "link": "/approvals"
+  },
+  {
+    "id": "n-7",
+    "recipientRole": "hrhead",
+    "icon": "✉",
+    "title": "Offer sign-off (within band)",
+    "body": "J. Nair · M3 · within ₹18–24L (Annexure D).",
+    "createdAt": "2026-08-17T16:20:00Z",
+    "unread": true,
+    "link": "/approvals"
+  },
+  {
+    "id": "n-8",
+    "recipientRole": "hrhead",
+    "icon": "⚑",
+    "title": "Adverse BGV — first escalation",
+    "body": "Branch Sales Kolhapur · police check discrepancy · offer on hold.",
+    "createdAt": "2026-08-17T11:05:00Z",
+    "unread": false,
+    "link": "/approvals"
+  },
+  {
+    "id": "n-9",
+    "recipientRole": "mdceo",
+    "icon": "💰",
+    "title": "CTC deviation approval",
+    "body": "S. Verma ₹24.8L vs cap ₹24L · 3.3% (Annexure D).",
+    "createdAt": "2026-08-18T05:00:00Z",
+    "unread": true,
+    "link": "/approvals"
+  },
+  {
+    "id": "n-10",
+    "recipientRole": "mdceo",
+    "icon": "⚠",
+    "title": "Out-of-budget MRF — AVP Risk",
+    "body": "REQ-2026-0149 · Board-audit justification.",
+    "createdAt": "2026-08-17T09:15:00Z",
+    "unread": false,
+    "link": "/approvals"
+  },
+  {
+    "id": "n-11",
+    "recipientRole": "mdceo",
+    "icon": "🏛",
+    "title": "KMP file ready — CFO",
+    "body": "NRC reviewed Fit & Proper · forward to Board agenda.",
+    "createdAt": "2026-08-15T10:00:00Z",
+    "unread": false,
+    "link": "/approvals"
+  },
+  {
+    "id": "n-12",
+    "recipientRole": "employee",
+    "icon": "🎉",
+    "title": "Referral shortlisted!",
+    "body": "Priya Deshmukh advanced to R1 — bonus on joining + 90 days.",
+    "createdAt": "2026-08-18T08:00:00Z",
+    "unread": true,
+    "link": "/internal-careers"
+  },
+  {
+    "id": "n-13",
+    "recipientRole": "candidate",
+    "icon": "✅",
+    "title": "Application received",
+    "body": "APP-2026-0417 · Sr Manager — Credit · under HR review ≤7 days.",
+    "createdAt": "2026-08-18T07:00:00Z",
+    "unread": true,
+    "link": "/careers"
+  }
+]
