@@ -8,8 +8,8 @@ It has two levels:
 
 | Level | Who | What they control |
 |---|---|---|
-| Platform console | Recuro's own team | Tenants (create, plan, custom domain, suspend), the theme library |
-| Tenant admin | Each customer's HR admin | Their theme and colour mode, and every screen's on/off, header text, field labels, visibility, required flags and order |
+| Platform console | Recuro's own team | Tenants (create, plan, custom domain, suspend), each tenant's theme and default colour mode (Tenant themes), the theme library |
+| Tenant admin | Each customer's HR admin | A view of the theme assigned to them, and every screen's on/off, header text, field labels, visibility, required flags and order |
 
 The main portal reads the result from `GET /api/v1/runtime/{tenantSlug}`: theme tokens (keyed by the
 CSS variables in `frontend/src/styles/tokens.css`) plus the resolved screen layout.

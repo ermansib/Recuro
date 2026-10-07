@@ -126,5 +126,5 @@ public static class ThemeErrors
     public static Error NotFound(string key) => Error.NotFound("theme.notFound", $"Theme '{key}' was not found.");
 
     public static Error NotPublished(string key) =>
-        Error.Conflict("theme.notPublished", $"Theme '{key}' is not published, so tenants cannot use it yet.");
+        Error.Conflict("theme.notPublished", $"Theme '{key}' is not available in the theme library, so it can't be assigned to a tenant yet.");
 }

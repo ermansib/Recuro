@@ -1,4 +1,5 @@
 import type {
+  AssignTenantThemeRequest,
   AuthConfig,
   Branding,
   CurrentAdmin,
@@ -7,7 +8,6 @@ import type {
   Persona,
   Tenant,
   ThemePreset,
-  UpdateBrandingRequest,
   UpdateScreenRequest,
   UpdateTenantRequest,
 } from './types'
@@ -24,12 +24,13 @@ export interface AdminApi {
   createTenant(request: CreateTenantRequest): Promise<Tenant>
   updateTenant(id: string, request: UpdateTenantRequest): Promise<Tenant>
   setTenantSuspended(id: string, suspended: boolean): Promise<Tenant>
+  /** Gives one tenant a theme from the library; the main portal shows it (RCU-PLT-006). */
+  assignTenantTheme(id: string, request: AssignTenantThemeRequest): Promise<Tenant>
   listThemes(): Promise<ThemePreset[]>
   setThemePublished(key: string, isPublished: boolean): Promise<ThemePreset>
 
   // tenant admin
   getBranding(): Promise<Branding>
-  updateBranding(request: UpdateBrandingRequest): Promise<Branding>
   listScreens(): Promise<EffectiveScreen[]>
   getScreen(key: string): Promise<EffectiveScreen>
   updateScreen(key: string, request: UpdateScreenRequest): Promise<EffectiveScreen>

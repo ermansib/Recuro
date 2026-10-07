@@ -34,6 +34,7 @@ import type {
   SignInInput,
   SignInResult,
   SsoProvider,
+  TenantAppearance,
   User,
   WorkspaceBranding,
 } from '../domain/types'
@@ -146,4 +147,13 @@ export interface ApiClient extends AuthApi {
   getApplicationStatus(appId: string): Promise<string | null>
 
   listAudit(): Promise<AuditEvent[]>
+}
+
+/**
+ * Tenant look and feel, served by the admin portal (GET /api/v1/runtime/{slug}). Resolves `null`
+ * when the admin portal is unreachable or doesn't know the tenant, so the portal falls back to its
+ * built-in theme instead of failing.
+ */
+export interface AppearanceApi {
+  getTenantAppearance(slug: string): Promise<TenantAppearance | null>
 }

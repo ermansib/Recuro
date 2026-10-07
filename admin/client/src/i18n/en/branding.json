@@ -1,14 +1,12 @@
 {
   "title": "Branding & theme",
-  "subtitle": "Choose how {{tenant}}'s portal looks for everyone",
-  "presets": "Theme presets",
+  "subtitle": "How {{tenant}}'s portal looks for everyone",
   "mode": "Default colour mode",
   "modeHint": "Follow device uses each person's light or dark setting.",
   "previewMode": "Preview in",
   "preview": "Live preview",
   "current": "Current",
   "unsaved": "You have unsaved changes.",
-  "savedToast": "Theme saved. It applies the next time people load the portal.",
   "previewSample": {
     "brand": "Careers",
     "dashboard": "Dashboard",
@@ -20,5 +18,8 @@
     "primaryAction": "Raise MRF",
     "secondaryAction": "View pipeline",
     "chip": "Approved"
-  }
+  },
+  "assigned": "Your theme",
+  "theme": "Theme",
+  "managedHint": "Your theme is set by your Recuro account team. Ask them if you would like a different one."
 }

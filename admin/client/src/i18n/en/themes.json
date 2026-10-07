@@ -1,10 +1,10 @@
 {
   "title": "Theme library",
-  "subtitle": "Presets tenants can choose from. Publishing checks WCAG AA contrast in both modes.",
-  "published": "Published",
-  "draft": "Draft",
-  "publish": "Publish",
-  "unpublish": "Unpublish",
+  "subtitle": "Presets you can assign to tenants under Tenant themes. Making one available checks WCAG AA contrast in both modes.",
+  "published": "Available",
+  "draft": "Not available",
+  "publish": "Make available",
+  "unpublish": "Withdraw",
   "light": "Light",
   "dark": "Dark",
   "swatch": {

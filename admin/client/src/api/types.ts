@@ -63,14 +63,15 @@ export interface ThemePreset {
   isPublished: boolean
 }
 
+/** A tenant admin's view of their theme. The platform console assigns it; tenants can't change it. */
 export interface Branding {
   tenantName: string
   themePresetKey: string
   themeMode: ThemeMode
-  presets: ThemePreset[]
+  theme: ThemePreset
 }
 
-export interface UpdateBrandingRequest {
+export interface AssignTenantThemeRequest {
   themePresetKey: string
   themeMode: ThemeMode
 }

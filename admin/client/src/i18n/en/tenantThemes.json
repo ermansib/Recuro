@@ -1,0 +1,8 @@
+{
+  "title": "Tenant themes",
+  "subtitle": "Choose a tenant, then the theme and default colour mode its portal uses. Each tenant has its own.",
+  "tenant": "Tenant",
+  "presets": "Theme for {{tenant}}",
+  "assign": "Save theme for {{tenant}}",
+  "savedToast": "Theme saved for {{tenant}}. It shows in their portal the next time it loads."
+}
