@@ -46,3 +46,18 @@ public interface IPersonalDataAccessLog
 {
     void Read(IReadOnlyCollection<Guid> candidateIds, string purpose);
 }
+
+/// <summary>
+/// RCU-AUT-004: the Identity service's masking map for one role on <c>candidate</c>. Null when Identity
+/// has no map for the role (404 <c>masking_map_not_found</c>), which callers treat as "hide everything".
+/// </summary>
+public interface IMaskingMaps
+{
+    Task<IReadOnlyDictionary<string, Candidates.Masking.MaskStrategy>?> GetAsync(string role, CancellationToken ct);
+}
+
+/// <summary>The stable one-way hash for the <c>hash</c> masking strategy. Keyed, so it can't be reversed by guessing.</summary>
+public interface IMaskHasher
+{
+    string Hash(string field, string value);
+}

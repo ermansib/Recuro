@@ -1,5 +1,4 @@
 using FluentValidation;
-using Recuro.BuildingBlocks.Application.Abstractions;
 using Recuro.BuildingBlocks.Application.Messaging;
 using Recuro.BuildingBlocks.Domain;
 using Recuro.Candidate.Application.Abstractions;
@@ -24,7 +23,7 @@ internal sealed class GetCandidatesQueryValidator : AbstractValidator<GetCandida
 
 internal sealed class GetCandidatesQueryHandler(
     ICandidateRepository candidates,
-    ICurrentUser caller,
+    ICallerMask callerMask,
     IPersonalDataAccessLog accessLog) : IQueryHandler<GetCandidatesQuery, IReadOnlyList<CandidateDto>>
 {
     public async Task<Result<IReadOnlyList<CandidateDto>>> Handle(GetCandidatesQuery query, CancellationToken ct)
@@ -35,7 +34,7 @@ internal sealed class GetCandidatesQueryHandler(
             accessLog.Read(found.Select(c => c.Id).ToList(), "candidate.batch");
         }
 
-        var masks = CandidateMasking.For(caller.Roles);
-        return Result.Success<IReadOnlyList<CandidateDto>>(found.Select(c => CandidateMasking.Apply(CandidateDto.From(c), masks)).ToList());
+        var mask = await callerMask.ForCallerAsync(ct);
+        return Result.Success<IReadOnlyList<CandidateDto>>(found.Select(c => mask(CandidateDto.From(c))).ToList());
     }
 }
