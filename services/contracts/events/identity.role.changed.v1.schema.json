@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/identity.role.changed.v1.schema.json",
+  "title": "identity.role.changed.v1",
+  "description": "A person's roles changed in the identity provider (RCU-AUT-001). Subject: User/{userId}.",
+  "type": "object",
+  "required": ["userId", "from", "to"],
+  "properties": {
+    "userId": { "type": "string" },
+    "from": { "type": "array", "items": { "type": "string" } },
+    "to": { "type": "array", "items": { "type": "string" } }
+  }
+}

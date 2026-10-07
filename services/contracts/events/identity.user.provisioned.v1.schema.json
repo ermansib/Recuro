@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/identity.user.provisioned.v1.schema.json",
+  "title": "identity.user.provisioned.v1",
+  "description": "A person signed in for the first time and was mirrored by the Identity service (RCU-AUT-001). Subject: User/{userId}.",
+  "type": "object",
+  "required": ["userId", "roles"],
+  "properties": {
+    "userId": { "type": "string", "description": "Keycloak subject; the id every service records for this person." },
+    "roles": { "type": "array", "items": { "type": "string" }, "description": "Mirrored roles, sorted (hrta, hrhead, mdceo, employee, candidate, tenant-admin)." }
+  }
+}
