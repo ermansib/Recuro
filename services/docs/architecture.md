@@ -60,6 +60,52 @@ Notes:
 - The JD builder (S-05) has no service in RCU-BKD-001; it lives in Requisition because a JD belongs to
   one requisition and gates posting (CAR-007).
 
+## Synchronous contracts
+
+The owning service implements these shapes exactly, and callers code against them. Any change goes
+through this file first. JSON is camelCase. Until service accounts exist, callers forward the incoming
+`Authorization` bearer token on the outgoing call. `CorrelationHeadersHandler` forwards only the
+correlation ids, so the token is the caller's job.
+
+### Config: resolve rules (owner: Config, callers: Requisition, Workflow)
+
+**`GET /api/v1/resolve/doa?grade=M3&budget=in|oob&at=<ISO-8601>[&versionId=<guid>]`**
+
+- `at` picks the version in force at that moment.
+- `versionId` pins a version instead, which is how a running workflow re-reads its rules (CFG-003).
+- `budget=oob` returns the out-of-budget variant, which has the extra approval leg (REQ-003).
+- An unknown grade returns 404, and a bad query returns 400 with field errors.
+- The response extends the frontend `DoaRoute` (`frontend/src/domain/types.ts`) with the version and
+  the legs:
+
+```json
+{
+  "configVersionId": "guid",
+  "grade": "M3",
+  "budgetStatus": "in | oob",
+  "initiating": "string",
+  "recommending": "string",
+  "approving": "string",
+  "approverRole": "hrhead | mdceo | ...",
+  "bandLabel": "string",
+  "overallTat": { "minDays": 5, "maxDays": 7, "label": "string" },
+  "legs": [
+    {
+      "name": "string",
+      "assignees": [{ "role": "string", "label": "string" }],
+      "slaWorkingDays": 2,
+      "escalation": [{ "role": "string", "label": "string", "afterWorkingDays": 1 }]
+    }
+  ]
+}
+```
+
+**`GET /api/v1/resolve/working-days?from=<date>&days=<n>[&location=<code>][&versionId=<guid>]`**
+
+This adds `n` working days to `from` using the business calendar for `location` (the tenant default
+when it is omitted). It returns `{ "date": "YYYY-MM-DD", "configVersionId": "guid" }`. This is the
+only working-day calculation in the backend; services never count holidays themselves.
+
 ## Sagas (owner runs the orchestration, compensations required)
 
 | Saga | Owner | Steps |
