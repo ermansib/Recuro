@@ -19,6 +19,30 @@
       {
         "name": "tenant-admin",
         "description": "Customer HR admin: configures their own tenant's portal"
+      },
+      {
+        "name": "hrta",
+        "description": "Talent acquisition (main portal)"
+      },
+      {
+        "name": "hrhead",
+        "description": "HR Head (main portal)"
+      },
+      {
+        "name": "mdceo",
+        "description": "MD / CEO (main portal)"
+      },
+      {
+        "name": "employee",
+        "description": "Employee: internal careers (main portal)"
+      },
+      {
+        "name": "candidate",
+        "description": "Candidate: public careers site"
+      },
+      {
+        "name": "service",
+        "description": "Service account of a Recuro microservice (never a person)"
       }
     ]
   },
@@ -84,6 +108,71 @@
           "consentRequired": false,
           "config": {
             "included.custom.audience": "recuro-admin-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "recuro-portal",
+      "name": "Recuro Portal",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "fullScopeAllowed": true,
+      "rootUrl": "http://localhost:5173",
+      "redirectUris": [
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "roles",
+            "multivalued": "true",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
+          }
+        },
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
+          }
+        },
+        {
+          "name": "audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "recuro-api",
             "access.token.claim": "true",
             "id.token.claim": "false"
           }
@@ -156,6 +245,30 @@
       "attributes": {
         "tenant_id": [
           "6a1e3c4e-0b4d-4d55-9f5b-5f0d3b8a0a02"
+        ]
+      }
+    },
+    {
+      "username": "hrta@aurora.example",
+      "email": "hrta@aurora.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Aurora",
+      "lastName": "Recruiter",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Recuro@2026",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "hrta",
+        "default-roles-recuro"
+      ],
+      "attributes": {
+        "tenant_id": [
+          "6a1e3c4e-0b4d-4d55-9f5b-5f0d3b8a0a01"
         ]
       }
     }

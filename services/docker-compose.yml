@@ -1,0 +1,101 @@
+# Recuro services, local development. Free and open-source images only.
+#
+#   docker compose up -d                       PostgreSQL, Valkey (Redis), RabbitMQ, Keycloak
+#   docker compose --profile apps up -d        ...plus the gateway and the services, built from source
+#   docker compose --profile observability up -d   ...plus Jaeger for traces
+#
+# Already running the admin portal's compose (Keycloak on :8080)? Start without ours:
+#   docker compose up -d postgres redis rabbitmq
+name: recuro-services
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "${RECURO_PG_PORT:-55433}:5432"
+    volumes:
+      - recuro-services-pg:/var/lib/postgresql/data
+      - ./infra/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 20
+
+  # Valkey: the BSD-licensed fork of Redis, same protocol. Cache, idempotency replays, rate-limit state.
+  redis:
+    image: valkey/valkey:8-alpine
+    ports:
+      - "${RECURO_REDIS_PORT:-6379}:6379"
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: recuro
+      RABBITMQ_DEFAULT_PASS: recuro
+    ports:
+      - "${RECURO_AMQP_PORT:-5672}:5672"
+      - "${RECURO_RABBIT_UI_PORT:-15672}:15672"   # management UI, recuro / recuro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      retries: 20
+
+  # Same realm as the admin portal (admin/keycloak/recuro-realm.json): one sign-in for everything.
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6.4
+    command: start-dev --import-realm --http-port 8080
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      - "${KEYCLOAK_PORT:-8080}:8080"
+    volumes:
+      - ../admin/keycloak:/opt/keycloak/data/import:ro
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.65.0
+    profiles: ["observability"]
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"   # UI
+      - "4317:4317"     # OTLP gRPC
+
+  gateway:
+    profiles: ["apps"]
+    build:
+      context: .
+      dockerfile: Gateway/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__redis: redis:6379
+      Auth__Authority: http://localhost:${KEYCLOAK_PORT:-8080}/realms/recuro
+      Auth__MetadataAddress: http://keycloak:8080/realms/recuro/.well-known/openid-configuration
+      ReverseProxy__Clusters__audit__Destinations__primary__Address: http://audit:8080/
+    ports:
+      - "5100:8080"
+    depends_on: [redis, keycloak, audit]
+
+  audit:
+    profiles: ["apps"]
+    build:
+      context: .
+      dockerfile: Audit/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__audit: Host=postgres;Database=recuro_audit;Username=recuro_audit;Password=recuro_audit
+      ConnectionStrings__rabbitmq: amqp://recuro:recuro@rabbitmq:5672/
+      ConnectionStrings__redis: redis:6379
+      Auth__Authority: http://localhost:${KEYCLOAK_PORT:-8080}/realms/recuro
+      Auth__MetadataAddress: http://keycloak:8080/realms/recuro/.well-known/openid-configuration
+    ports:
+      - "5103:8080"
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+
+volumes:
+  recuro-services-pg:

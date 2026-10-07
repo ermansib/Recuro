@@ -1,0 +1,34 @@
+<Solution>
+  <Folder Name="/Audit/" />
+  <Folder Name="/Audit/src/">
+    <Project Path="Audit/src/Recuro.Audit.Api/Recuro.Audit.Api.csproj" />
+    <Project Path="Audit/src/Recuro.Audit.Application/Recuro.Audit.Application.csproj" />
+    <Project Path="Audit/src/Recuro.Audit.Domain/Recuro.Audit.Domain.csproj" />
+    <Project Path="Audit/src/Recuro.Audit.Infrastructure/Recuro.Audit.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Audit/tests/">
+    <Project Path="Audit/tests/Recuro.Audit.IntegrationTests/Recuro.Audit.IntegrationTests.csproj" />
+    <Project Path="Audit/tests/Recuro.Audit.UnitTests/Recuro.Audit.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/BuildingBlocks/" />
+  <Folder Name="/BuildingBlocks/src/">
+    <Project Path="BuildingBlocks/src/Recuro.BuildingBlocks.Application/Recuro.BuildingBlocks.Application.csproj" />
+    <Project Path="BuildingBlocks/src/Recuro.BuildingBlocks.Domain/Recuro.BuildingBlocks.Domain.csproj" />
+    <Project Path="BuildingBlocks/src/Recuro.BuildingBlocks.Infrastructure/Recuro.BuildingBlocks.Infrastructure.csproj" />
+    <Project Path="BuildingBlocks/src/Recuro.BuildingBlocks.Web/Recuro.BuildingBlocks.Web.csproj" />
+  </Folder>
+  <Folder Name="/BuildingBlocks/tests/">
+    <Project Path="BuildingBlocks/tests/Recuro.BuildingBlocks.IntegrationTests/Recuro.BuildingBlocks.IntegrationTests.csproj" />
+    <Project Path="BuildingBlocks/tests/Recuro.BuildingBlocks.UnitTests/Recuro.BuildingBlocks.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/Gateway/" />
+  <Folder Name="/Gateway/src/">
+    <Project Path="Gateway/src/Recuro.Gateway/Recuro.Gateway.csproj" />
+  </Folder>
+  <Folder Name="/Gateway/tests/">
+    <Project Path="Gateway/tests/Recuro.Gateway.Tests/Recuro.Gateway.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Recuro.ArchitectureTests/Recuro.ArchitectureTests.csproj" />
+  </Folder>
+</Solution>

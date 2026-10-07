@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Shared kernel: no packages, no framework references. Keep it small. -->
+</Project>
