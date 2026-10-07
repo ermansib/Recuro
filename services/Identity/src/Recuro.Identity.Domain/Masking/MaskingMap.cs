@@ -42,7 +42,7 @@ public sealed class MaskingMap
     /// </summary>
     public IReadOnlyDictionary<string, MaskStrategy>? For(string role, string resource)
     {
-        if (!PersonaRoles.IsPersona(role) || !_byResource.TryGetValue(resource, out var roles))
+        if (!PersonaRoles.HasMaskingMap(role) || !_byResource.TryGetValue(resource, out var roles))
         {
             return null;
         }

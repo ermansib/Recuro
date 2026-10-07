@@ -26,10 +26,26 @@ public class MaskingAndUserTests
     public void HR_sees_every_field(string role) => Assert.Empty(DefaultMaskingMap.Create().For(role, "candidate")!);
 
     [Theory]
-    [InlineData("service", "candidate")]
+    [InlineData("tenant-admin", "candidate")]
     [InlineData(PersonaRoles.HrTa, "payslip")]
     public void Unknown_roles_and_resources_have_no_map(string role, string resource) =>
         Assert.Null(DefaultMaskingMap.Create().For(role, resource));
+
+    [Fact]
+    public void Service_accounts_see_candidate_name_and_email_only()
+    {
+        var fields = DefaultMaskingMap.Create().For(PersonaRoles.Service, "candidate")!;
+
+        Assert.False(fields.ContainsKey("name"));
+        Assert.False(fields.ContainsKey("email"));
+        Assert.Equal(MaskStrategy.Hide, fields["phone"]);
+        Assert.Equal(MaskStrategy.Hide, fields["summary"]);
+        Assert.Equal(MaskStrategy.Hide, fields["currentCtc"]);
+        Assert.Equal(MaskStrategy.Hide, fields["expectedCtc"]);
+    }
+
+    [Fact]
+    public void Service_accounts_are_never_mirrored_as_users() => Assert.False(PersonaRoles.IsMirrored(PersonaRoles.Service));
 
     [Fact]
     public void Provisioning_keeps_only_Recuro_roles_and_raises_an_event()
