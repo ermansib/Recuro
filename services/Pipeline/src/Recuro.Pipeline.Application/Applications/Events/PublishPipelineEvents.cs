@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using Recuro.BuildingBlocks.Application.IntegrationEvents;
 using Recuro.BuildingBlocks.Application.Messaging;
 using Recuro.Pipeline.Domain.Applications;
@@ -42,7 +41,7 @@ public sealed record TatBreachedPayload(
     string? EscalationPath);
 
 /// <summary>Turns domain events into integration events through the outbox, in the same transaction as the change.</summary>
-internal sealed class PublishPipelineEvents(IIntegrationEventPublisher publisher, IOptions<PipelineOptions> options)
+internal sealed class PublishPipelineEvents(IIntegrationEventPublisher publisher)
     : IDomainEventHandler<ApplicationCreatedDomainEvent>,
       IDomainEventHandler<StageChangedDomainEvent>,
       IDomainEventHandler<FinalRejectedDomainEvent>,
@@ -91,7 +90,6 @@ internal sealed class PublishPipelineEvents(IIntegrationEventPublisher publisher
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
         var a = domainEvent.Application;
-        var escalation = options.Value.StageTat.GetValueOrDefault(domainEvent.Stage.ToString())?.Escalation;
         publisher.Publish(
             EventTypes.Pipeline.TatBreached,
             Subject(a),
@@ -102,7 +100,7 @@ internal sealed class PublishPipelineEvents(IIntegrationEventPublisher publisher
                 domainEvent.Stage.ToString(),
                 domainEvent.DueAt,
                 (long)domainEvent.Variance.TotalMilliseconds,
-                string.IsNullOrEmpty(escalation) ? null : escalation));
+                string.IsNullOrEmpty(domainEvent.Escalation) ? null : domainEvent.Escalation));
         return Task.CompletedTask;
     }
 

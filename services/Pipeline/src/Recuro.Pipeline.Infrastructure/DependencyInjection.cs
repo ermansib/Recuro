@@ -39,6 +39,24 @@ public static class DependencyInjection
     }
 
     /// <summary>
+    /// The Config service's calendar and TAT matrix, one typed client behind both interfaces. The API adds
+    /// handlers that forward the caller's credentials and correlation ids.
+    /// </summary>
+    public static IHttpClientBuilder AddConfigRules(this IServiceCollection services)
+    {
+        services.AddMemoryCache();
+        services.AddOptions<ConfigServiceOptions>().BindConfiguration(ConfigServiceOptions.SectionName);
+        services.AddScoped<IWorkingDayCalendar>(sp => sp.GetRequiredService<ConfigRulesClient>());
+        services.AddScoped<ITatRules>(sp => sp.GetRequiredService<ConfigRulesClient>());
+        return services.AddHttpClient<ConfigRulesClient>((sp, http) =>
+        {
+            var options = sp.GetRequiredService<IOptions<ConfigServiceOptions>>().Value;
+            http.BaseAddress = options.BaseUrl;
+            http.Timeout = options.Timeout;
+        });
+    }
+
+    /// <summary>
     /// The typed client for the Candidate service. The API adds handlers that forward the caller's
     /// credentials and correlation ids.
     /// </summary>

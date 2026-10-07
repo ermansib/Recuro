@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Recuro.Pipeline.Domain.Applications;
 using Recuro.Pipeline.Domain.Requisitions;
+using StageTatRule = Recuro.Pipeline.Application.Applications.StageTatRule;
 
 namespace Recuro.Pipeline.Application.Abstractions;
 
@@ -40,6 +41,21 @@ public interface ISourcingGateRepository
 public interface IApplicationNumbers
 {
     Task<string> NextAsync(int year, CancellationToken ct);
+}
+
+/// <summary>
+/// Working-day arithmetic on the tenant's business calendar (Config <c>resolve/working-days</c>, BNFR-8).
+/// The only place Pipeline counts working days.
+/// </summary>
+public interface IWorkingDayCalendar
+{
+    Task<DateOnly> AddAsync(DateOnly from, int days, CancellationToken ct);
+}
+
+/// <summary>Stage TATs in force for the tenant (Config TAT matrix, FRD §5.2), keyed by stage. Stages without a rule have no clock.</summary>
+public interface ITatRules
+{
+    Task<IReadOnlyDictionary<ApplicationStage, StageTatRule>> GetAsync(CancellationToken ct);
 }
 
 /// <summary>

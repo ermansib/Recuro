@@ -9,8 +9,8 @@ public sealed class StageTatRule
 }
 
 /// <summary>
-/// Pipeline rules bound from <c>Pipeline</c>. Defaults are FRD §5.2 / §9.6; per-tenant, versioned values
-/// come from the Config service (RCU-CFG) when it is connected.
+/// Pipeline rules bound from <c>Pipeline</c>. Stage TATs come from the Config service's TAT matrix
+/// (RCU-CFG); <see cref="StageTat"/> holds the FRD §5.2 values used only while Config can't be reached.
 /// </summary>
 public sealed class PipelineOptions
 {
@@ -22,7 +22,7 @@ public sealed class PipelineOptions
     /// <summary>Unsuccessful candidates' data is kept this long (FRD §5.7).</summary>
     public int RetentionDays { get; set; } = 365;
 
-    /// <summary>Stage TATs keyed by stage name. Stages without a rule have no clock.</summary>
+    /// <summary>Fallback stage TATs keyed by stage name, used only while Config can't be reached.</summary>
     public Dictionary<string, StageTatRule> StageTat { get; set; } = new(StringComparer.Ordinal)
     {
         ["Sourced"] = new() { WorkingDays = 7, Escalation = "hrhead" },

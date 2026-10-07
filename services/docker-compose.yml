@@ -149,6 +149,7 @@ services:
       ConnectionStrings__redis: redis:6379
       Auth__Authority: http://localhost:${KEYCLOAK_PORT:-8080}/realms/recuro
       Auth__MetadataAddress: http://keycloak:8080/realms/recuro/.well-known/openid-configuration
+      Services__Identity__BaseUrl: http://identity:8080/
     ports:
       - "5107:8080"
     volumes:
@@ -170,6 +171,7 @@ services:
       Auth__Authority: http://localhost:${KEYCLOAK_PORT:-8080}/realms/recuro
       Auth__MetadataAddress: http://keycloak:8080/realms/recuro/.well-known/openid-configuration
       Services__Candidate__BaseUrl: http://candidate:8080/
+      Services__Config__BaseUrl: http://config:8080/
     ports:
       - "5108:8080"
     depends_on:
