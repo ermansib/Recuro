@@ -1,0 +1,11 @@
+{
+  "title": "Sign in to Recuro Admin",
+  "devNotice": "Development sign-in, for running without Keycloak. The API only accepts it in Development.",
+  "choose": "Choose who to sign in as",
+  "platform": "Platform admin",
+  "platformHint": "Manage tenants, plans and the theme library",
+  "tenantHint": "Configure {{tenant}}'s portal",
+  "unavailable": "The admin API isn't reachable. Start it with dotnet run, then reload.",
+  "oidcHint": "You'll continue to the Recuro sign-in page, then come back here.",
+  "oidcButton": "Sign in"
+}

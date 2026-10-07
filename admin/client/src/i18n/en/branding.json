@@ -1,0 +1,24 @@
+{
+  "title": "Branding & theme",
+  "subtitle": "Choose how {{tenant}}'s portal looks for everyone",
+  "presets": "Theme presets",
+  "mode": "Default colour mode",
+  "modeHint": "Follow device uses each person's light or dark setting.",
+  "previewMode": "Preview in",
+  "preview": "Live preview",
+  "current": "Current",
+  "unsaved": "You have unsaved changes.",
+  "savedToast": "Theme saved. It applies the next time people load the portal.",
+  "previewSample": {
+    "brand": "Careers",
+    "dashboard": "Dashboard",
+    "requisitions": "Requisitions",
+    "pipeline": "Pipeline",
+    "offers": "Offers",
+    "alerts": "3 alerts",
+    "kpi": "Open requisitions",
+    "primaryAction": "Raise MRF",
+    "secondaryAction": "View pipeline",
+    "chip": "Approved"
+  }
+}

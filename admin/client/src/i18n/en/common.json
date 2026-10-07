@@ -1,0 +1,42 @@
+{
+  "product": "Recuro",
+  "adminTitle": "Admin",
+  "loading": "Loading…",
+  "save": "Save changes",
+  "saving": "Saving…",
+  "saved": "Saved",
+  "cancel": "Cancel",
+  "reset": "Reset to defaults",
+  "signOut": "Sign out",
+  "error": "Something went wrong: {{message}}",
+  "skipToContent": "Skip to main content",
+  "level": {
+    "platform": "Platform console",
+    "tenant": "Tenant admin"
+  },
+  "nav": {
+    "label": "Admin navigation",
+    "tenants": "Tenants",
+    "themes": "Theme library",
+    "branding": "Branding & theme",
+    "screens": "Screens & fields"
+  },
+  "mode": {
+    "system": "Follow device",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "plan": {
+    "starter": "Starter",
+    "professional": "Professional",
+    "enterprise": "Enterprise"
+  },
+  "kind": {
+    "inHouse": "In-house HR",
+    "agency": "Staffing agency"
+  },
+  "status": {
+    "active": "Active",
+    "suspended": "Suspended"
+  }
+}

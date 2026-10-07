@@ -4,6 +4,8 @@ Recuro is a white-label recruitment portal for in-house HR teams and staffing ag
 recruitment CRM. The React + TypeScript frontend is built first, on static JSON mocks; .NET Core
 microservices come later. See [CLAUDE.md](CLAUDE.md) for the architecture and conventions.
 
+The admin portal (platform console and tenant admin, .NET 10 + React) lives in [`admin/`](admin/README.md).
+
 ## Run the frontend
 
 ```bash

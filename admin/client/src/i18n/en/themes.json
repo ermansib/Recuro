@@ -1,0 +1,15 @@
+{
+  "title": "Theme library",
+  "subtitle": "Presets tenants can choose from. Publishing checks WCAG AA contrast in both modes.",
+  "published": "Published",
+  "draft": "Draft",
+  "publish": "Publish",
+  "unpublish": "Unpublish",
+  "light": "Light",
+  "dark": "Dark",
+  "swatch": {
+    "primary": "Primary",
+    "secondary": "Secondary",
+    "accent": "Accent"
+  }
+}
