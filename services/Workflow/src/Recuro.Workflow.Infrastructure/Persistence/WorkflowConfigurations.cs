@@ -65,6 +65,11 @@ internal sealed class ApprovalTaskConfiguration : IEntityTypeConfiguration<Appro
             .HasColumnName("escalations")
             .HasColumnType("jsonb")
             .HasConversion(JsonColumn.Converter<List<EscalationStep>>(), JsonColumn.Comparer<List<EscalationStep>>());
+        builder.Ignore(t => t.Reminders);
+        builder.Property<List<ReminderStep>>("_reminders")
+            .HasColumnName("reminders")
+            .HasColumnType("jsonb")
+            .HasConversion(JsonColumn.Converter<List<ReminderStep>>(), JsonColumn.Comparer<List<ReminderStep>>());
         builder.Property(t => t.Decision)
             .HasColumnType("jsonb")
             .HasConversion(JsonColumn.Converter<TaskDecision>()!, JsonColumn.Comparer<TaskDecision>()!);
@@ -73,5 +78,6 @@ internal sealed class ApprovalTaskConfiguration : IEntityTypeConfiguration<Appro
 
         // The escalation scheduler scans across tenants for due steps (RCU-WFL-006).
         builder.HasIndex(t => t.NextEscalationAt).HasFilter("next_escalation_at IS NOT NULL");
+        builder.HasIndex(t => t.NextReminderAt).HasFilter("next_reminder_at IS NOT NULL");
     }
 }

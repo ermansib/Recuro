@@ -68,7 +68,16 @@ public sealed class SlaPlannerTests
 
         Assert.Equal(TestData.Now.AddDays(2), schedule.DueAt);
         Assert.Equal([TestData.Now.AddDays(3), TestData.Now.AddDays(5)], schedule.EscalationsAt);
+        Assert.Equal(TestData.Now.AddDays(1), schedule.HalfwayAt);
         Assert.All(calendar.Calls, c => Assert.Equal("doa-2026.08", c.Version));
+    }
+
+    [Fact]
+    public async Task A_one_day_sla_reminds_halfway_in_clock_time()
+    {
+        var schedule = await new SlaPlanner(new FakeCalendar()).ScheduleAsync(TestData.Leg("hrhead", 1), "v", TestData.Now, CancellationToken.None);
+
+        Assert.Equal(TestData.Now.AddHours(12), schedule.HalfwayAt);
     }
 
     [Fact]

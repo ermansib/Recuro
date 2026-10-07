@@ -6,6 +6,7 @@ namespace Recuro.Workflow.Domain.Workflows;
 public sealed class ApprovalTask : Entity, ITenantOwned
 {
     private List<EscalationStep> _escalations = [];
+    private List<ReminderStep> _reminders = [];
 
     private ApprovalTask()
     {
@@ -40,6 +41,11 @@ public sealed class ApprovalTask : Entity, ITenantOwned
     /// <summary>When the next unfired escalation is due, for the scheduler's index. Null when none is pending.</summary>
     public DateTimeOffset? NextEscalationAt { get; private set; }
 
+    public IReadOnlyList<ReminderStep> Reminders => _reminders;
+
+    /// <summary>When the next unfired reminder is due, for the scheduler's index. Null when none is pending.</summary>
+    public DateTimeOffset? NextReminderAt { get; private set; }
+
     public TaskDecision? Decision { get; private set; }
 
     public bool IsOpen => Status == ApprovalTaskStatus.Open;
@@ -62,8 +68,10 @@ public sealed class ApprovalTask : Entity, ITenantOwned
             SlaWorkingDays = slaWorkingDays,
             DueAt = schedule.DueAt,
             _escalations = steps,
+            _reminders = RemindersFor(schedule),
         };
         task.RefreshNextEscalation();
+        task.RefreshNextReminder();
         return task;
     }
 
@@ -73,12 +81,14 @@ public sealed class ApprovalTask : Entity, ITenantOwned
         Status = ApprovalTaskStatus.Completed;
         PausedAt = null;
         NextEscalationAt = null;
+        NextReminderAt = null;
     }
 
     internal void Cancel()
     {
         Status = ApprovalTaskStatus.Cancelled;
         NextEscalationAt = null;
+        NextReminderAt = null;
     }
 
     internal bool Pause(DateTimeOffset now)
@@ -99,7 +109,28 @@ public sealed class ApprovalTask : Entity, ITenantOwned
         PausedAt = null;
         DueAt += paused;
         _escalations = _escalations.Select(s => s.FiredAt is null ? s with { At = s.At + paused } : s).ToList();
+        _reminders = _reminders.Select(r => r.FiredAt is null ? r with { At = r.At + paused } : r).ToList();
         RefreshNextEscalation();
+        RefreshNextReminder();
+    }
+
+    /// <summary>Fires every due, unfired reminder (each fires once only), returning them in order.</summary>
+    internal IReadOnlyList<ReminderStep> FireDueReminders(DateTimeOffset now)
+    {
+        if (!IsOpen || PausedAt is not null)
+        {
+            return [];
+        }
+
+        var due = _reminders.Where(r => r.FiredAt is null && r.At <= now).ToList();
+        if (due.Count == 0)
+        {
+            return [];
+        }
+
+        _reminders = _reminders.Select(r => due.Contains(r) ? r with { FiredAt = now } : r).ToList();
+        RefreshNextReminder();
+        return due.Select(r => r with { FiredAt = now }).ToList();
     }
 
     /// <summary>Fires every due, unfired step at once (each fires once only), returning them in order.</summary>
@@ -121,6 +152,26 @@ public sealed class ApprovalTask : Entity, ITenantOwned
         RefreshNextEscalation();
         return due.Select(s => s with { FiredAt = now }).ToList();
     }
+
+    private static List<ReminderStep> RemindersFor(TaskSchedule schedule)
+    {
+        if (schedule.DueAt is not { } due)
+        {
+            return [];
+        }
+
+        var reminders = new List<ReminderStep>();
+        if (schedule.HalfwayAt is { } halfway && halfway < due)
+        {
+            reminders.Add(new ReminderStep(50, halfway, null));
+        }
+
+        reminders.Add(new ReminderStep(100, due, null));
+        return reminders;
+    }
+
+    private void RefreshNextReminder() =>
+        NextReminderAt = _reminders.Where(r => r.FiredAt is null).Select(r => (DateTimeOffset?)r.At).Min();
 
     private void RefreshNextEscalation() =>
         NextEscalationAt = _escalations.Where(s => s.FiredAt is null).Select(s => (DateTimeOffset?)s.At).Min();

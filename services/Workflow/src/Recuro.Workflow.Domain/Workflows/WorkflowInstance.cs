@@ -221,7 +221,10 @@ public sealed class WorkflowInstance : AggregateRoot, ITenantOwned
         return Result.Success();
     }
 
-    /// <summary>RCU-WFL-003/006: fires due escalation steps on open, unpaused tasks; each step fires once.</summary>
+    /// <summary>
+    /// RCU-WFL-003/006: fires due reminders (50% and 100% of the SLA) and escalation steps on open,
+    /// unpaused tasks; each fires once. Returns how many fired.
+    /// </summary>
     public int FireDueEscalations(DateTimeOffset now)
     {
         if (Status != WorkflowStatus.Active)
@@ -232,12 +235,22 @@ public sealed class WorkflowInstance : AggregateRoot, ITenantOwned
         var fired = 0;
         foreach (var task in _tasks.Where(t => t.IsOpen))
         {
+            foreach (var reminder in task.FireDueReminders(now))
+            {
+                Raise(new TaskReminderDue(this, task, reminder));
+                fired++;
+            }
+
             foreach (var step in task.FireDue(now))
             {
                 Raise(new TaskEscalated(this, task, step));
-                UpdatedAt = now;
                 fired++;
             }
+        }
+
+        if (fired > 0)
+        {
+            UpdatedAt = now;
         }
 
         return fired;
