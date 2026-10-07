@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/candidate.purged.v1.schema.json",
+  "title": "candidate.purged.v1",
+  "description": "Producer: Candidate. Personal data was purged after retention (RCU-CAN-005). Consumers drop any cached candidate data.",
+  "type": "object",
+  "required": [
+    "candidateId",
+    "purgeScope"
+  ],
+  "properties": {
+    "candidateId": {
+      "type": "string"
+    },
+    "purgeScope": {
+      "type": "string",
+      "enum": [
+        "anonymised"
+      ]
+    }
+  },
+  "additionalProperties": true
+}
