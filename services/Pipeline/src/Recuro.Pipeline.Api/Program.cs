@@ -19,6 +19,9 @@ builder.Services
 builder.Services.AddCandidateDirectory()
     .AddHttpMessageHandler<ForwardCallerHandler>()
     .AddHttpMessageHandler<CorrelationHeadersHandler>();
+builder.Services.AddConfigRules()
+    .AddHttpMessageHandler<ForwardCallerHandler>()
+    .AddHttpMessageHandler<CorrelationHeadersHandler>();
 
 var app = builder.Build();
 

@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Recuro.BuildingBlocks.Web.Auth;
 using Recuro.Candidate.Infrastructure.Persistence;
@@ -19,6 +20,8 @@ public sealed class CandidateApiFactory : WebApplicationFactory<Program>, IAsync
     private readonly string _resumeRoot = Path.Combine(Path.GetTempPath(), $"recuro-resumes-{Guid.NewGuid():N}");
 
     public string ResumeRoot => _resumeRoot;
+
+    public StubIdentity Identity { get; } = new();
 
     public async Task InitializeAsync()
     {
@@ -59,5 +62,7 @@ public sealed class CandidateApiFactory : WebApplicationFactory<Program>, IAsync
         builder.UseSetting("Pii:Keys:test", Key);
         builder.UseSetting("Pii:BlindIndexKey", Key);
         builder.UseSetting("ResumeStorage:RootPath", _resumeRoot);
+        builder.ConfigureTestServices(services =>
+            services.ConfigureHttpClientDefaults(http => http.ConfigurePrimaryHttpMessageHandler(() => Identity)));
     }
 }

@@ -80,7 +80,8 @@ public sealed class CandidateApiTests(CandidateApiFactory api) : IClassFixture<C
 
         Assert.Equal(JsonValueKind.Null, read.GetProperty("currentCtc").ValueKind);
         Assert.Equal(JsonValueKind.Null, read.GetProperty("expectedCtc").ValueKind);
-        Assert.StartsWith("r***@", read.GetProperty("email").GetString(), StringComparison.Ordinal);
+        Assert.StartsWith("••••", read.GetProperty("email").GetString(), StringComparison.Ordinal);
+        Assert.Equal("Rahul Mehta", read.GetProperty("name").GetString());
     }
 
     [Fact]
@@ -166,7 +167,7 @@ public sealed class CandidateApiTests(CandidateApiFactory api) : IClassFixture<C
         var a = await CreateAsync(CandidateApiFactory.TenantA, NewCandidate());
         var b = await CreateAsync(CandidateApiFactory.TenantA, NewCandidate());
 
-        var batch = await api.ClientFor(CandidateApiFactory.TenantA, RecuroRoles.Service)
+        var batch = await api.ClientFor(CandidateApiFactory.TenantA, RecuroRoles.HrHead)
             .GetFromJsonAsync<JsonElement>($"/api/v1/candidates?ids={a.GetProperty("id").GetString()},{b.GetProperty("id").GetString()},{Guid.NewGuid()}");
 
         Assert.Equal(2, batch.GetArrayLength());
@@ -272,6 +273,46 @@ public sealed class CandidateApiTests(CandidateApiFactory api) : IClassFixture<C
         var candidate = await db.Candidates.SingleAsync(c => c.Id == Guid.Parse(Id(created)));
         Assert.Single(candidate.Applications);
         Assert.Equal(1, await db.InboxMessages.CountAsync(m => m.EventId == cloudEvent.Id));
+    }
+
+    [Fact]
+    public async Task Masking_follows_the_Identity_map_and_fails_closed_for_unmapped_roles()
+    {
+        var created = await CreateAsync(CandidateApiFactory.TenantA, NewCandidate());
+        var tenant = Guid.NewGuid();
+        api.Identity.SetMap("hrhead", new(StringComparer.Ordinal) { ["phone"] = "hash", ["summary"] = "partial" });
+        var other = await CreateAsync(tenant, NewCandidate());
+
+        var hashed = await api.ClientFor(tenant, RecuroRoles.HrHead).GetFromJsonAsync<JsonElement>($"/api/v1/candidates/{Id(other)}");
+        api.Identity.SetMap("hrhead", []);
+
+        Assert.Matches("^[0-9a-f]{16}$", hashed.GetProperty("phone").GetString()!);
+        Assert.Equal("••••edit", hashed.GetProperty("summary").GetString());
+        Assert.Equal(19, hashed.GetProperty("currentCtc").GetDecimal());
+
+        // A service token has no persona map: Identity answers 404 and every sensitive field is hidden.
+        var service = await api.ClientFor(CandidateApiFactory.TenantA, RecuroRoles.Service).GetFromJsonAsync<JsonElement>($"/api/v1/candidates/{Id(created)}");
+        Assert.Equal(string.Empty, service.GetProperty("name").GetString());
+        Assert.Equal(JsonValueKind.Null, service.GetProperty("currentCtc").ValueKind);
+    }
+
+    [Fact]
+    public async Task An_Identity_outage_falls_back_to_the_local_table()
+    {
+        var tenant = Guid.NewGuid();
+        var created = await CreateAsync(tenant, NewCandidate());
+        api.Identity.Down = true;
+        try
+        {
+            var read = await api.ClientFor(tenant, RecuroRoles.MdCeo).GetFromJsonAsync<JsonElement>($"/api/v1/candidates/{Id(created)}");
+
+            Assert.Equal(JsonValueKind.Null, read.GetProperty("currentCtc").ValueKind);
+            Assert.StartsWith("••••", read.GetProperty("phone").GetString(), StringComparison.Ordinal);
+        }
+        finally
+        {
+            api.Identity.Down = false;
+        }
     }
 
     private static string Id(JsonElement candidate) => candidate.GetProperty("id").GetString()!;

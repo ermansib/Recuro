@@ -24,6 +24,8 @@ public sealed class PipelineApiFactory : WebApplicationFactory<Program>, IAsyncL
 
     public MutableClock Clock { get; } = new();
 
+    public StubConfig Config { get; } = new();
+
     public async Task InitializeAsync()
     {
         await _postgres.StartAsync();
@@ -55,12 +57,14 @@ public sealed class PipelineApiFactory : WebApplicationFactory<Program>, IAsyncL
         builder.UseSetting("Messaging:Enabled", "false");
         builder.UseSetting("TatScan:Enabled", "false");
         builder.UseSetting("Database:MigrateOnStartup", "false");
+        builder.UseSetting("Services:Config:RetryAfter", "00:00:00.001");
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<ICandidateDirectory>();
             services.AddSingleton<ICandidateDirectory>(Candidates);
             services.RemoveAll<TimeProvider>();
             services.AddSingleton<TimeProvider>(Clock);
+            services.ConfigureHttpClientDefaults(http => http.ConfigurePrimaryHttpMessageHandler(() => Config));
         });
     }
 }

@@ -28,6 +28,7 @@ internal sealed class RejectApplicationCommandHandler(
     ICurrentUser caller,
     IUnitOfWork unitOfWork,
     IOptions<PipelineOptions> options,
+    IWorkingDayCalendar calendar,
     TimeProvider clock) : ICommandHandler<RejectApplicationCommand, ApplicationDto>
 {
     public async Task<Result<ApplicationDto>> Handle(RejectApplicationCommand command, CancellationToken ct)
@@ -39,7 +40,9 @@ internal sealed class RejectApplicationCommandHandler(
         }
 
         var rules = options.Value;
-        var rejected = application.Reject(command.Reason, Actors.From(caller), clock.GetUtcNow(), rules.RegretWorkingDays, rules.RetentionDays);
+        var now = clock.GetUtcNow();
+        var regretDueBy = await calendar.AddAsync(DateOnly.FromDateTime(now.UtcDateTime), rules.RegretWorkingDays, ct);
+        var rejected = application.Reject(command.Reason, Actors.From(caller), now, regretDueBy, rules.RetentionDays);
         if (rejected.IsFailure)
         {
             return rejected.Error!;

@@ -1,100 +1,130 @@
 namespace Recuro.Candidate.Application.Candidates.Masking;
 
-/// <summary>How a field is shown to a role (RCU-AUT-004 vocabulary).</summary>
+/// <summary>How a field is shown to a role (RCU-AUT-004), from least to most restrictive.</summary>
 public enum MaskStrategy
 {
     /// <summary>Shown as is.</summary>
     None,
 
-    /// <summary>Partly hidden, e.g. <c>r.***@email.example</c>.</summary>
+    /// <summary>Only the last 4 characters are kept, e.g. <c>••••0001</c>.</summary>
     Partial,
 
-    /// <summary>Not returned at all (null or empty).</summary>
+    /// <summary>A stable one-way hash, so equal values still group together.</summary>
+    Hash,
+
+    /// <summary>Not returned (empty or null).</summary>
     Hide,
 }
 
 /// <summary>
-/// RCU-CND-004: field masking per caller role, kept as data. It mirrors FRD §3.2 and the frontend's
-/// <c>candidate.viewSensitive</c> capability (HR-TA and HR Head see everything; MD/CEO sees CTC masked).
-/// When the Identity service publishes its masking map (RCU-AUT-004) this table is where it plugs in.
-/// Unknown roles fail closed: everything sensitive is hidden.
+/// RCU-CND-004: field masking per caller role. The maps come from the Identity service
+/// (<c>GET /api/v1/identity/masking/{role}/candidate</c>, RCU-AUT-004); this class turns them into one mask
+/// for the caller and applies it. Missing maps fail closed: every sensitive field is hidden.
 /// </summary>
 public static class CandidateMasking
 {
+    public const string Resource = "candidate";
+
+    public const string Name = "name";
     public const string Email = "email";
     public const string Phone = "phone";
+    public const string Summary = "summary";
     public const string CurrentCtc = "currentCtc";
     public const string ExpectedCtc = "expectedCtc";
 
-    private static readonly string[] Fields = [Email, Phone, CurrentCtc, ExpectedCtc];
+    private const int PartialKeep = 4;
+    private const string PartialPrefix = "••••";
 
-    private static readonly IReadOnlyDictionary<string, MaskStrategy> NothingMasked =
-        Fields.ToDictionary(f => f, _ => MaskStrategy.None);
+    /// <summary>The <c>Candidate</c> fields a map can mask (frontend DTO names).</summary>
+    public static readonly IReadOnlyList<string> SensitiveFields = [Name, Email, Phone, Summary, CurrentCtc, ExpectedCtc];
 
-    private static readonly IReadOnlyDictionary<string, MaskStrategy> EverythingHidden =
-        Fields.ToDictionary(f => f, _ => MaskStrategy.Hide);
+    public static readonly IReadOnlyDictionary<string, MaskStrategy> Unmasked =
+        SensitiveFields.ToDictionary(f => f, _ => MaskStrategy.None, StringComparer.Ordinal);
 
-    private static readonly Dictionary<string, IReadOnlyDictionary<string, MaskStrategy>> ByRole = new(StringComparer.Ordinal)
+    public static readonly IReadOnlyDictionary<string, MaskStrategy> FailClosed =
+        SensitiveFields.ToDictionary(f => f, _ => MaskStrategy.Hide, StringComparer.Ordinal);
+
+    /// <summary>
+    /// The FRD §3.2 map, used only while the Identity service can't be reached and nothing is cached.
+    /// It matches Identity's default map; any other role fails closed.
+    /// </summary>
+    public static IReadOnlyDictionary<string, MaskStrategy>? LocalFallback(string role) => role switch
     {
-        ["hrta"] = NothingMasked,
-        ["hrhead"] = NothingMasked,
-        ["service"] = NothingMasked,
-        ["mdceo"] = new Dictionary<string, MaskStrategy>
+        "hrta" or "hrhead" => new Dictionary<string, MaskStrategy>(StringComparer.Ordinal),
+        "mdceo" => new Dictionary<string, MaskStrategy>(StringComparer.Ordinal)
         {
             [Email] = MaskStrategy.Partial,
             [Phone] = MaskStrategy.Partial,
             [CurrentCtc] = MaskStrategy.Hide,
             [ExpectedCtc] = MaskStrategy.Hide,
         },
+        _ => null,
     };
 
-    /// <summary>The least restrictive strategy any of the caller's roles allows, per field.</summary>
-    public static IReadOnlyDictionary<string, MaskStrategy> For(IEnumerable<string> roles)
+    /// <summary>Reads Identity's wire map (<c>hide</c>, <c>partial</c>, <c>hash</c>). An unknown strategy hides the field.</summary>
+    public static IReadOnlyDictionary<string, MaskStrategy> Parse(IReadOnlyDictionary<string, string> fields)
     {
-        var maps = roles.Select(r => ByRole.GetValueOrDefault(r)).OfType<IReadOnlyDictionary<string, MaskStrategy>>().ToList();
+        ArgumentNullException.ThrowIfNull(fields);
+        return fields.ToDictionary(
+            f => f.Key,
+            f => f.Value switch
+            {
+                "partial" => MaskStrategy.Partial,
+                "hash" => MaskStrategy.Hash,
+                _ => MaskStrategy.Hide,
+            },
+            StringComparer.Ordinal);
+    }
+
+    /// <summary>
+    /// One mask for a caller with several roles: per field, the least restrictive strategy any role allows.
+    /// A role without a map (null) contributes nothing; no maps at all fails closed.
+    /// </summary>
+    public static IReadOnlyDictionary<string, MaskStrategy> Combine(IEnumerable<IReadOnlyDictionary<string, MaskStrategy>?> roleMaps)
+    {
+        ArgumentNullException.ThrowIfNull(roleMaps);
+        var maps = roleMaps.OfType<IReadOnlyDictionary<string, MaskStrategy>>().ToList();
         if (maps.Count == 0)
         {
-            return EverythingHidden;
+            return FailClosed;
         }
 
-        return Fields.ToDictionary(f => f, f => maps.Min(m => m.GetValueOrDefault(f, MaskStrategy.Hide)));
+        // A field a map doesn't list passes through unchanged for that role.
+        return SensitiveFields.ToDictionary(f => f, f => maps.Min(m => m.GetValueOrDefault(f, MaskStrategy.None)), StringComparer.Ordinal);
     }
 
-    public static CandidateDto Apply(CandidateDto candidate, IReadOnlyDictionary<string, MaskStrategy> masks)
+    public static CandidateDto Apply(CandidateDto candidate, IReadOnlyDictionary<string, MaskStrategy> mask, Func<string, string, string> hash)
     {
         ArgumentNullException.ThrowIfNull(candidate);
-        ArgumentNullException.ThrowIfNull(masks);
+        ArgumentNullException.ThrowIfNull(mask);
+        ArgumentNullException.ThrowIfNull(hash);
+
+        string Text(string field, string value) => mask.GetValueOrDefault(field, MaskStrategy.Hide) switch
+        {
+            MaskStrategy.None => value,
+            MaskStrategy.Partial => Partial(value),
+            MaskStrategy.Hash when value.Length > 0 => hash(field, value),
+            _ => string.Empty,
+        };
+
+        // Amounts are either shown or not: a partial or hashed salary would still leak it.
+        decimal? Amount(string field, decimal? value) => mask.GetValueOrDefault(field, MaskStrategy.Hide) == MaskStrategy.None ? value : null;
+
         return candidate with
         {
-            Email = MaskEmail(candidate.Email, masks[Email]),
-            Phone = MaskPhone(candidate.Phone, masks[Phone]),
-            CurrentCtc = masks[CurrentCtc] == MaskStrategy.None ? candidate.CurrentCtc : null,
-            ExpectedCtc = masks[ExpectedCtc] == MaskStrategy.None ? candidate.ExpectedCtc : null,
+            Name = Text(Name, candidate.Name),
+            Email = Text(Email, candidate.Email),
+            Phone = Text(Phone, candidate.Phone),
+            Summary = Text(Summary, candidate.Summary),
+            CurrentCtc = Amount(CurrentCtc, candidate.CurrentCtc),
+            ExpectedCtc = Amount(ExpectedCtc, candidate.ExpectedCtc),
         };
     }
 
-    /// <summary><c>rahul.mehta@email.example</c> → <c>r***@email.example</c>, like the frontend's <c>maskEmail</c>.</summary>
-    public static string MaskEmail(string email, MaskStrategy strategy)
+    /// <summary>Identity's <c>partial</c>: only the last 4 characters stay, e.g. <c>+91 98200 40001</c> → <c>••••0001</c>.</summary>
+    public static string Partial(string value)
     {
-        ArgumentNullException.ThrowIfNull(email);
-        return strategy switch
-        {
-            MaskStrategy.None => email,
-            MaskStrategy.Partial when email.IndexOf('@', StringComparison.Ordinal) is > 0 and var at => $"{email[0]}***{email[at..]}",
-            _ => string.Empty,
-        };
-    }
-
-    /// <summary><c>+91 98200 40001</c> → <c>••••••0001</c>: only the last four digits stay.</summary>
-    public static string MaskPhone(string phone, MaskStrategy strategy)
-    {
-        ArgumentNullException.ThrowIfNull(phone);
-        var digits = new string(phone.Where(char.IsAsciiDigit).ToArray());
-        return strategy switch
-        {
-            MaskStrategy.None => phone,
-            MaskStrategy.Partial when digits.Length >= 4 => $"••••••{digits[^4..]}",
-            _ => string.Empty,
-        };
+        ArgumentNullException.ThrowIfNull(value);
+        return value.Length == 0 ? string.Empty : PartialPrefix + value[^Math.Min(PartialKeep, value.Length)..];
     }
 }
