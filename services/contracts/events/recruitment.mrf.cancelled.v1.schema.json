@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/recruitment.mrf.cancelled.v1.schema.json",
+  "title": "recruitment.mrf.cancelled.v1",
+  "description": "HR Head cancelled the requisition with a documented reason (RCU-REQ-008). Subject: Requisition/{reqId}.",
+  "type": "object",
+  "properties": {
+    "reqId": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "from": {
+      "type": "string",
+      "description": "Requisition state (FRD §6)."
+    },
+    "to": {
+      "type": "string",
+      "description": "Requisition state (FRD §6)."
+    }
+  },
+  "required": [
+    "reqId",
+    "reason",
+    "from",
+    "to"
+  ],
+  "additionalProperties": true
+}
