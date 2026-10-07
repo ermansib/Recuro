@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/workflow.task.completed.v1.schema.json",
+  "title": "workflow.task.completed.v1",
+  "description": "An approval task was decided (RCU-WFL-002). instanceStatus says whether the whole workflow is now Approved, Rejected or still Active. Subject: WorkflowTask/{taskId}.",
+  "type": "object",
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "instanceId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "type": {
+      "type": "string",
+      "description": "Workflow kind, e.g. MRF, Offer."
+    },
+    "subjectType": {
+      "type": "string"
+    },
+    "subjectId": {
+      "type": "string"
+    },
+    "assignee": {
+      "type": "string",
+      "description": "Assignee role."
+    },
+    "decision": {
+      "enum": [
+        "approve",
+        "reject"
+      ]
+    },
+    "actionId": {
+      "type": "string"
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "instanceStatus": {
+      "enum": [
+        "Active",
+        "Approved",
+        "Rejected",
+        "Cancelled"
+      ]
+    },
+    "configVersionId": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "taskId",
+    "instanceId",
+    "type",
+    "subjectType",
+    "subjectId",
+    "assignee",
+    "decision",
+    "actionId",
+    "instanceStatus",
+    "configVersionId"
+  ],
+  "additionalProperties": true
+}

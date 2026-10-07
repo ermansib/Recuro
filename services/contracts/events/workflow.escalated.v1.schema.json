@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/workflow.escalated.v1.schema.json",
+  "title": "workflow.escalated.v1",
+  "description": "An overdue approval task escalated one level (RCU-WFL-006). Subject: WorkflowTask/{taskId}.",
+  "type": "object",
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "instanceId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "type": {
+      "type": "string",
+      "description": "Workflow kind, e.g. MRF, Offer."
+    },
+    "subjectType": {
+      "type": "string"
+    },
+    "subjectId": {
+      "type": "string"
+    },
+    "assignee": {
+      "type": "string",
+      "description": "Assignee role."
+    },
+    "level": {
+      "type": "integer"
+    },
+    "escalateTo": {
+      "type": "string",
+      "description": "Role notified at this level."
+    },
+    "dueAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "taskId",
+    "instanceId",
+    "type",
+    "subjectType",
+    "subjectId",
+    "assignee",
+    "level",
+    "escalateTo"
+  ],
+  "additionalProperties": true
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/recruitment.sourcing.unlocked.v1.schema.json",
+  "title": "recruitment.sourcing.unlocked.v1",
+  "description": "Sourcing may start for this requisition (RCU-REQ-005). Subject: Requisition/{reqId}.",
+  "type": "object",
+  "properties": {
+    "reqId": {
+      "type": "string"
+    },
+    "targetClosure": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    }
+  },
+  "required": [
+    "reqId"
+  ],
+  "additionalProperties": true
+}
