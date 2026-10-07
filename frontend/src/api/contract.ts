@@ -1,28 +1,41 @@
 // Contract between the UI and the backend. Mirrors the endpoints the .NET services will expose.
 import type {
+  AcceptInvitationInput,
   AppNotification,
   Application,
   ApplicationStage,
   ApprovalItem,
   AuditEvent,
+  AuthSession,
   BgvCase,
   BgvCheckType,
   Candidate,
   CandidateSource,
   DashboardData,
+  DemoAccess,
   EmailMessage,
+  Invitation,
+  InvitationView,
+  InviteInput,
   InterviewRound,
   JobDescription,
   JobPosting,
   Offer,
+  PasswordResetRequested,
   PipelineCard,
   PublicApplicationInput,
   PublicApplicationResult,
+  RegisterCandidateInput,
+  RegisterOrganisationInput,
   Requisition,
   RequisitionInput,
   Role,
   RuleConfig,
+  SignInInput,
+  SignInResult,
+  SsoProvider,
   User,
+  WorkspaceBranding,
 } from '../domain/types'
 
 /** Who is calling. The real services will read this from the SSO token (RCU-PLT-001). */
@@ -50,8 +63,40 @@ export interface LogCandidateInput {
   privacyConsent: boolean
 }
 
-export interface ApiClient {
-  getUsers(): Promise<User[]>
+/**
+ * Identity endpoints (RCU-PLT-001). The .NET identity service replaces the mock behind this
+ * interface. Errors: 400 validation, 401 bad credentials or expired session/link, 403 RBAC,
+ * 404 unknown workspace, 409 duplicate account, 423 locked account, 501 SSO not connected.
+ */
+export interface AuthApi {
+  getWorkspaceBranding(workspace: string): Promise<WorkspaceBranding>
+  signIn(input: SignInInput): Promise<SignInResult>
+  verifyMfa(challengeId: string, code: string): Promise<AuthSession>
+  /** Starts an enterprise SSO redirect. Not connected in the mock. */
+  signInWithSso(workspace: string, provider: SsoProvider): Promise<SignInResult>
+  /** Restores a session from its token, e.g. after a page reload. */
+  getSession(token: string): Promise<AuthSession>
+  signOut(token: string): Promise<void>
+
+  registerOrganisation(input: RegisterOrganisationInput): Promise<AuthSession>
+  registerCandidate(input: RegisterCandidateInput): Promise<AuthSession>
+
+  requestPasswordReset(workspace: string, email: string): Promise<PasswordResetRequested>
+  resetPassword(token: string, password: string): Promise<void>
+
+  listTeam(token: string): Promise<User[]>
+  listInvitations(token: string): Promise<Invitation[]>
+  inviteStaff(token: string, input: InviteInput): Promise<Invitation>
+  getInvitation(inviteToken: string): Promise<InvitationView>
+  acceptInvitation(input: AcceptInvitationInput): Promise<AuthSession>
+
+  /** Demo only: persona switcher accounts. The real service returns 404. */
+  getDemoAccess(workspace: string): Promise<DemoAccess>
+  /** Demo only: sign in as a persona without a password. The real service returns 404. */
+  demoSignIn(workspace: string, role: Role): Promise<AuthSession>
+}
+
+export interface ApiClient extends AuthApi {
   getRules(): Promise<RuleConfig>
   getDashboard(): Promise<DashboardData>
 

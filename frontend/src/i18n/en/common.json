@@ -16,8 +16,8 @@
     "label": "Main navigation"
   },
   "persona": {
-    "title": "Switch Persona — Demo Sign-in",
-    "button": "Switch persona, signed in as {{name}}",
+    "title": "Demo personas (dev only)",
+    "button": "Account menu, signed in as {{name}} to {{workspace}}",
     "viewingAs": "Viewing as {{role}}",
     "masked": " — CTC & personal data masked"
   },

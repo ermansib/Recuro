@@ -1,6 +1,7 @@
 [
   {
     "id": "u-hrta",
+    "tenantId": "tnt-aurora",
     "name": "A. Sharma",
     "initials": "AS",
     "role": "hrta",
@@ -10,6 +11,7 @@
   },
   {
     "id": "u-hrhead",
+    "tenantId": "tnt-aurora",
     "name": "K. Iyer",
     "initials": "KI",
     "role": "hrhead",
@@ -19,6 +21,7 @@
   },
   {
     "id": "u-mdceo",
+    "tenantId": "tnt-aurora",
     "name": "V. Raghavan",
     "initials": "VR",
     "role": "mdceo",
@@ -28,6 +31,7 @@
   },
   {
     "id": "u-emp",
+    "tenantId": "tnt-aurora",
     "name": "R. Sabnis",
     "initials": "RS",
     "role": "employee",
@@ -37,6 +41,7 @@
   },
   {
     "id": "u-cand",
+    "tenantId": "tnt-aurora",
     "name": "Guest",
     "initials": "GU",
     "role": "candidate",

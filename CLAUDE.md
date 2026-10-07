@@ -34,6 +34,9 @@ Rules that follow from this:
   (§9) so they map cleanly onto future .NET DTOs.
 - State transitions follow the FRD state machines (§6). Encode them as data (allowed-transition maps),
   not scattered `if`s, so the backend can reuse the same rules.
+- Identity goes through the `AuthApi` part of the `ApiClient` (sign-in, MFA, SSO, sign-up, reset,
+  invites). The mock in `api/mock/identity.ts` stands in for the .NET identity service; the demo
+  persona switcher is dev-only (`config/features.ts`).
 - Role-based UI (hiding buttons, masking CTC/PII) is a convenience only. The real enforcement will live
   in the .NET services; never assume the UI is the security boundary.
 
@@ -61,7 +64,7 @@ frontend/src/
   api/mock/           in-memory mock that enforces RBAC, state machines and rules
   mocks/data/*.json   static seed data (camelCase, like ASP.NET Core DTOs)
   domain/             types, state machines, pure rule functions (DOA, offer matrix, BGV gate)
-  auth/               session (persona switcher stands in for SSO) and the RBAC capability matrix
+  auth/               session lifecycle (sign-in, restore, idle timeout, sign-out) and the RBAC matrix
   config/tenant.ts    white-label tenant config and theme
   components/         layout, topbar, notification drawer, shared UI
   features/<screen>/  one folder per screen

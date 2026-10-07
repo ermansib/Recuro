@@ -26,7 +26,8 @@ import type {
 } from '../../domain/types'
 import { addWorkingDays, toIsoDate } from '../../utils/workingDays'
 import { ApiError, type Actor, type ApiClient } from '../contract'
-import { loadSeed, type MockDb } from './seed'
+import { createIdentityMock } from './identity'
+import { DEMO_PASSWORD, loadSeed, type MockDb } from './seed'
 
 const LATENCY_MS = import.meta.env.MODE === 'test' ? 0 : 120
 
@@ -125,6 +126,29 @@ export function createMockClient(seed: () => MockDb = loadSeed): ApiClient {
     }
   }
 
+  function runAsync<T>(fn: () => T | Promise<T>): Promise<T> {
+    return Promise.resolve()
+      .then(fn)
+      .then(respond, (e: unknown) => (e instanceof ApiError ? fail(e.status, e.message) : Promise.reject(e)))
+  }
+
+  const identity = createIdentityMock({
+    db,
+    demoPassword: DEMO_PASSWORD,
+    audit,
+    run: runAsync,
+    sendEmail: (role, to, tenant, subject, paragraphs, cta) =>
+      email(role, {
+        tag: 'Account',
+        from: `Recuro for ${tenant.name} <no-reply@${tenant.emailDomain}>`,
+        to,
+        subject,
+        paragraphs,
+        cta,
+        signature: `${tenant.name} · sent by Recuro`,
+      }),
+  })
+
   function requireCapability(actor: Actor, ok: boolean, message: string) {
     if (!ok) {
       audit(actor, 'access', 'ACCESS_DENIED', { reason: message })
@@ -133,7 +157,7 @@ export function createMockClient(seed: () => MockDb = loadSeed): ApiClient {
   }
 
   return {
-    getUsers: () => respond(db.users),
+    ...identity,
     getRules: () => respond(db.rules),
     getDashboard: () => respond(db.dashboard),
 

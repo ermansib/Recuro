@@ -2,13 +2,14 @@ import { useCallback, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Outlet } from 'react-router-dom'
 import { useRules } from '../api/hooks'
-import { tenant } from '../config/tenant'
+import { useSession } from '../auth/sessionContext'
 import { NotificationDrawer } from './NotificationDrawer'
 import { Topbar } from './Topbar'
 
 export function Layout() {
   const { t } = useTranslation()
   const rules = useRules()
+  const { tenant } = useSession()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const close = useCallback(() => setDrawerOpen(false), [])
   return (

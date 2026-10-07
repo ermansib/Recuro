@@ -9,6 +9,8 @@ export type ChipTone = 'green' | 'red' | 'amber' | 'slate' | 'navy' | 'gold' | '
 
 export interface User {
   id: string
+  /** Workspace (tenant) the account belongs to. Accounts never span tenants. */
+  tenantId: string
   name: string
   initials: string
   role: Role
@@ -18,9 +20,17 @@ export interface User {
   summary: string
 }
 
+/** Kind of organisation running the workspace. It only seeds defaults; every type gets every feature. */
+export type OrgType = 'smallBusiness' | 'agency' | 'enterprise'
+
+export type SsoProvider = 'microsoft' | 'google' | 'saml'
+
 export interface TenantConfig {
   id: string
+  /** URL-safe workspace id used on the sign-in page and careers site, e.g. `aurora`. */
+  slug: string
   name: string
+  orgType: OrgType
   legalName: string
   careersTagline: string
   careersIntro: string
@@ -29,6 +39,114 @@ export interface TenantConfig {
   currency: string
   /** Optional overrides of the CSS design tokens in styles/tokens.css. */
   theme?: Record<string, string>
+  /** Enterprise sign-in options shown on the login page (RCU-PLT-001). */
+  ssoProviders: SsoProvider[]
+  /** Roles that must pass a second factor at sign-in (RCU-PLT-001). */
+  mfaRoles: Role[]
+  /** Idle minutes before the session ends (NFR-01). */
+  sessionIdleMinutes: number
+}
+
+// ---------- identity & sessions (RCU-PLT-001) ----------
+
+/** What the sign-in page needs to render a tenant's branding before anyone is signed in. */
+export type WorkspaceBranding = Pick<
+  TenantConfig,
+  'slug' | 'name' | 'orgType' | 'careersTagline' | 'theme' | 'ssoProviders' | 'sessionIdleMinutes'
+>
+
+export interface AuthSession {
+  /** Opaque bearer token. The .NET identity service will issue a JWT here. */
+  token: string
+  user: User
+  tenant: TenantConfig
+  issuedAt: string
+}
+
+export interface SignInInput {
+  workspace: string
+  email: string
+  password: string
+}
+
+export type SignInResult =
+  | { status: 'signedIn'; session: AuthSession }
+  | {
+      status: 'mfaRequired'
+      challengeId: string
+      /** Masked destination, e.g. `k.***@aurora-demo.example`. */
+      deliveredTo: string
+      /** Only the mock fills this, so the demo can be used without a mailbox. */
+      demoCode?: string
+    }
+
+export interface RegisterOrganisationInput {
+  orgName: string
+  orgType: OrgType
+  adminName: string
+  /** Role the workspace creator takes. Defaults per org type, the person can change it. */
+  adminRole: Exclude<Role, 'candidate' | 'employee'>
+  email: string
+  password: string
+  acceptTerms: boolean
+}
+
+export interface RegisterCandidateInput {
+  workspace: string
+  name: string
+  email: string
+  password: string
+  privacyConsent: boolean
+}
+
+export interface PasswordResetRequested {
+  /** Masked address the link went to. Always returned, so the form never reveals whether an account exists. */
+  deliveredTo: string
+  /** Only the mock fills this, so the demo can be used without a mailbox. */
+  demoResetPath?: string
+}
+
+export type StaffRole = Exclude<Role, 'candidate'>
+
+export interface InviteInput {
+  name: string
+  email: string
+  role: StaffRole
+}
+
+export interface Invitation {
+  id: string
+  tenantId: string
+  name: string
+  email: string
+  role: StaffRole
+  invitedBy: string
+  createdAt: string
+  expiresAt: string
+  status: 'Pending' | 'Accepted' | 'Expired'
+  /** Path the invitee opens to set a password, e.g. `/invite/abc`. */
+  acceptPath: string
+}
+
+/** Public view of an invite, shown on the accept page. */
+export interface InvitationView {
+  workspace: WorkspaceBranding
+  name: string
+  email: string
+  role: StaffRole
+  invitedBy: string
+}
+
+export interface AcceptInvitationInput {
+  token: string
+  name: string
+  password: string
+}
+
+/** Demo-only: personas the switcher can impersonate, and their shared password. */
+export interface DemoAccess {
+  personas: User[]
+  password: string
 }
 
 // ---------- rules engine seeds (FRD §5) ----------

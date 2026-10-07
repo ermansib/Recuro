@@ -14,5 +14,13 @@ npm test           # unit and component tests
 npm run build      # typecheck + production build
 ```
 
-Use the persona menu at the top right to switch between HR-TA, HR Head, MD/CEO, Employee and
-Candidate. Data lives in memory and resets on reload.
+Sign in at `/signin`. Choose **Open the demo workspace** (Aurora Housing Finance), then sign in with
+any demo account and the password `Recuro@2026`, or click a persona under **Demo personas**. HR Head
+and MD/CEO get a second-factor code, shown on screen in the demo. You can also create your own
+workspace at `/signup` (small business, recruitment agency or enterprise), register as a candidate
+from a workspace's sign-in page, reset a password, and invite colleagues from **Team & invitations**
+in the account menu.
+
+The demo personas (and the persona switcher in the account menu) appear in `npm run dev` only; set
+`VITE_DEMO_PERSONAS=true` to keep them in a production build. Accounts and workspaces you create are
+kept in the browser's localStorage; hiring data lives in memory and resets on reload.

@@ -17,6 +17,7 @@ export type Capability =
   | 'approvals.view'
   | 'internal.view'
   | 'careers.apply'
+  | 'team.invite'
 
 const matrix: Record<Capability, readonly Role[]> = {
   'mrf.raise': ['hrta'],
@@ -34,6 +35,8 @@ const matrix: Record<Capability, readonly Role[]> = {
   'approvals.view': ['hrta', 'hrhead', 'mdceo'],
   'internal.view': ['hrta', 'hrhead', 'mdceo'],
   'careers.apply': ['candidate'],
+  // Workspace administration: HR roles invite colleagues; candidates self-register (RCU-PLT-001).
+  'team.invite': ['hrta', 'hrhead'],
 }
 
 export function can(role: Role, capability: Capability): boolean {
