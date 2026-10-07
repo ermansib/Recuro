@@ -27,6 +27,12 @@ public interface IApplicationRepository
         int limit,
         CancellationToken ct);
 
+    /// <summary>How many of the tenant's applications sit in each stage (RCU-DSH-001 funnel).</summary>
+    Task<IReadOnlyDictionary<ApplicationStage, int>> CountByStageAsync(CancellationToken ct);
+
+    /// <summary>Read-only: applications whose current stage has overrun its TAT, longest-waiting first.</summary>
+    Task<IReadOnlyList<Domain.Applications.Application>> ListTatBreachedAsync(int limit, CancellationToken ct);
+
     void Add(Domain.Applications.Application application);
 }
 

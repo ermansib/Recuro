@@ -288,6 +288,47 @@ public sealed class PipelineApiTests(PipelineApiFactory api) : IClassFixture<Pip
         Assert.Matches("\"escalationPath\": ?\"hrhead\"", envelope);
     }
 
+    [Fact]
+    public async Task The_TA_dashboard_fragment_has_the_funnel_and_stage_breaches()
+    {
+        var tenant = Guid.NewGuid();
+        var reqId = await OpenRequisitionAsync(tenant);
+        var breached = await CreateAsync(tenant, reqId);
+        var screened = await CreateAsync(tenant, reqId);
+        await MoveAsync(tenant, screened, "Screened");
+        var job = api.Services.GetServices<Microsoft.Extensions.Hosting.IHostedService>().OfType<TatScanJob>().Single();
+        api.Clock.Advance(TimeSpan.FromDays(12));
+        try
+        {
+            await job.ScanAllTenantsAsync(CancellationToken.None);
+        }
+        finally
+        {
+            api.Clock.Advance(TimeSpan.FromDays(-12));
+        }
+
+        var fragment = await api.ClientFor(tenant, RecuroRoles.HrTa).GetFromJsonAsync<JsonElement>("/api/v1/pipeline/dashboard/ta");
+
+        Assert.Equal(["pipeline", "stats", "tatBreaches"], fragment.EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal));
+        var funnel = fragment.GetProperty("pipeline").EnumerateArray().ToList();
+        Assert.Equal(["Sourced", "Screened", "Interview", "Selection", "BGV", "Offer"], funnel.Select(f => f.GetProperty("stage").GetString()));
+        Assert.Equal(1, funnel[0].GetProperty("count").GetInt32());
+        Assert.Equal(["color", "count", "stage"], funnel[0].EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal));
+
+        // Both stages overran (7 working days each); rows carry the frontend tatBreaches fields.
+        var rows = fragment.GetProperty("tatBreaches").EnumerateArray().ToList();
+        Assert.Equal(2, rows.Count);
+        Assert.Contains(rows, r => r.GetProperty("position").GetString() == AppId(breached));
+        Assert.Equal(["escalation", "link", "position", "reqId", "stage", "stageTone"], rows[0].EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal));
+        Assert.Equal("HR Head", rows[0].GetProperty("escalation").GetString());
+        Assert.EndsWith("d / 7d TAT", rows[0].GetProperty("stage").GetString(), StringComparison.Ordinal);
+        var tile = Assert.Single(fragment.GetProperty("stats").EnumerateArray());
+        Assert.Equal("2", tile.GetProperty("value").GetString());
+        Assert.Equal("r", tile.GetProperty("tone").GetString());
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await api.ClientFor(tenant, RecuroRoles.Employee).GetAsync("/api/v1/pipeline/dashboard/ta")).StatusCode);
+    }
+
     private static string AppId(JsonElement application) => application.GetProperty("appId").GetString()!;
 
     private async Task<JsonElement> GetAsync(Guid tenant, string appId) =>
