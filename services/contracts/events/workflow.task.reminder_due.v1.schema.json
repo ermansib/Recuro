@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/workflow.task.reminder_due.v1.schema.json",
+  "title": "workflow.task.reminder_due.v1",
+  "description": "Producer: Workflow. An open task reached a reminder point of its SLA (RCU-WFL-003: 50% and 100% of the working-day duration). Notification reminds the assignees. Raised once per task and threshold. Subject: WorkflowTask/<taskId>.",
+  "type": "object",
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "instanceId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "leg": {
+      "type": "string"
+    },
+    "subjectType": {
+      "type": "string",
+      "description": "What the workflow decides on, e.g. Requisition or Offer."
+    },
+    "subjectId": {
+      "type": "string"
+    },
+    "assigneeIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "thresholdPercent": {
+      "type": "integer",
+      "enum": [
+        50,
+        100
+      ]
+    },
+    "dueAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "taskId",
+    "instanceId",
+    "subjectType",
+    "subjectId",
+    "assigneeIds",
+    "thresholdPercent",
+    "dueAt"
+  ],
+  "additionalProperties": true
+}
