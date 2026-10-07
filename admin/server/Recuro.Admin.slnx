@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Recuro.Admin.Api/Recuro.Admin.Api.csproj" />
+    <Project Path="src/Recuro.Admin.Application/Recuro.Admin.Application.csproj" />
+    <Project Path="src/Recuro.Admin.Domain/Recuro.Admin.Domain.csproj" />
+    <Project Path="src/Recuro.Admin.Infrastructure/Recuro.Admin.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Recuro.Admin.ArchitectureTests/Recuro.Admin.ArchitectureTests.csproj" />
+    <Project Path="tests/Recuro.Admin.IntegrationTests/Recuro.Admin.IntegrationTests.csproj" />
+    <Project Path="tests/Recuro.Admin.UnitTests/Recuro.Admin.UnitTests.csproj" />
+  </Folder>
+</Solution>
