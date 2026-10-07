@@ -11,7 +11,7 @@ using Recuro.Workflow.Infrastructure.Persistence;
 namespace Recuro.Workflow.Infrastructure.Scheduling;
 
 /// <summary>
-/// RCU-WFL-003/006: fires escalation steps whose time has come. Deadlines were computed on the tenant's
+/// RCU-WFL-003/006: fires SLA reminders (50%, 100%) and escalation steps whose time has come. Deadlines were computed on the tenant's
 /// calendar when each task opened, so a run needs no other service. One replica runs at a time (an
 /// advisory lock, BNFR-4); each instance is updated in its own tenant scope, and each step fires once.
 /// </summary>
@@ -45,7 +45,7 @@ public sealed partial class EscalationScheduler(
         while (await timer.WaitForNextTickAsync(stoppingToken));
     }
 
-    /// <summary>One pass. Returns how many escalation steps fired, or -1 when another replica holds the lock. Public for tests.</summary>
+    /// <summary>One pass. Returns how many reminders and escalation steps fired, or -1 when another replica holds the lock. Public for tests.</summary>
     public async Task<int> RunOnceAsync(CancellationToken ct)
     {
         await using var lockScope = scopes.CreateAsyncScope();
@@ -60,7 +60,8 @@ public sealed partial class EscalationScheduler(
         var due = await lockDb.Tasks
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(t => t.NextEscalationAt != null && t.NextEscalationAt <= now && t.Status == ApprovalTaskStatus.Open && t.PausedAt == null)
+            .Where(t => ((t.NextEscalationAt != null && t.NextEscalationAt <= now) || (t.NextReminderAt != null && t.NextReminderAt <= now))
+                && t.Status == ApprovalTaskStatus.Open && t.PausedAt == null)
             .Select(t => new { t.TenantId, t.InstanceId })
             .Distinct()
             .Take(options.Value.BatchSize)
@@ -109,7 +110,7 @@ public sealed partial class EscalationScheduler(
     [LoggerMessage(Level = LogLevel.Error, Message = "Escalation run failed")]
     private static partial void RunFailed(ILogger logger, Exception ex);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Fired {Count} escalation step(s) on workflow {InstanceId} (tenant {TenantId})")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Fired {Count} reminder(s) or escalation step(s) on workflow {InstanceId} (tenant {TenantId})")]
     private static partial void Escalated(ILogger logger, int count, Guid instanceId, Guid tenantId);
 }
 

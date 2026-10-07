@@ -41,6 +41,21 @@ internal sealed record EscalatedPayload(
     string EscalateTo,
     DateTimeOffset? DueAt);
 
+/// <summary>
+/// RCU-WFL-003. Tasks are assigned to a role, so <c>assigneeIds</c> is empty and <c>assigneeRole</c> names
+/// who to remind; Notification resolves the role's users through Identity.
+/// </summary>
+internal sealed record ReminderDuePayload(
+    Guid TaskId,
+    Guid InstanceId,
+    string Leg,
+    string SubjectType,
+    string SubjectId,
+    IReadOnlyList<string> AssigneeIds,
+    string AssigneeRole,
+    int ThresholdPercent,
+    DateTimeOffset? DueAt);
+
 internal sealed record SlaPayload(
     Guid TaskId,
     Guid InstanceId,
@@ -102,6 +117,19 @@ internal sealed class PublishTaskEscalated(IIntegrationEventPublisher publisher)
             EventTypes.Workflow.Escalated,
             Subjects.For(t),
             new EscalatedPayload(t.Id, i.Id, i.Type, i.SubjectType, i.SubjectId, t.AssigneeRole, s.Level, s.Role, t.DueAt));
+        return Task.CompletedTask;
+    }
+}
+
+internal sealed class PublishTaskReminderDue(IIntegrationEventPublisher publisher) : IDomainEventHandler<TaskReminderDue>
+{
+    public Task Handle(TaskReminderDue domainEvent, CancellationToken ct)
+    {
+        var (i, t, r) = (domainEvent.Instance, domainEvent.Task, domainEvent.Step);
+        publisher.Publish(
+            EventTypes.Workflow.TaskReminderDue,
+            Subjects.For(t),
+            new ReminderDuePayload(t.Id, i.Id, i.Legs[t.LegIndex].Name, i.SubjectType, i.SubjectId, [], t.AssigneeRole, r.ThresholdPercent, t.DueAt));
         return Task.CompletedTask;
     }
 }
