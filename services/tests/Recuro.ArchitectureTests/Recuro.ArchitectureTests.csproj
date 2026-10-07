@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Fails the build when a layer or a service boundary is crossed. Every service's Api project is
+    picked up by the glob below, so a new service is checked without editing this file.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NetArchTest.Rules" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../*/src/*.Api/*.Api.csproj" />
+    <ProjectReference Include="../../Gateway/src/Recuro.Gateway/Recuro.Gateway.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/src/*/*.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

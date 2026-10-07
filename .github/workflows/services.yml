@@ -1,0 +1,48 @@
+name: services
+
+on:
+  pull_request:
+    paths: ['services/**', '.github/workflows/services.yml']
+  push:
+    branches: [main]
+    paths: ['services/**', '.github/workflows/services.yml']
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: services/global.json
+      - run: dotnet tool restore
+      - run: dotnet restore Recuro.Services.slnx
+      - run: dotnet build Recuro.Services.slnx --no-restore
+      - run: dotnet format Recuro.Services.slnx --verify-no-changes --no-restore
+      # Unit, integration (Testcontainers: PostgreSQL, RabbitMQ) and architecture tests.
+      # The architecture tests fail the build when a layer or a service boundary is crossed.
+      - run: dotnet test Recuro.Services.slnx --no-build
+      # Free / open-source only: any package whose licence is not on the allow-list fails the build.
+      - name: Licence check
+        run: >
+          dotnet nuget-license -i Recuro.Services.slnx -t
+          -a licenses/allowed-licenses.json
+          -mapping licenses/license-url-mappings.json
+          -override licenses/package-overrides.json
+
+  images:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build every service image
+        run: |
+          for dockerfile in */Dockerfile; do
+            service=$(dirname "$dockerfile" | tr '[:upper:]' '[:lower:]')
+            docker build -f "$dockerfile" -t "recuro/$service:ci" .
+          done

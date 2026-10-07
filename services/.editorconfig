@@ -1,0 +1,50 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+
+[*.{json,props,csproj,slnx,xml}]
+indent_size = 2
+
+[*.cs]
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_style_var_for_built_in_types = true:suggestion
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_sort_system_directives_first = true
+# Private fields are _camelCase.
+dotnet_naming_rule.private_fields.symbols = private_fields
+dotnet_naming_rule.private_fields.style = underscore_camel
+dotnet_naming_rule.private_fields.severity = warning
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_style.underscore_camel.capitalization = camel_case
+dotnet_naming_style.underscore_camel.required_prefix = _
+# Static readonly / const fields are PascalCase.
+dotnet_naming_rule.private_static.symbols = private_static
+dotnet_naming_rule.private_static.style = pascal
+dotnet_naming_rule.private_static.severity = warning
+dotnet_naming_symbols.private_static.applicable_kinds = field
+dotnet_naming_symbols.private_static.applicable_accessibilities = private
+dotnet_naming_symbols.private_static.required_modifiers = static
+dotnet_naming_style.pascal.capitalization = pascal_case
+# C#-only codebase: VB keyword clashes (Error) do not matter.
+dotnet_diagnostic.CA1716.severity = none
+# Library code: no ConfigureAwait noise in ASP.NET Core.
+dotnet_diagnostic.CA2007.severity = none
+# Handler names such as IDomainEventHandler are deliberate.
+dotnet_diagnostic.CA1711.severity = none
+# Domain errors are created with string literals by design.
+dotnet_diagnostic.CA1303.severity = none
+# xUnit test names use underscores.
+[{tests/**.cs,**/tests/**.cs}]
+dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1515.severity = none
+dotnet_diagnostic.CA2234.severity = none
+dotnet_diagnostic.CA1861.severity = none
+
+[**/Migrations/*.cs]
+generated_code = true

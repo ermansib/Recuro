@@ -46,7 +46,8 @@ future .NET DTOs. P1 screens (Onboarding, Vendors, Reports, Internal Careers) ar
 ## Tooling and layout
 
 Monorepo: `frontend/` (main portal), `admin/` (admin portal: .NET 10 API + React client, one deployable; see
-`admin/README.md`), and `services/` (.NET Core microservices) later.
+`admin/README.md`), and `services/` (.NET 10 microservices behind a YARP gateway; see `services/README.md`,
+`services/docs/architecture.md` for the service map and ADR 0001 for the decisions).
 
 | Concern | Choice |
 |---|---|
