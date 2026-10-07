@@ -18,24 +18,25 @@ internal static class NotificationEndpoints
     public static IEndpointRouteBuilder MapNotificationEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/v1/notifications").WithTags("Notifications");
+        var inbox = group.MapGroup(string.Empty).AddEndpointFilter<RememberContactFilter>();
 
-        group.MapGet("/", ListAsync)
+        inbox.MapGet("/", ListAsync)
             .RequireAuthorization(NotificationPolicies.Inbox)
             .WithSummary("The caller's notifications, newest first (frontend listNotifications). filter=all|unread, limit, before=<id>.");
 
-        group.MapGet("/unread-count", UnreadCountAsync)
+        inbox.MapGet("/unread-count", UnreadCountAsync)
             .RequireAuthorization(NotificationPolicies.Inbox)
             .WithSummary("Unread badge counts for the bell and the email centre (cached briefly).");
 
-        group.MapPost("/read", MarkReadAsync)
+        inbox.MapPost("/read", MarkReadAsync)
             .RequireAuthorization(NotificationPolicies.Inbox)
             .WithSummary("Marks notifications read: { ids: [...] } or { all: true } (frontend markNotificationRead / markAllRead).");
 
-        group.MapGet("/emails", ListEmailsAsync)
+        inbox.MapGet("/emails", ListEmailsAsync)
             .RequireAuthorization(NotificationPolicies.Inbox)
             .WithSummary("The caller's email centre, newest first (frontend listEmails).");
 
-        group.MapPost("/emails/read", MarkEmailsReadAsync)
+        inbox.MapPost("/emails/read", MarkEmailsReadAsync)
             .RequireAuthorization(NotificationPolicies.Inbox)
             .WithSummary("Marks emails read: { ids: [...] } or { all: true } (frontend markEmailRead / markAllRead).");
 

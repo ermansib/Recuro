@@ -1,0 +1,69 @@
+using Recuro.Identity.Application.Users;
+using Recuro.Identity.Domain;
+using Recuro.Identity.Domain.Masking;
+using Recuro.Identity.Domain.Users;
+
+namespace Recuro.Identity.UnitTests;
+
+public class MaskingAndUserTests
+{
+    private static readonly Guid Tenant = Guid.Parse("6a1e3c4e-0b4d-4d55-9f5b-5f0d3b8a0a01");
+    private static readonly DateTimeOffset Now = new(2026, 10, 7, 10, 0, 0, TimeSpan.Zero);
+
+    [Fact]
+    public void MD_CEO_sees_candidate_CTC_hidden_and_contact_partial()
+    {
+        var fields = DefaultMaskingMap.Create().For(PersonaRoles.MdCeo, "candidate")!;
+
+        Assert.Equal(MaskStrategy.Hide, fields["currentCtc"]);
+        Assert.Equal(MaskStrategy.Hide, fields["expectedCtc"]);
+        Assert.Equal(MaskStrategy.Partial, fields["phone"]);
+    }
+
+    [Theory]
+    [InlineData(PersonaRoles.HrTa)]
+    [InlineData(PersonaRoles.HrHead)]
+    public void HR_sees_every_field(string role) => Assert.Empty(DefaultMaskingMap.Create().For(role, "candidate")!);
+
+    [Theory]
+    [InlineData("service", "candidate")]
+    [InlineData(PersonaRoles.HrTa, "payslip")]
+    public void Unknown_roles_and_resources_have_no_map(string role, string resource) =>
+        Assert.Null(DefaultMaskingMap.Create().For(role, resource));
+
+    [Fact]
+    public void Provisioning_keeps_only_Recuro_roles_and_raises_an_event()
+    {
+        var user = UserAccount.Provision(Tenant, "sub-1", "Kavya Iyer", "k@aurora.example", ["offline_access", "hrhead", "default-roles-recuro", "hrta"], Now);
+
+        Assert.Equal(["hrhead", "hrta"], user.Roles);
+        var provisioned = Assert.IsType<UserProvisionedDomainEvent>(Assert.Single(user.DomainEvents));
+        Assert.Equal("sub-1", provisioned.Subject);
+    }
+
+    [Fact]
+    public void A_role_change_raises_an_event_and_an_unchanged_sync_does_not()
+    {
+        var user = UserAccount.Provision(Tenant, "sub-1", "Kavya Iyer", "k@aurora.example", ["hrta"], Now);
+        user.ClearDomainEvents();
+
+        user.SyncFromToken("Kavya Iyer", "k@aurora.example", ["hrta"], Now.AddHours(1));
+        Assert.Empty(user.DomainEvents);
+
+        user.SyncFromToken("Kavya Iyer", "k@aurora.example", ["hrhead"], Now.AddHours(2));
+        var changed = Assert.IsType<UserRolesChangedDomainEvent>(Assert.Single(user.DomainEvents));
+        Assert.Equal(["hrta"], changed.From);
+        Assert.Equal(["hrhead"], changed.To);
+    }
+
+    [Fact]
+    public void The_user_DTO_uses_the_most_senior_persona_and_initials()
+    {
+        var dto = UserDto.From(UserAccount.Provision(Tenant, "sub-9", "kavya  iyer rao", "k@x", ["hrta", "mdceo"], Now));
+
+        Assert.Equal("mdceo", dto.Role);
+        Assert.Equal("KI", dto.Initials);
+        Assert.Equal("sub-9", dto.Id);
+        Assert.Equal(Tenant.ToString(), dto.TenantId);
+    }
+}

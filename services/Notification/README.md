@@ -46,8 +46,10 @@ never go in the URL.
 ## Events
 
 Consumes the matrix events (see `NotificationMatrix.SubscribedEventTypes`), plus
-`identity.user.provisioned.v1` and `identity.role.changed.v1` to keep a local directory of names,
-addresses and roles (fields read: `userId`, `name`, `email`, `roles`). Publishes
+`identity.user.provisioned.v1` and `identity.role.changed.v1` to keep a local directory of who holds
+which role. Those events carry no PII, so a person's name and email are remembered from their token
+the first time they open the bell (just in time, like Identity does). Until then, mail to them is
+logged as suppressed. Publishes
 `notification.created.v1`, `notification.email.dispatched.v1` and `notification.email.failed.v1`
 (schemas in `contracts/events`).
 

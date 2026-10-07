@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\Recuro.Config.Application\Recuro.Config.Application.csproj" />
+    <ProjectReference Include="..\Recuro.Config.Infrastructure\Recuro.Config.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\src\Recuro.BuildingBlocks.Web\Recuro.BuildingBlocks.Web.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

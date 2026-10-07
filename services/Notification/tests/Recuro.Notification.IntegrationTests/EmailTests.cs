@@ -3,7 +3,9 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Recuro.BuildingBlocks.Application.Abstractions;
+using Recuro.BuildingBlocks.Application.Messaging;
 using Recuro.BuildingBlocks.Web.Auth;
+using Recuro.Notification.Application.Directory;
 using Recuro.Notification.Infrastructure.Email;
 using Recuro.Notification.Infrastructure.Persistence;
 
@@ -173,5 +175,28 @@ public sealed class EmailTests(NotificationApiFactory api)
         Assert.Equal("Pending", row.GetProperty("status").GetString());
         Assert.Equal("candidate.regret", row.GetProperty("templateKey").GetString());
         Assert.Equal("cnd-42@example.test", row.GetProperty("to").GetString());
+    }
+
+    [Fact]
+    public async Task People_who_signed_in_are_emailed_at_the_address_on_their_token()
+    {
+        var tenant = Guid.NewGuid();
+        await using (var scope = api.Services.CreateAsyncScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<ScopeContext>();
+            context.SetTenant(tenant);
+            context.SetUser("head-9", "R. Iyer", [RecuroRoles.HrHead]);
+            await scope.ServiceProvider.GetRequiredService<ICommandHandler<RememberContactCommand>>()
+                .Handle(new RememberContactCommand("R. Iyer", "r.iyer@example.test"), CancellationToken.None);
+        }
+
+        // Identity's events carry roles only; they must not wipe the address.
+        await api.PublishAsync("identity.role.changed.v1", new { userId = "head-9", from = new[] { "hrhead" }, to = new[] { "hrhead", "mdceo" } }, tenant: tenant);
+        await api.PublishAsync("vendor.sla.breached.v1", new { vendorId = "VND-1" }, tenant: tenant);
+        await DispatchAsync();
+
+        var sent = Assert.Single(api.Mail.Sent, m => m.TenantId == tenant);
+        Assert.Equal("r.iyer@example.test", sent.ToAddress);
+        Assert.Equal("R. Iyer", sent.ToName);
     }
 }

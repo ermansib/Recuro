@@ -12,6 +12,8 @@ builder.Services
     .AddNotificationApplication()
     .AddNotificationInfrastructure(builder.Configuration)
     .AddNotificationPolicies();
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<RememberContactFilter>();
 builder.Services.AddOptions<NotificationStreamOptions>().BindConfiguration(NotificationStreamOptions.SectionName);
 
 var app = builder.Build();

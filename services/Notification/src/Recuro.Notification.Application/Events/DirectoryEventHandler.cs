@@ -5,12 +5,17 @@ using Recuro.Notification.Domain.Directory;
 namespace Recuro.Notification.Application.Events;
 
 /// <summary>
-/// The fields this service reads from <c>identity.user.provisioned.v1</c> and <c>identity.role.changed.v1</c>
-/// (tolerant reader: anything else in the payload is ignored; missing fields keep their old value).
+/// The fields this service reads from <c>identity.user.provisioned.v1</c> (<c>userId</c>, <c>roles</c>) and
+/// <c>identity.role.changed.v1</c> (<c>userId</c>, <c>to</c>). Tolerant reader: other fields are ignored,
+/// and <c>name</c>/<c>email</c> are used if a future version adds them.
 /// </summary>
-public sealed record IdentityUserPayload(string? UserId, string? Name, string? Email, IReadOnlyList<string>? Roles);
+public sealed record IdentityUserPayload(string? UserId, string? Name, string? Email, IReadOnlyList<string>? Roles, IReadOnlyList<string>? To)
+{
+    /// <summary>The user's roles now: <c>roles</c> on provisioning, <c>to</c> on a change.</summary>
+    public IReadOnlyList<string>? CurrentRoles => Roles ?? To;
+}
 
-/// <summary>Keeps the local recipient directory in step with Identity, so role recipients get email addresses.</summary>
+/// <summary>Keeps the local recipient directory (who holds which role) in step with Identity's events.</summary>
 public sealed class DirectoryEventHandler(INotificationStore store, TimeProvider clock) : IIntegrationEventHandler<IdentityUserPayload>
 {
     public async Task Handle(IntegrationEvent<IdentityUserPayload> integrationEvent, CancellationToken ct)
@@ -31,6 +36,6 @@ public sealed class DirectoryEventHandler(INotificationStore store, TimeProvider
             store.Add(user);
         }
 
-        user.Update(data.Name, data.Email, data.Roles, now);
+        user.Update(data.Name, data.Email, data.CurrentRoles, now);
     }
 }

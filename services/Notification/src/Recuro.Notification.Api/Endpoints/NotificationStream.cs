@@ -42,6 +42,7 @@ internal static class NotificationStream
     {
         app.MapGet(Path, StreamAsync)
             .RequireAuthorization(NotificationPolicies.Inbox)
+            .AddEndpointFilter<RememberContactFilter>()
             .WithTags("Notifications")
             .WithSummary("Live notifications as Server-Sent Events. Resume with Last-Event-ID.")
             .Produces(StatusCodes.Status200OK, contentType: "text/event-stream");
