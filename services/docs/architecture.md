@@ -106,6 +106,59 @@ This adds `n` working days to `from` using the business calendar for `location` 
 when it is omitted). It returns `{ "date": "YYYY-MM-DD", "configVersionId": "guid" }`. This is the
 only working-day calculation in the backend; services never count holidays themselves.
 
+### Identity: masking map (owner: Identity, callers: Candidate, Bgv, Offer, Gateway BFF)
+
+**`GET /api/v1/masking/{role}/{resource}`** (RCU-AUT-004), for example `/masking/mdceo/candidate`
+
+This returns `{ "role": "mdceo", "resource": "candidate", "version": "string", "fields": { "email": "partial", "phone": "partial", "currentCtc": "hide", "expectedCtc": "hide" } }`.
+
+- The strategies are `none`, `partial`, `hide` and `hash`. A field that isn't listed is `none`.
+- An unknown role, or one with no map, gets every sensitive field as `hide`, so the lookup fails closed.
+- Callers cache the map per tenant, role and version for up to 5 minutes, and apply it when they
+  serialize a response.
+- The map is tenant configuration seeded from FRD §3.2. Candidate's local table
+  (`CandidateMasking`) holds the same values until Identity ships, and is then replaced by this call.
+
+### Vendor: consultant status (owner: Vendor, wave 2; caller: Candidate)
+
+**`GET /api/v1/vendors/{vendorId}/status`** (RCU-CND-005, VND-001)
+
+This returns `{ "vendorId": "string", "status": "active | pending | off", "active": true }`. An unknown
+id returns 404, which the caller treats as not active (400 `vendor_not_active`). Until Vendor ships,
+Candidate's `UncheckedVendorDirectory` accepts every id and logs a warning. Vendor also publishes
+`vendor.de_empanelled`, so a caller may cache a status for up to 5 minutes.
+
+### Gateway BFF: log a candidate (owner: Gateway; calls Candidate, then Pipeline)
+
+**`POST /bff/candidates`** with the frontend `LogCandidateInput` body
+(`frontend/src/api/contract.ts`). It returns 201 with a `PipelineCard`, the same shape `logCandidate`
+returns in the mock.
+
+1. `POST /api/v1/candidates` with the candidate fields and consent. Errors come back as is,
+   including 409 `duplicate_candidate`. That matches the mock (RCU-PIP-002), where HR-TA decides
+   whether the person is a duplicate.
+2. `POST /api/v1/pipeline/applications` with `{ reqId, candidateId }`. A 409 means sourcing is
+   locked or the candidate already applied, and it comes back as is.
+
+The client's `Idempotency-Key` is forwarded to both calls with a step suffix (`<key>:candidate`,
+`<key>:application`). If the first call succeeded and the second failed, a retry replays the stored
+candidate response instead of tripping the duplicate check, then creates the application. No compensation is needed: a candidate without an application is valid data, and it ages
+out under the retention policy. The BFF forwards the caller's bearer token and correlation ids.
+
+### Integration event change: `pipeline.application.final_rejected` v1
+
+The payload is `{ appId, reqId, candidateId, reason, regretSendAt, retainUntil }`, with both dates as
+`YYYY-MM-DD`. `candidateId` and `retainUntil` are additive, so v1 stays v1 and tolerant readers that
+ignore them keep working. The schema is in
+`services/contracts/events/pipeline.application.final_rejected.v1.schema.json`. Candidate uses
+`retainUntil` for its purge date, and Notification uses `regretSendAt` for the regret email.
+
+Contract changes follow these rules:
+
+- Adding an optional field, or a field that every producer always sets, keeps the version.
+- Removing or renaming a field, or changing its meaning, needs `.v2` and a period in which both
+  versions are published.
+
 ## Sagas (owner runs the orchestration, compensations required)
 
 | Saga | Owner | Steps |
