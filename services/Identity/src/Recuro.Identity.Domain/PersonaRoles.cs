@@ -15,6 +15,9 @@ public static class PersonaRoles
     /// <summary>Tenant administrator in the admin portal. Not a persona, but mirrored like one.</summary>
     public const string TenantAdmin = "tenant-admin";
 
+    /// <summary>Service accounts (client credentials, RCU-AUT-005). Never mirrored as a user.</summary>
+    public const string Service = "service";
+
     /// <summary>Every persona, most senior first. A user's primary role is the first one they hold.</summary>
     public static readonly IReadOnlyList<string> All = [MdCeo, HrHead, HrTa, Employee, Candidate];
 
@@ -22,6 +25,9 @@ public static class PersonaRoles
 
     /// <summary>Roles the user mirror keeps. Keycloak's own defaults (offline_access, default-roles-*) are dropped.</summary>
     public static bool IsMirrored(string role) => IsPersona(role) || role == TenantAdmin;
+
+    /// <summary>Roles the masking map answers for: every persona plus service accounts.</summary>
+    public static bool HasMaskingMap(string role) => IsPersona(role) || role == Service;
 
     /// <summary>The role a person is shown as: the most senior persona role they hold.</summary>
     public static string? Primary(IEnumerable<string> roles)

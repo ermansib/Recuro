@@ -24,7 +24,7 @@ internal sealed class GetMaskingMapQueryHandler(IMaskingMapProvider maps) : IQue
         {
             return Error.NotFound(
                 "masking_map_not_found",
-                $"No masking map for role '{query.Role}' on '{query.Resource}'. Roles: {string.Join(", ", PersonaRoles.All)}. Resources: {string.Join(", ", map.Resources)}.");
+                $"No masking map for role '{query.Role}' on '{query.Resource}'. Roles: {string.Join(", ", PersonaRoles.All)}, {PersonaRoles.Service}. Resources: {string.Join(", ", map.Resources)}.");
         }
 
         var wire = fields.ToDictionary(f => f.Key, f => f.Value.ToString().ToLowerInvariant(), StringComparer.Ordinal);

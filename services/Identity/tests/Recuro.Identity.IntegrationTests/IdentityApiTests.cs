@@ -153,6 +153,17 @@ public sealed class IdentityApiTests(IdentityApiFactory api) : IClassFixture<Ide
     }
 
     [Fact]
+    public async Task Service_accounts_have_a_masking_map()
+    {
+        var map = await api.ClientFor(IdentityApiFactory.TenantA, RecuroRoles.Service)
+            .GetFromJsonAsync<JsonElement>("/api/v1/identity/masking/service/candidate");
+
+        var fields = map.GetProperty("fields");
+        Assert.False(fields.TryGetProperty("email", out _));
+        Assert.Equal("hide", fields.GetProperty("currentCtc").GetString());
+    }
+
+    [Fact]
     public async Task An_unknown_masking_resource_is_a_404()
     {
         var response = await api.ClientFor(IdentityApiFactory.TenantA, RecuroRoles.Service).GetAsync("/api/v1/identity/masking/hrta/payslip");
