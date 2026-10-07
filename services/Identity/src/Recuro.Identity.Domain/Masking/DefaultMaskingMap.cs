@@ -6,7 +6,7 @@ namespace Recuro.Identity.Domain.Masking;
 /// </summary>
 public static class DefaultMaskingMap
 {
-    public const string Version = "masking-2026.10";
+    public const string Version = "masking-2026.10.1";
 
     public static MaskingMap Create()
     {
@@ -35,6 +35,16 @@ public static class DefaultMaskingMap
                 },
                 [PersonaRoles.Employee] = noAccess,
                 [PersonaRoles.Candidate] = noAccess,
+
+                // Service accounts get only what event handlers need: name and email for
+                // candidate emails (e.g. Notification's regret email). Phone, summary and CTC stay hidden.
+                [PersonaRoles.Service] = new Dictionary<string, MaskStrategy>
+                {
+                    ["phone"] = MaskStrategy.Hide,
+                    ["summary"] = MaskStrategy.Hide,
+                    ["currentCtc"] = MaskStrategy.Hide,
+                    ["expectedCtc"] = MaskStrategy.Hide,
+                },
             },
             ["approval"] = new Dictionary<string, IReadOnlyDictionary<string, MaskStrategy>>
             {
@@ -42,6 +52,7 @@ public static class DefaultMaskingMap
                 [PersonaRoles.MdCeo] = new Dictionary<string, MaskStrategy> { ["sensitive"] = MaskStrategy.Hide },
                 [PersonaRoles.Employee] = new Dictionary<string, MaskStrategy> { ["sensitive"] = MaskStrategy.Hide },
                 [PersonaRoles.Candidate] = new Dictionary<string, MaskStrategy> { ["sensitive"] = MaskStrategy.Hide },
+                [PersonaRoles.Service] = new Dictionary<string, MaskStrategy> { ["sensitive"] = MaskStrategy.Hide },
             },
         });
     }
