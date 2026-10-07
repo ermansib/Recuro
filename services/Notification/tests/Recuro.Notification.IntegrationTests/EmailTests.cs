@@ -155,4 +155,23 @@ public sealed class EmailTests(NotificationApiFactory api)
 
         Assert.Empty(await db.Emails.ToListAsync());
     }
+
+    [Fact]
+    public async Task The_regret_email_waits_for_the_date_Pipeline_set()
+    {
+        var tenant = Guid.NewGuid();
+        var sendOn = DateTime.UtcNow.Date.AddDays(3).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+
+        await api.PublishAsync(
+            "pipeline.application.final_rejected.v1",
+            new { appId = "APP-R1", reqId = "REQ-1", candidateId = "CND-42", reason = "Not shortlisted", regretSendAt = sendOn, retainUntil = "2027-10-07" },
+            tenant: tenant);
+        await DispatchAsync();
+
+        Assert.DoesNotContain(api.Mail.Sent, m => m.TenantId == tenant);
+        var row = Assert.Single((await api.ClientFor(tenant, RecuroRoles.HrHead).GetFromJsonAsync<JsonElement>("/api/v1/notifications/delivery-log")).EnumerateArray());
+        Assert.Equal("Pending", row.GetProperty("status").GetString());
+        Assert.Equal("candidate.regret", row.GetProperty("templateKey").GetString());
+        Assert.Equal("cnd-42@example.test", row.GetProperty("to").GetString());
+    }
 }

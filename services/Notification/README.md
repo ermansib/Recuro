@@ -16,6 +16,9 @@ stream of RCU-GTW-003. Database: `recuro_notification`.
   MailKit (MIT): Mailpit locally, any SMTP relay in production. Three attempts with exponential
   backoff, then `Failed` (the dead letter) and `notification.email.failed.v1`. Bounced addresses are
   suppressed. Templates are plain text, so event data can never become HTML in an inbox.
+- **Regret emails (CAR-006).** `pipeline.application.final_rejected.v1` schedules the candidate's
+  regret email for `regretSendAt`. The address comes from `ICandidateContacts`; until Candidate offers
+  a contact lookup, the stand-in returns none and the email is logged as suppressed.
 - **Delivery log (NTF-004).** Every email row keeps template, template version, matrix version,
   recipient, timestamps, provider message id and status. Rows are never deleted.
 - **Live stream (GTW-003).** `GET /stream/notifications` is Server-Sent Events, proxied by the gateway.

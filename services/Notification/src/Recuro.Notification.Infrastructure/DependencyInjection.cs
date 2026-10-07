@@ -9,6 +9,7 @@ using Recuro.Notification.Application.Events;
 using Recuro.Notification.Application.Templates;
 using Recuro.Notification.Domain.Matrix;
 using Recuro.Notification.Infrastructure.Caching;
+using Recuro.Notification.Infrastructure.Directory;
 using Recuro.Notification.Infrastructure.Email;
 using Recuro.Notification.Infrastructure.Live;
 using Recuro.Notification.Infrastructure.Persistence;
@@ -26,6 +27,7 @@ public static class DependencyInjection
         services.AddScoped<INotificationReadStore, NotificationReadStore>();
         services.AddScoped<IUnreadCountCache, DistributedUnreadCountCache>();
         services.AddSingleton<ITemplateSource, DefaultTemplates>();
+        services.AddScoped<ICandidateContacts, UnavailableCandidateContacts>();
 
         // Live updates: pg_notify inside the writing transaction, LISTEN on every replica.
         services.AddScoped<IFeedChangeSignal, PostgresFeedChangeSignal>();

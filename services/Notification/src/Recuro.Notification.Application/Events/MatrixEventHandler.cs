@@ -57,9 +57,10 @@ public sealed partial class MatrixEventHandler(
                 if (rule.Channels.HasFlag(Channels.Email))
                 {
                     var content = template.RenderEmail(values);
+                    var sendAt = EventPayload.ReadDate(data, rule.SendAtField);
                     foreach (var recipient in recipients.Email.Where(r => emailKeys.Add(r.Key)))
                     {
-                        await AddEmailAsync(recipient, content, origin, now, ct);
+                        await AddEmailAsync(recipient, content, origin, now, sendAt, ct);
                     }
                 }
             }
@@ -102,10 +103,10 @@ public sealed partial class MatrixEventHandler(
         return true;
     }
 
-    private async Task AddEmailAsync(Recipient recipient, RenderedEmail content, DeliveryOrigin origin, DateTimeOffset now, CancellationToken ct)
+    private async Task AddEmailAsync(Recipient recipient, RenderedEmail content, DeliveryOrigin origin, DateTimeOffset now, DateTimeOffset? sendAt, CancellationToken ct)
     {
         var options = emailOptions;
-        var created = EmailMessage.Create(recipient, content, new EmailSender(options.FromAddress, options.FromName, options.Signature), origin, now);
+        var created = EmailMessage.Create(recipient, content, new EmailSender(options.FromAddress, options.FromName, options.Signature), origin, now, sendAt);
         if (created.IsFailure)
         {
             Skipped(logger, origin.TemplateKey, recipient.Key, created.Error!.Message);

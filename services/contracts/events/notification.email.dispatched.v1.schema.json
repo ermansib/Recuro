@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://recuro.dev/contracts/events/notification.email.dispatched.v1.schema.json",
+  "$id": "events/notification.email.dispatched.v1.schema.json",
   "title": "notification.email.dispatched.v1",
-  "description": "The mail provider accepted an email (RCU-NTF-002/004). No addresses or text. Subject: Email/<emailId>.",
+  "description": "Producer: Notification. The mail provider accepted an email (RCU-NTF-002/004). No addresses or text. Subject: Email/<emailId>.",
   "type": "object",
   "properties": {
     "emailId": {

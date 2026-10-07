@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://recuro.dev/contracts/events/notification.created.v1.schema.json",
+  "$id": "events/notification.created.v1.schema.json",
   "title": "notification.created.v1",
-  "description": "A bell item was created (RCU-NTF-001). Ids only: no text, names or contact details. Subject: Notification/<notificationId>.",
+  "description": "Producer: Notification. A bell item was created (RCU-NTF-001). Ids only: no text, names or contact details. Subject: Notification/<notificationId>.",
   "type": "object",
   "properties": {
     "notificationId": {

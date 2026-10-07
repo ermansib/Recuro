@@ -29,7 +29,7 @@ public class RecipientResolverTests
     [Fact]
     public async Task A_role_with_nobody_in_the_directory_gets_one_role_wide_item_and_one_unaddressed_email()
     {
-        var resolver = new RecipientResolver(new FakeStore());
+        var resolver = new RecipientResolver(new FakeStore(), FakeContacts.None);
 
         var result = await resolver.ResolveAsync(RecipientRule.ForRole("hrhead"), Metadata, default, CancellationToken.None);
 
@@ -45,7 +45,7 @@ public class RecipientResolverTests
         store.AddUser("u-2", "S. Rao", "s.rao@example.test", "hrhead");
         store.AddUser("u-3", "T. Das", "t.das@example.test", "hrta");
 
-        var result = await new RecipientResolver(store).ResolveAsync(RecipientRule.ForRole("hrhead"), Metadata, default, CancellationToken.None);
+        var result = await new RecipientResolver(store, FakeContacts.None).ResolveAsync(RecipientRule.ForRole("hrhead"), Metadata, default, CancellationToken.None);
 
         Assert.True(Assert.Single(result.InApp).IsRoleWide);
         Assert.Equal(["r.iyer@example.test", "s.rao@example.test"], result.Email.Select(r => r.Email));
@@ -54,7 +54,7 @@ public class RecipientResolverTests
     [Fact]
     public async Task The_actor_is_addressed_by_id_and_keeps_their_name()
     {
-        var result = await new RecipientResolver(new FakeStore()).ResolveAsync(RecipientRule.ForActor("candidate"), Metadata, default, CancellationToken.None);
+        var result = await new RecipientResolver(new FakeStore(), FakeContacts.None).ResolveAsync(RecipientRule.ForActor("candidate"), Metadata, default, CancellationToken.None);
 
         var recipient = Assert.Single(result.InApp);
         Assert.Equal("cand-7", recipient.UserId);
@@ -66,7 +66,7 @@ public class RecipientResolverTests
     public async Task A_missing_payload_user_falls_back_to_the_role_when_the_rule_says_so()
     {
         var data = JsonSerializer.SerializeToElement(new { taskId = "T-1" });
-        var resolver = new RecipientResolver(new FakeStore());
+        var resolver = new RecipientResolver(new FakeStore(), FakeContacts.None);
 
         var withFallback = await resolver.ResolveAsync(RecipientRule.ForPayloadUser("assignee", "hrhead", fallbackToRole: true), Metadata, data, CancellationToken.None);
         var without = await resolver.ResolveAsync(RecipientRule.ForPayloadUser("assignee", "hrhead"), Metadata, data, CancellationToken.None);
@@ -80,8 +80,32 @@ public class RecipientResolverTests
     {
         var data = JsonSerializer.SerializeToElement(new { panel = new[] { "u-1", "u-1", "u-2" } });
 
-        var result = await new RecipientResolver(new FakeStore()).ResolveAsync(RecipientRule.ForPayloadUsers("panel", "hrta"), Metadata, data, CancellationToken.None);
+        var result = await new RecipientResolver(new FakeStore(), FakeContacts.None).ResolveAsync(RecipientRule.ForPayloadUsers("panel", "hrta"), Metadata, data, CancellationToken.None);
 
         Assert.Equal(["u-1", "u-2"], result.InApp.Select(r => r.UserId));
+    }
+
+    [Fact]
+    public async Task A_candidate_gets_email_only_at_Candidates_address_and_never_a_bell_item()
+    {
+        var data = JsonSerializer.SerializeToElement(new { candidateId = "CND-1" });
+        var contacts = new FakeContacts(new Recuro.Notification.Application.Abstractions.CandidateContact("P. Nair", "p.nair@example.test"));
+
+        var result = await new RecipientResolver(new FakeStore(), contacts).ResolveAsync(RecipientRule.ForPayloadCandidate("candidateId"), Metadata, data, CancellationToken.None);
+
+        Assert.Empty(result.InApp);
+        var recipient = Assert.Single(result.Email);
+        Assert.Equal("candidate:CND-1", recipient.UserId);
+        Assert.Equal("p.nair@example.test", recipient.Email);
+    }
+
+    [Fact]
+    public void Dates_in_payloads_are_read_as_midnight_UTC()
+    {
+        var data = JsonSerializer.SerializeToElement(new { regretSendAt = "2026-10-12", bad = "soon" });
+
+        Assert.Equal(new DateTimeOffset(2026, 10, 12, 0, 0, 0, TimeSpan.Zero), EventPayload.ReadDate(data, "regretSendAt"));
+        Assert.Null(EventPayload.ReadDate(data, "bad"));
+        Assert.Null(EventPayload.ReadDate(data, "missing"));
     }
 }

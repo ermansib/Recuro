@@ -79,7 +79,11 @@ public sealed class NotificationApiFactory : WebApplicationFactory<Program>, IAs
         builder.UseSetting("Email:RetryBackoff", "00:00:00");
         builder.UseSetting("NotificationStream:HeartbeatInterval", "00:00:01");
         builder.UseSetting("Database:MigrateOnStartup", "false");
-        builder.ConfigureTestServices(services => services.AddSingleton<IEmailTransport>(Mail));
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddSingleton<IEmailTransport>(Mail);
+            services.AddSingleton<ICandidateContacts>(new KnownCandidates());
+        });
     }
 }
 
@@ -100,4 +104,13 @@ public sealed class FakeEmailTransport : IEmailTransport
         Sent.Add(message);
         return Task.FromResult($"<{Guid.NewGuid():N}@test>");
     }
+}
+
+/// <summary>Candidate contacts for tests: <c>CND-*</c> ids have an address, others do not.</summary>
+public sealed class KnownCandidates : ICandidateContacts
+{
+    public Task<CandidateContact?> FindAsync(string candidateId, CancellationToken ct) =>
+        Task.FromResult(candidateId.StartsWith("CND-", StringComparison.Ordinal)
+            ? new CandidateContact("A Candidate", $"{candidateId.ToLowerInvariant()}@example.test")
+            : null);
 }

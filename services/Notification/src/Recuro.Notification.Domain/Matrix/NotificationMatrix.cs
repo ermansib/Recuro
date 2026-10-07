@@ -26,6 +26,9 @@ public enum RecipientKind
 
     /// <summary>Whoever started the subject's flow, e.g. the MRF initiator (see <see cref="NotificationMatrix.OwnerEvents"/>).</summary>
     SubjectOwner,
+
+    /// <summary>A candidate record named in a payload field (not a portal user); the address comes from Candidate.</summary>
+    PayloadCandidate,
 }
 
 /// <summary>
@@ -45,14 +48,17 @@ public sealed record RecipientRule(RecipientKind Kind, string Role, string? Fiel
     public static RecipientRule ForPayloadUsers(string field, string role) => new(RecipientKind.PayloadUsers, role, field);
 
     public static RecipientRule ForSubjectOwner(string role) => new(RecipientKind.SubjectOwner, role);
+
+    public static RecipientRule ForPayloadCandidate(string field) => new(RecipientKind.PayloadCandidate, "candidate", field);
 }
 
 /// <summary>
 /// One row of the event matrix: when <see cref="EventType"/> arrives, render <see cref="TemplateKey"/>
 /// for <see cref="Recipients"/> on <see cref="Channels"/>. Critical rules (approvals, escalations,
-/// adverse findings) are never muted by preferences (RCU-NTF-005).
+/// adverse findings) are never muted by preferences (RCU-NTF-005). <see cref="SendAtField"/> names a
+/// payload date that schedules the email instead of sending it at once.
 /// </summary>
-public sealed record MatrixRule(string EventType, string TemplateKey, Channels Channels, bool Critical, IReadOnlyList<RecipientRule> Recipients);
+public sealed record MatrixRule(string EventType, string TemplateKey, Channels Channels, bool Critical, IReadOnlyList<RecipientRule> Recipients, string? SendAtField = null);
 
 /// <summary>
 /// The FRD §5.6 notification and email event matrix as data (RCU-NTF-001). Changing who hears about
@@ -97,6 +103,9 @@ public static class NotificationMatrix
         // §5.6 #3 and §16: escalations go to whoever Workflow escalated to, else HR Head.
         new("workflow.escalated.v1", "workflow.escalated", Both, Critical: true, [RecipientRule.ForPayloadUser("assignee", HrHead, fallbackToRole: true)]),
         new("pipeline.tat.breached.v1", "tat.breached", Both, Critical: true, [RecipientRule.ForRole(HrTa)]),
+
+        // §5.6 #9 / RCU-CAR-006: the regret email goes out on the date Pipeline set (≤ 3 working days).
+        new("pipeline.application.final_rejected.v1", "candidate.regret", Channels.Email, Critical: false, [RecipientRule.ForPayloadCandidate("candidateId")], SendAtField: "regretSendAt"),
 
         // New applications land with HR-TA; a signed-in applicant gets a confirmation.
         new("pipeline.application.created.v1", "application.created", Channels.InApp, Critical: false, [RecipientRule.ForRole(HrTa)]),

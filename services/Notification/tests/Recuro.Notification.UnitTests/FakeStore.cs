@@ -52,3 +52,11 @@ internal sealed class FakeStore : INotificationStore
     public Task<IReadOnlySet<Guid>> ReadItemIdsAsync(string userId, IReadOnlyCollection<Guid> itemIds, CancellationToken ct) =>
         Task.FromResult<IReadOnlySet<Guid>>(new HashSet<Guid>());
 }
+
+/// <summary>Candidate contacts that return a fixed answer.</summary>
+internal sealed class FakeContacts(CandidateContact? contact) : ICandidateContacts
+{
+    public static FakeContacts None { get; } = new(null);
+
+    public Task<CandidateContact?> FindAsync(string candidateId, CancellationToken ct) => Task.FromResult(contact);
+}

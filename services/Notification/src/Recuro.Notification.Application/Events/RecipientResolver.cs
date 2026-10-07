@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Recuro.BuildingBlocks.Application.IntegrationEvents;
 using Recuro.Notification.Application.Abstractions;
@@ -16,12 +17,17 @@ public sealed record ResolvedRecipients(IReadOnlyList<Recipient> InApp, IReadOnl
 /// both addressed to them. People the directory does not know yet still get their bell item; their
 /// email is logged as suppressed for lack of an address.
 /// </summary>
-public sealed class RecipientResolver(INotificationStore store)
+public sealed class RecipientResolver(INotificationStore store, ICandidateContacts candidates)
 {
     public async Task<ResolvedRecipients> ResolveAsync(RecipientRule rule, EventMetadata metadata, JsonElement data, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(rule);
         ArgumentNullException.ThrowIfNull(metadata);
+        if (rule.Kind == RecipientKind.PayloadCandidate)
+        {
+            return await ForCandidateAsync(rule, data, ct);
+        }
+
         var userIds = rule.Kind switch
         {
             RecipientKind.Role => null,
@@ -29,6 +35,7 @@ public sealed class RecipientResolver(INotificationStore store)
             RecipientKind.PayloadUser => Single(EventPayload.ReadString(data, rule.Field)),
             RecipientKind.PayloadUsers => EventPayload.ReadStrings(data, rule.Field),
             RecipientKind.SubjectOwner => Single((await store.FindOwnerAsync(metadata.Subject, ct))?.UserId),
+            RecipientKind.PayloadCandidate => throw new InvalidOperationException("Handled above."),
             _ => throw new ArgumentOutOfRangeException(nameof(rule), rule.Kind, "Unknown recipient kind."),
         };
 
@@ -46,6 +53,23 @@ public sealed class RecipientResolver(INotificationStore store)
         }
 
         return new ResolvedRecipients(people, people);
+    }
+
+    /// <summary>
+    /// A candidate record is not a portal account: the email goes to Candidate's address for it, and it
+    /// never shows in anyone's bell or email centre (its key is <c>candidate:&lt;id&gt;</c>).
+    /// </summary>
+    private async Task<ResolvedRecipients> ForCandidateAsync(RecipientRule rule, JsonElement data, CancellationToken ct)
+    {
+        var candidateId = EventPayload.ReadString(data, rule.Field);
+        if (string.IsNullOrWhiteSpace(candidateId))
+        {
+            return new ResolvedRecipients([], []);
+        }
+
+        var contact = await candidates.FindAsync(candidateId, ct);
+        var recipient = new Recipient(rule.Role, $"candidate:{candidateId}", contact?.Name, contact?.Email);
+        return new ResolvedRecipients([], [recipient]);
     }
 
     private async Task<ResolvedRecipients> ForRoleAsync(string role, CancellationToken ct)
@@ -81,6 +105,13 @@ public static class EventPayload
             ? value.EnumerateArray().Select(AsText).OfType<string>().ToList()
             : AsText(value) is { } single ? [single] : [];
     }
+
+    /// <summary>A date (<c>YYYY-MM-DD</c>, as midnight UTC) or timestamp field; null when absent or unreadable.</summary>
+    public static DateTimeOffset? ReadDate(JsonElement data, string? field) =>
+        ReadString(data, field) is { } text
+        && DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var value)
+            ? value
+            : null;
 
     /// <summary>Template values: the payload's top-level scalar fields plus the subject id and actor name.</summary>
     public static IReadOnlyDictionary<string, string> TemplateValues(EventMetadata metadata, JsonElement data)

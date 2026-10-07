@@ -86,6 +86,18 @@ public interface IUnreadCountCache
     Task InvalidateAsync(Viewer viewer, CancellationToken ct);
 }
 
+/// <summary>
+/// A candidate's email address for candidate-facing mail (regret emails). Candidate owns that PII; the
+/// stand-in returns null until Candidate publishes a contact contract, and the email is then logged as
+/// suppressed for lack of an address.
+/// </summary>
+public interface ICandidateContacts
+{
+    Task<CandidateContact?> FindAsync(string candidateId, CancellationToken ct);
+}
+
+public sealed record CandidateContact(string? Name, string Email);
+
 /// <summary>Templates for the current tenant: its override (RCU-CFG-004, admin portal) first, then the default.</summary>
 public interface ITemplateSource
 {
