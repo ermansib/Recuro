@@ -1,9 +1,7 @@
-using Microsoft.Extensions.Options;
 using Recuro.BuildingBlocks.Application.Abstractions;
 using Recuro.BuildingBlocks.Application.Messaging;
 using Recuro.BuildingBlocks.Domain;
 using Recuro.Pipeline.Application.Abstractions;
-using Recuro.Pipeline.Domain.Applications;
 
 namespace Recuro.Pipeline.Application.Applications.Commands.ScanTatBreaches;
 
@@ -16,16 +14,17 @@ public sealed record ScanTatBreachesCommand(int BatchSize = 500) : ICommand<int>
 internal sealed class ScanTatBreachesCommandHandler(
     IApplicationRepository applications,
     IUnitOfWork unitOfWork,
-    IOptions<PipelineOptions> options,
+    ITatRules tatRules,
+    IWorkingDayCalendar calendar,
     TimeProvider clock) : ICommandHandler<ScanTatBreachesCommand, int>
 {
     public async Task<Result<int>> Handle(ScanTatBreachesCommand command, CancellationToken ct)
     {
         var now = clock.GetUtcNow();
         var flagged = 0;
-        foreach (var (stageName, rule) in options.Value.StageTat)
+        foreach (var (stage, rule) in await tatRules.GetAsync(ct))
         {
-            if (!Enum.TryParse<ApplicationStage>(stageName, out var stage) || rule.WorkingDays <= 0)
+            if (rule.WorkingDays <= 0)
             {
                 continue;
             }
@@ -34,7 +33,10 @@ internal sealed class ScanTatBreachesCommandHandler(
             var candidates = await applications.ListTatCandidatesAsync(stage, now.AddDays(-rule.WorkingDays), command.BatchSize, ct);
             foreach (var application in candidates)
             {
-                if (application.FlagTatBreach(WorkingDays.Add(application.StageEnteredAt, rule.WorkingDays), now))
+                var entered = application.StageEnteredAt.ToUniversalTime();
+                var dueDate = await calendar.AddAsync(DateOnly.FromDateTime(entered.UtcDateTime), rule.WorkingDays, ct);
+                var dueAt = new DateTimeOffset(dueDate.ToDateTime(TimeOnly.FromDateTime(entered.UtcDateTime)), TimeSpan.Zero);
+                if (application.FlagTatBreach(dueAt, now, string.IsNullOrEmpty(rule.Escalation) ? null : rule.Escalation))
                 {
                     flagged++;
                 }

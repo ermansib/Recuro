@@ -77,13 +77,12 @@ public sealed class ApplicationTests
     public void Rejection_needs_a_reason_and_sets_the_regret_and_retention_dates()
     {
         var application = NewApplication();
-        Assert.Equal(ApplicationErrors.ReasonRequired.Code, application.Reject("  ", HrTa, Monday, 3, 365).Error!.Code);
+        Assert.Equal(ApplicationErrors.ReasonRequired.Code, application.Reject("  ", HrTa, Monday, new DateOnly(2026, 10, 8), 365).Error!.Code);
 
         var friday = Monday.AddDays(4);
-        Assert.True(application.Reject("Skills gap", HrTa, friday, 3, 365).IsSuccess);
+        Assert.True(application.Reject("Skills gap", HrTa, friday, new DateOnly(2026, 10, 14), 365).IsSuccess);
 
         Assert.Equal(ApplicationStage.Rejected, application.Stage);
-        // Friday + 3 working days = Wednesday.
         Assert.Equal(new DateOnly(2026, 10, 14), application.Rejection!.RegretDueBy);
         Assert.Equal(new DateOnly(2027, 10, 9), application.Rejection.RetainUntil);
         Assert.Single(application.DomainEvents.OfType<FinalRejectedDomainEvent>());

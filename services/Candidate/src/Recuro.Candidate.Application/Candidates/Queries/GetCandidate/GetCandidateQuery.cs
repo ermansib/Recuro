@@ -1,4 +1,3 @@
-using Recuro.BuildingBlocks.Application.Abstractions;
 using Recuro.BuildingBlocks.Application.Messaging;
 using Recuro.BuildingBlocks.Domain;
 using Recuro.Candidate.Application.Abstractions;
@@ -12,7 +11,7 @@ public sealed record GetCandidateQuery(Guid Id) : IQuery<CandidateDto>;
 
 internal sealed class GetCandidateQueryHandler(
     ICandidateRepository candidates,
-    ICurrentUser caller,
+    ICallerMask callerMask,
     IPersonalDataAccessLog accessLog) : IQueryHandler<GetCandidateQuery, CandidateDto>
 {
     public async Task<Result<CandidateDto>> Handle(GetCandidateQuery query, CancellationToken ct)
@@ -24,6 +23,7 @@ internal sealed class GetCandidateQueryHandler(
         }
 
         accessLog.Read([candidate.Id], "candidate.get");
-        return CandidateMasking.Apply(CandidateDto.From(candidate), CandidateMasking.For(caller.Roles));
+        var mask = await callerMask.ForCallerAsync(ct);
+        return mask(CandidateDto.From(candidate));
     }
 }

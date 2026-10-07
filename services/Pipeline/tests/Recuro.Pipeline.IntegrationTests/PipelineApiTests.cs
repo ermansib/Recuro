@@ -230,6 +230,64 @@ public sealed class PipelineApiTests(PipelineApiFactory api) : IClassFixture<Pip
         Assert.Equal(1, await OutboxCountAsync(tenant, EventTypes.Pipeline.TatBreached, AppId(application)));
     }
 
+    [Fact]
+    public async Task The_regret_date_comes_from_the_Config_calendar_and_survives_an_outage()
+    {
+        var reqId = await OpenRequisitionAsync(PipelineApiFactory.TenantA);
+        var today = DateOnly.FromDateTime(api.Clock.GetUtcNow().UtcDateTime);
+        var url = (JsonElement a) => $"/api/v1/pipeline/applications/{AppId(a)}/reject";
+        var client = api.ClientFor(PipelineApiFactory.TenantA, RecuroRoles.HrTa);
+
+        var viaConfig = await (await client.PostAsJsonAsync(url(await CreateAsync(PipelineApiFactory.TenantA, reqId)), new { reason = "Skills gap" }))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(StubConfig.Add(today, 3).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture), viaConfig.GetProperty("rejection").GetProperty("regretDueBy").GetString());
+
+        // Config down with a fresh tenant: nothing cached, so the local weekends-only calendar answers.
+        var tenant = Guid.NewGuid();
+        var otherReq = await OpenRequisitionAsync(tenant);
+        var application = await CreateAsync(tenant, otherReq);
+        api.Config.Down = true;
+        try
+        {
+            var local = await (await api.ClientFor(tenant, RecuroRoles.HrTa).PostAsJsonAsync(url(application), new { reason = "Skills gap" }))
+                .Content.ReadFromJsonAsync<JsonElement>();
+            Assert.Equal(Domain.Applications.WorkingDays.Add(today, 3).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture), local.GetProperty("rejection").GetProperty("regretDueBy").GetString());
+        }
+        finally
+        {
+            api.Config.Down = false;
+        }
+    }
+
+    [Fact]
+    public async Task The_TAT_scanner_uses_the_Config_TAT_matrix()
+    {
+        var tenant = Guid.NewGuid();
+        var reqId = await OpenRequisitionAsync(tenant);
+        var application = await CreateAsync(tenant, reqId);
+        var job = api.Services.GetServices<Microsoft.Extensions.Hosting.IHostedService>().OfType<TatScanJob>().Single();
+
+        // Config says sourcing may take 1 working day; 5 calendar days always overrun it, but not the local 7.
+        api.Config.SourcingMaxDays = 1;
+        api.Clock.Advance(TimeSpan.FromDays(5));
+        try
+        {
+            await job.ScanAllTenantsAsync(CancellationToken.None);
+        }
+        finally
+        {
+            api.Clock.Advance(TimeSpan.FromDays(-5));
+            api.Config.SourcingMaxDays = 7;
+        }
+
+        Assert.Equal(1, await OutboxCountAsync(tenant, EventTypes.Pipeline.TatBreached, AppId(application)));
+        await using var scope = api.Services.CreateAsyncScope();
+        scope.ServiceProvider.GetRequiredService<ScopeContext>().SetTenant(tenant);
+        var envelope = await scope.ServiceProvider.GetRequiredService<PipelineDbContext>().OutboxMessages
+            .Where(m => m.TenantId == tenant && m.Type == EventTypes.Pipeline.TatBreached).Select(m => m.Envelope).SingleAsync();
+        Assert.Matches("\"escalationPath\": ?\"hrhead\"", envelope);
+    }
+
     private static string AppId(JsonElement application) => application.GetProperty("appId").GetString()!;
 
     private async Task<JsonElement> GetAsync(Guid tenant, string appId) =>

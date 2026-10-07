@@ -92,8 +92,11 @@ public sealed class Application : AggregateRoot, ITenantOwned
         return Transition(to, actor, now);
     }
 
-    /// <summary>RCU-PPL-003: final rejection with a mandatory reason, the regret deadline and the retention date.</summary>
-    public Result Reject(string reason, StageActor actor, DateTimeOffset now, int regretWorkingDays, int retentionDays)
+    /// <summary>
+    /// RCU-PPL-003: final rejection with a mandatory reason, the regret deadline (worked out on the
+    /// tenant's business calendar by the caller) and the retention date.
+    /// </summary>
+    public Result Reject(string reason, StageActor actor, DateTimeOffset now, DateOnly regretDueBy, int retentionDays)
     {
         if (string.IsNullOrWhiteSpace(reason))
         {
@@ -107,7 +110,7 @@ public sealed class Application : AggregateRoot, ITenantOwned
         }
 
         var today = DateOnly.FromDateTime(now.UtcDateTime);
-        Rejection = new Rejection(reason.Trim(), WorkingDays.Add(today, regretWorkingDays), today.AddDays(retentionDays));
+        Rejection = new Rejection(reason.Trim(), regretDueBy, today.AddDays(retentionDays));
         Note = $"Rejected — {Rejection.Reason}";
         Raise(new FinalRejectedDomainEvent(this, Rejection.Reason, Rejection.RegretDueBy, Rejection.RetainUntil));
         return Result.Success();
@@ -124,7 +127,7 @@ public sealed class Application : AggregateRoot, ITenantOwned
     /// RCU-PPL-005: raises the TAT breach for the current stage once, when <paramref name="dueAt"/> has passed.
     /// Returns true when a breach was raised.
     /// </summary>
-    public bool FlagTatBreach(DateTimeOffset dueAt, DateTimeOffset now)
+    public bool FlagTatBreach(DateTimeOffset dueAt, DateTimeOffset now, string? escalation = null)
     {
         if (TatBreachedAt is not null || now <= dueAt || Stage == ApplicationStage.Hold || IsClosed)
         {
@@ -132,7 +135,7 @@ public sealed class Application : AggregateRoot, ITenantOwned
         }
 
         TatBreachedAt = now;
-        Raise(new TatBreachedDomainEvent(this, Stage, dueAt, now - dueAt));
+        Raise(new TatBreachedDomainEvent(this, Stage, dueAt, now - dueAt, escalation));
         return true;
     }
 

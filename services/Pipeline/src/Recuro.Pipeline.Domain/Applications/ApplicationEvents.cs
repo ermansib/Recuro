@@ -18,4 +18,4 @@ public sealed record StageChangedDomainEvent(
 
 public sealed record FinalRejectedDomainEvent(Application Application, string Reason, DateOnly RegretDueBy, DateOnly RetainUntil) : IDomainEvent;
 
-public sealed record TatBreachedDomainEvent(Application Application, ApplicationStage Stage, DateTimeOffset DueAt, TimeSpan Variance) : IDomainEvent;
+public sealed record TatBreachedDomainEvent(Application Application, ApplicationStage Stage, DateTimeOffset DueAt, TimeSpan Variance, string? Escalation) : IDomainEvent;

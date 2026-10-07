@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Recuro.BuildingBlocks.Web;
+using Recuro.BuildingBlocks.Web.Middleware;
 using Recuro.Candidate.Api.Endpoints;
+using Recuro.Candidate.Api.Http;
 using Recuro.Candidate.Application;
 using Recuro.Candidate.Infrastructure;
 using Recuro.Candidate.Infrastructure.Persistence;
@@ -11,7 +13,14 @@ builder.AddRecuroServiceDefaults("candidate");
 builder.Services
     .AddCandidateApplication()
     .AddCandidateInfrastructure(builder.Configuration)
-    .AddCandidatePolicies();
+    .AddCandidatePolicies()
+    .AddTransient<ForwardCallerHandler>();
+builder.Services.AddIdentityMaskingMaps()
+    .AddHttpMessageHandler<ForwardCallerHandler>()
+    .AddHttpMessageHandler<CorrelationHeadersHandler>();
+builder.Services.AddVendorDirectory(builder.Configuration)
+    .AddHttpMessageHandler<ForwardCallerHandler>()
+    .AddHttpMessageHandler<CorrelationHeadersHandler>();
 
 var app = builder.Build();
 

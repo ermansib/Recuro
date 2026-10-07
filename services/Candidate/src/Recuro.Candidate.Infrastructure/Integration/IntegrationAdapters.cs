@@ -5,8 +5,8 @@ using Recuro.Candidate.Application.Abstractions;
 namespace Recuro.Candidate.Infrastructure.Integration;
 
 /// <summary>
-/// Stand-in until the Vendor service (wave 2) publishes its vendor status contract: every consultant id
-/// is accepted and the gap is logged. Swap in an HTTP or event-built implementation then.
+/// Stand-in while the Vendor service (wave 2) is off (<c>Services:Vendor:Enabled</c> false): every consultant id
+/// is accepted and the gap is logged.
 /// </summary>
 internal sealed partial class UncheckedVendorDirectory(ILogger<UncheckedVendorDirectory> logger) : IVendorDirectory
 {
