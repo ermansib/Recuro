@@ -33,6 +33,9 @@ public interface IApplicationRepository
     /// <summary>Read-only: applications whose current stage has overrun its TAT, longest-waiting first.</summary>
     Task<IReadOnlyList<Domain.Applications.Application>> ListTatBreachedAsync(int limit, CancellationToken ct);
 
+    /// <summary>Applications in pre-boarding whose expected joining date falls between the two dates, inclusive.</summary>
+    Task<int> CountJoiningBetweenAsync(DateOnly from, DateOnly to, CancellationToken ct);
+
     void Add(Domain.Applications.Application application);
 }
 

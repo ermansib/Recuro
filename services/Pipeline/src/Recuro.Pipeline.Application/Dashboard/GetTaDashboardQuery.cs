@@ -17,8 +17,8 @@ public sealed record PipelineStageCountDto(string Stage, int Count, string Color
 
 /// <summary>
 /// Pipeline's part of the HR-TA dashboard (S-01, RCU-DSH-001/002), the gateway BFF's
-/// <c>DashboardFragment</c>: the funnel, the stage TAT breaches and their tile. Other lists belong to
-/// other services and are left out.
+/// <c>DashboardFragment</c>: the funnel, the stage TAT breaches, and the "Joining ≤ 30d" and "TAT Breaches"
+/// tiles (architecture.md "Gateway BFF: TA dashboard"). Other lists belong to other services.
 /// </summary>
 public sealed record TaDashboardFragmentDto(
     IReadOnlyList<DashboardStatDto> Stats,
@@ -31,6 +31,9 @@ public sealed record GetTaDashboardQuery(int MaxBreaches = 10) : IQuery<TaDashbo
 internal static class DashboardText
 {
     public const string BreachesTile = "TAT Breaches";
+    public const string JoiningTile = "Joining ≤ 30d";
+    public const string JoiningTrend = "Offer accepted, joining date set";
+    public const int JoiningWindowDays = 30;
     public const string EscalationsActive = "Escalations active";
     public const string NoBreaches = "All stages within TAT";
     public const string BoardLink = "/pipeline";
@@ -85,7 +88,13 @@ internal sealed class GetTaDashboardQueryHandler(IApplicationRepository applicat
             rows.Count.ToString(System.Globalization.CultureInfo.InvariantCulture),
             rows.Count > 0 ? DashboardText.EscalationsActive : DashboardText.NoBreaches,
             rows.Count > 0 ? "r" : "g");
-        return new TaDashboardFragmentDto([tile], rows, funnel);
+        var joining = await applications.CountJoiningBetweenAsync(today, today.AddDays(DashboardText.JoiningWindowDays), ct);
+        var joiningTile = new DashboardStatDto(
+            DashboardText.JoiningTile,
+            joining.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            DashboardText.JoiningTrend,
+            "g");
+        return new TaDashboardFragmentDto([joiningTile, tile], rows, funnel);
     }
 
     private static TatBreachRowDto BreachRow(Domain.Applications.Application application, StageTatRule? rule, DateOnly today)

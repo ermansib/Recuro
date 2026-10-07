@@ -51,6 +51,11 @@ internal sealed class ApplicationRepository(PipelineDbContext db) : IApplication
             .Take(limit)
             .ToListAsync(ct);
 
+    public Task<int> CountJoiningBetweenAsync(DateOnly from, DateOnly to, CancellationToken ct) =>
+        db.Applications.CountAsync(
+            a => a.Stage == ApplicationStage.PreBoarding && a.ExpectedJoiningDate >= from && a.ExpectedJoiningDate <= to,
+            ct);
+
     public void Add(ApplicationEntity application) => db.Applications.Add(application);
 }
 

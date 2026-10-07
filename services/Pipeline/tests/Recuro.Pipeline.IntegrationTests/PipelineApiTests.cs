@@ -322,11 +322,37 @@ public sealed class PipelineApiTests(PipelineApiFactory api) : IClassFixture<Pip
         Assert.Equal(["escalation", "link", "position", "reqId", "stage", "stageTone"], rows[0].EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal));
         Assert.Equal("HR Head", rows[0].GetProperty("escalation").GetString());
         Assert.EndsWith("d / 7d TAT", rows[0].GetProperty("stage").GetString(), StringComparison.Ordinal);
-        var tile = Assert.Single(fragment.GetProperty("stats").EnumerateArray());
-        Assert.Equal("2", tile.GetProperty("value").GetString());
-        Assert.Equal("r", tile.GetProperty("tone").GetString());
+        var tiles = fragment.GetProperty("stats").EnumerateArray().ToList();
+        Assert.Equal(["Joining ≤ 30d", "TAT Breaches"], tiles.Select(t => t.GetProperty("label").GetString()));
+        Assert.Equal("2", tiles[1].GetProperty("value").GetString());
+        Assert.Equal("r", tiles[1].GetProperty("tone").GetString());
 
         Assert.Equal(HttpStatusCode.Forbidden, (await api.ClientFor(tenant, RecuroRoles.Employee).GetAsync("/api/v1/pipeline/dashboard/ta")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Accepted_offers_with_a_joining_date_count_towards_joining_within_30_days()
+    {
+        var tenant = Guid.NewGuid();
+        var reqId = await OpenRequisitionAsync(tenant);
+        var soon = await CreateAsync(tenant, reqId);
+        var later = await CreateAsync(tenant, reqId);
+        foreach (var application in new[] { soon, later })
+        {
+            foreach (var stage in new[] { "Screened", "Interview", "Selection", "BGV", "Offer" })
+            {
+                await MoveAsync(tenant, application, stage);
+            }
+        }
+
+        var today = DateOnly.FromDateTime(api.Clock.GetUtcNow().UtcDateTime);
+        await ProcessAsync(tenant, EventTypes.Offer.Accepted, new { appId = AppId(soon), joiningDate = today.AddDays(10) });
+        await ProcessAsync(tenant, EventTypes.Offer.Accepted, new { appId = AppId(later), joiningDate = today.AddDays(45) });
+
+        Assert.Equal("PreBoarding", (await GetAsync(tenant, AppId(soon))).GetProperty("stage").GetString());
+        var fragment = await api.ClientFor(tenant, RecuroRoles.HrTa).GetFromJsonAsync<JsonElement>("/api/v1/pipeline/dashboard/ta");
+        var joining = fragment.GetProperty("stats").EnumerateArray().Single(t => t.GetProperty("label").GetString() == "Joining ≤ 30d");
+        Assert.Equal("1", joining.GetProperty("value").GetString());
     }
 
     private static string AppId(JsonElement application) => application.GetProperty("appId").GetString()!;
