@@ -1,0 +1,28 @@
+{
+  "title": "Tenants",
+  "subtitle": "Companies and agencies using Recuro",
+  "empty": "No tenants yet.",
+  "columns": {
+    "name": "Name",
+    "slug": "Slug",
+    "kind": "Type",
+    "plan": "Plan",
+    "domain": "Custom domain",
+    "theme": "Theme",
+    "status": "Status",
+    "actions": "Actions"
+  },
+  "suspend": "Suspend",
+  "activate": "Activate",
+  "create": {
+    "title": "Add a tenant",
+    "name": "Company name",
+    "slug": "Slug",
+    "slugHint": "Lowercase letters, digits and hyphens. Used as the default subdomain.",
+    "kind": "Type",
+    "plan": "Plan",
+    "domain": "Custom domain (optional)",
+    "submit": "Add tenant",
+    "created": "{{name}} added"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "title": "Screens & fields",
+  "subtitle": "Turn screens on or off, rename headers and fields, and choose what is shown or required",
+  "columns": {
+    "code": "ID",
+    "screen": "Screen",
+    "module": "Module",
+    "fields": "Fields",
+    "status": "Status"
+  },
+  "on": "On",
+  "off": "Off",
+  "edit": "Edit",
+  "back": "All screens",
+  "header": "Header",
+  "enabled": "Screen is turned on",
+  "cannotDisable": "The portal needs this screen, so it can't be turned off.",
+  "screenTitle": "Title",
+  "screenSubtitle": "Subtitle",
+  "defaultValue": "Default: {{value}}",
+  "fieldsHeading": "Fields",
+  "noFields": "This screen has no configurable fields yet.",
+  "field": {
+    "label": "Label",
+    "type": "Type",
+    "visible": "Shown",
+    "required": "Required",
+    "order": "Order",
+    "moveUp": "Move {{field}} up",
+    "moveDown": "Move {{field}} down",
+    "locked": "Used by a workflow rule, so it stays shown and required.",
+    "labelFor": "Label for {{field}}",
+    "visibleFor": "Show {{field}}",
+    "requiredFor": "{{field}} is required"
+  },
+  "dataType": {
+    "text": "Text",
+    "longText": "Long text",
+    "number": "Number",
+    "currency": "Currency",
+    "date": "Date",
+    "select": "Choice",
+    "email": "Email",
+    "phone": "Phone",
+    "file": "File"
+  },
+  "savedToast": "{{screen}} saved"
+}

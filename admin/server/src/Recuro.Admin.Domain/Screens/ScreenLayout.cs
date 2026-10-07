@@ -19,7 +19,9 @@ public static class ScreenLayout
                     setting?.IsVisible ?? true,
                     setting?.IsRequired ?? field.DefaultRequired,
                     field.IsLocked,
-                    setting?.SortOrder ?? field.SortOrder);
+                    setting?.SortOrder ?? field.SortOrder,
+                    field.DefaultRequired,
+                    field.SortOrder);
             })
             .OrderBy(field => field.SortOrder)
             .ThenBy(field => field.Key, StringComparer.Ordinal)
@@ -59,4 +61,6 @@ public sealed record EffectiveField(
     bool IsVisible,
     bool IsRequired,
     bool IsLocked,
-    int SortOrder);
+    int SortOrder,
+    bool DefaultRequired,
+    int DefaultSortOrder);

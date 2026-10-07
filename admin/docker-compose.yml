@@ -1,0 +1,15 @@
+# Local services for the admin portal. Free and open-source only.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: recuro_admin
+      POSTGRES_USER: recuro
+      POSTGRES_PASSWORD: recuro
+    ports:
+      - "5432:5432"
+    volumes:
+      - recuro-admin-pg:/var/lib/postgresql/data
+
+volumes:
+  recuro-admin-pg:

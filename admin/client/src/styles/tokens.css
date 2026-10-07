@@ -1,0 +1,13 @@
+:root{
+  /* Default Recuro theme. Same tokens as the main portal (frontend/src/styles/tokens.css). */
+  --navy:#1E2A5E; --navy-dk:#141C42; --navy-lt:#3B4BC8; --cy:#22D3EE;
+  --gold:#7C3AED; --gold-lt:#F1EDFE;
+  --red:#D7402F; --red-lt:#FDECEA;
+  --green:#2E9E5B; --green-lt:#E7F6EE;
+  --amber:#E8A33D; --amber-lt:#FDF5E6;
+  --teal:#0E8F8F; --purple:#7B5EA7; --slate:#64748B;
+  --bg:#F4F6FB; --card:#ffffff; --line:#E2E8F0;
+  --txt:#1E293B; --muted:#64748B;
+  --shadow:0 1px 3px rgba(15,23,42,.08),0 4px 14px rgba(15,23,42,.06);
+  --radius:12px;
+}

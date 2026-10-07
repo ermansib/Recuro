@@ -45,7 +45,8 @@ future .NET DTOs. P1 screens (Onboarding, Vendors, Reports, Internal Careers) ar
 
 ## Tooling and layout
 
-Monorepo: `frontend/` now, `services/` (.NET Core) later.
+Monorepo: `frontend/` (main portal), `admin/` (admin portal: .NET 10 API + React client, one deployable; see
+`admin/README.md`), and `services/` (.NET Core microservices) later.
 
 | Concern | Choice |
 |---|---|

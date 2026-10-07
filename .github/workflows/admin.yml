@@ -1,0 +1,42 @@
+name: admin
+
+on:
+  pull_request:
+    paths: ['admin/**', '.github/workflows/admin.yml']
+  push:
+    branches: [main]
+    paths: ['admin/**', '.github/workflows/admin.yml']
+
+jobs:
+  client:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin/client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: admin/client/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  server:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin/server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: admin/server/global.json
+      - run: dotnet restore
+      - run: dotnet build --no-restore
+      - run: dotnet format --verify-no-changes --no-restore
+      - run: dotnet test --no-build

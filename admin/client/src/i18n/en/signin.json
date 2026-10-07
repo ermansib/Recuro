@@ -1,0 +1,9 @@
+{
+  "title": "Sign in to Recuro Admin",
+  "devNotice": "Development sign-in. In production this page hands over to your identity provider.",
+  "choose": "Choose who to sign in as",
+  "platform": "Platform admin",
+  "platformHint": "Manage tenants, plans and the theme library",
+  "tenantHint": "Configure {{tenant}}'s portal",
+  "unavailable": "The admin API isn't reachable. Start it with dotnet run, then reload."
+}
