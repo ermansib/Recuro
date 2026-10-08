@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/offer.expired.v1.schema.json",
+  "title": "offer.expired.v1",
+  "description": "Producer: Offer. A sent offer passed its validity without an answer (RCU-OFR-006). Subject: Offer/<offerId>.",
+  "type": "object",
+  "properties": {
+    "offerId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "offerId",
+    "appId",
+    "reqId",
+    "candidateId",
+    "expiresAt"
+  ],
+  "additionalProperties": true
+}

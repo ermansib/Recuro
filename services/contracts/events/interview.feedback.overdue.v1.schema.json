@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/interview.feedback.overdue.v1.schema.json",
+  "title": "interview.feedback.overdue.v1",
+  "description": "Producer: Interview. Feedback is still missing 48h after the interview ended (RCU-INT-004). escalationIssue names the Config escalation row; until Identity resolves the HOD, Notification sends it to the panel and HR-TA. Subject: Interview/<interviewId>.",
+  "type": "object",
+  "properties": {
+    "interviewId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "roundId": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "round": {
+      "type": "string"
+    },
+    "panel": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pendingInterviewerIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "endedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dueAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "overdueAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "escalationIssue": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "interviewId",
+    "appId",
+    "reqId",
+    "roundId",
+    "round",
+    "panel",
+    "pendingInterviewerIds",
+    "endedAt",
+    "dueAt",
+    "overdueAt",
+    "escalationIssue"
+  ],
+  "additionalProperties": true
+}

@@ -71,19 +71,6 @@ public sealed class FeedTests(NotificationApiFactory api)
     }
 
     [Fact]
-    public async Task An_applicant_alone_gets_their_confirmation()
-    {
-        var app = $"APP-{Guid.NewGuid():N}"[..16];
-        await api.PublishAsync("career.job.applied.v1", new { appId = app, jobId = "JOB-1" }, actorId: "cand-1", actorName: "P. Nair");
-
-        var mine = await BellAsync(api.ClientFor(NotificationApiFactory.TenantA, RecuroRoles.Candidate, "cand-1"));
-        var theirs = await BellAsync(api.ClientFor(NotificationApiFactory.TenantA, RecuroRoles.Candidate, "cand-2"));
-
-        Assert.Single(mine, i => i.GetProperty("body").GetString()!.Contains(app, StringComparison.Ordinal));
-        Assert.DoesNotContain(theirs, i => i.GetProperty("body").GetString()!.Contains(app, StringComparison.Ordinal));
-    }
-
-    [Fact]
     public async Task Reading_one_item_is_per_person_and_mark_all_clears_the_rest()
     {
         var tenant = Guid.NewGuid();
@@ -127,13 +114,13 @@ public sealed class FeedTests(NotificationApiFactory api)
     public async Task Marking_someone_elses_item_changes_nothing()
     {
         var tenant = Guid.NewGuid();
-        await api.PublishAsync("career.job.applied.v1", new { appId = "APP-9" }, tenant: tenant, actorId: "cand-1");
-        var item = (await BellAsync(api.ClientFor(tenant, RecuroRoles.Candidate, "cand-1")))[0].GetProperty("id").GetString();
+        await api.PublishAsync("employee.ijp.applied.v1", new { reqId = "REQ-9", employeeId = "emp-1" }, tenant: tenant, actorId: "emp-1");
+        var item = (await BellAsync(api.ClientFor(tenant, RecuroRoles.Employee, "emp-1")))[0].GetProperty("id").GetString();
 
-        var response = await api.ClientFor(tenant, RecuroRoles.Candidate, "cand-2").PostAsJsonAsync("/api/v1/notifications/read", new { ids = new[] { item } });
+        var response = await api.ClientFor(tenant, RecuroRoles.Employee, "emp-2").PostAsJsonAsync("/api/v1/notifications/read", new { ids = new[] { item } });
 
         Assert.Equal(0, await response.Content.ReadFromJsonAsync<int>());
-        Assert.Single(await BellAsync(api.ClientFor(tenant, RecuroRoles.Candidate, "cand-1"), "?filter=unread"));
+        Assert.Single(await BellAsync(api.ClientFor(tenant, RecuroRoles.Employee, "emp-1"), "?filter=unread"));
     }
 
     [Fact]

@@ -27,7 +27,6 @@ public static class DependencyInjection
         services.AddScoped<INotificationReadStore, NotificationReadStore>();
         services.AddScoped<IUnreadCountCache, DistributedUnreadCountCache>();
         services.AddSingleton<ITemplateSource, DefaultTemplates>();
-        services.AddScoped<ICandidateContacts, UnavailableCandidateContacts>();
 
         // Live updates: pg_notify inside the writing transaction, LISTEN on every replica.
         services.AddScoped<IFeedChangeSignal, PostgresFeedChangeSignal>();
@@ -53,5 +52,26 @@ public static class DependencyInjection
             .Subscribe<IdentityUserPayload, DirectoryEventHandler>(EventTypes.Identity.UserProvisioned)
             .Subscribe<IdentityUserPayload, DirectoryEventHandler>(EventTypes.Identity.RoleChanged);
         return services;
+    }
+
+    /// <summary>Candidate addresses for candidate emails. The Api adds the service-token handler (RCU-AUT-005).</summary>
+    public static IHttpClientBuilder AddCandidateContacts(this IServiceCollection services) =>
+        services.AddServiceClient<ICandidateContacts, CandidateContactsClient>(ServiceEndpointOptions.CandidateSection);
+
+    /// <summary>Role members from Identity. The Api adds the service-token handler (RCU-AUT-005).</summary>
+    public static IHttpClientBuilder AddStaffDirectory(this IServiceCollection services) =>
+        services.AddServiceClient<IStaffDirectory, IdentityStaffDirectory>(ServiceEndpointOptions.IdentitySection);
+
+    private static IHttpClientBuilder AddServiceClient<TClient, TImplementation>(this IServiceCollection services, string section)
+        where TClient : class
+        where TImplementation : class, TClient
+    {
+        services.AddOptions<ServiceEndpointOptions>(section).BindConfiguration(section);
+        return services.AddHttpClient<TClient, TImplementation>((sp, http) =>
+        {
+            var options = sp.GetRequiredService<IOptionsMonitor<ServiceEndpointOptions>>().Get(section);
+            http.BaseAddress = options.BaseUrl ?? throw new InvalidOperationException($"{section}:BaseUrl is required.");
+            http.Timeout = options.Timeout;
+        });
     }
 }

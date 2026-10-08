@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Recuro.BuildingBlocks.Application.Abstractions;
 using Recuro.BuildingBlocks.Application.Messaging;
 using Recuro.BuildingBlocks.Web.Auth;
+using Recuro.Notification.Application.Abstractions;
 using Recuro.Notification.Application.Directory;
 using Recuro.Notification.Infrastructure.Email;
 using Recuro.Notification.Infrastructure.Persistence;
@@ -162,11 +163,13 @@ public sealed class EmailTests(NotificationApiFactory api)
     public async Task The_regret_email_waits_for_the_date_Pipeline_set()
     {
         var tenant = Guid.NewGuid();
+        var candidate = Guid.NewGuid();
+        api.Backends.Candidates[candidate] = ("Asha Rao", "asha.rao@example.test");
         var sendOn = DateTime.UtcNow.Date.AddDays(3).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 
         await api.PublishAsync(
             "pipeline.application.final_rejected.v1",
-            new { appId = "APP-R1", reqId = "REQ-1", candidateId = "CND-42", reason = "Not shortlisted", regretSendAt = sendOn, retainUntil = "2027-10-07" },
+            new { appId = "APP-R1", reqId = "REQ-1", candidateId = candidate, reason = "Not shortlisted", regretSendAt = sendOn, retainUntil = "2027-10-07" },
             tenant: tenant);
         await DispatchAsync();
 
@@ -174,7 +177,63 @@ public sealed class EmailTests(NotificationApiFactory api)
         var row = Assert.Single((await api.ClientFor(tenant, RecuroRoles.HrHead).GetFromJsonAsync<JsonElement>("/api/v1/notifications/delivery-log")).EnumerateArray());
         Assert.Equal("Pending", row.GetProperty("status").GetString());
         Assert.Equal("candidate.regret", row.GetProperty("templateKey").GetString());
-        Assert.Equal("cnd-42@example.test", row.GetProperty("to").GetString());
+        Assert.Equal("asha.rao@example.test", row.GetProperty("to").GetString());
+    }
+
+    [Fact]
+    public async Task A_public_applicant_is_emailed_through_their_candidate_record_and_has_no_bell_item()
+    {
+        // career.job.applied.v1 (Careers): public applicants have no user account, only a candidateId.
+        var tenant = Guid.NewGuid();
+        var candidate = Guid.NewGuid();
+        api.Backends.Candidates[candidate] = ("P. Nair", "p.nair@example.test");
+
+        await api.PublishAsync(
+            "career.job.applied.v1",
+            new { appId = "APP-C1", jobId = "post-2026-0156", reqId = "REQ-1", candidateId = candidate, possibleDuplicate = false },
+            tenant: tenant);
+        await DispatchAsync();
+
+        var sent = Assert.Single(api.Mail.Sent, m => m.TenantId == tenant);
+        Assert.Equal("p.nair@example.test", sent.ToAddress);
+        Assert.Equal("P. Nair", sent.ToName);
+        Assert.Equal("We received your application (APP-C1)", sent.Subject);
+        var bell = await api.ClientFor(tenant, RecuroRoles.Candidate, candidate.ToString()).GetFromJsonAsync<JsonElement>("/api/v1/notifications");
+        Assert.Equal(0, bell.GetArrayLength());
+    }
+
+    [Fact]
+    public async Task An_unknown_candidate_or_a_masked_address_is_suppressed_not_sent()
+    {
+        var tenant = Guid.NewGuid();
+        var masked = Guid.NewGuid();
+        api.Backends.Candidates[masked] = ("A***", "a***@***");
+
+        await api.PublishAsync("offer.chase_due.v1", new { offerId = "OFF-U", appId = "APP-U", candidateId = Guid.NewGuid(), chaseNumber = 1 }, tenant: tenant);
+        await api.PublishAsync("offer.chase_due.v1", new { offerId = "OFF-M", appId = "APP-M", candidateId = masked, chaseNumber = 1 }, tenant: tenant);
+        await DispatchAsync();
+
+        Assert.DoesNotContain(api.Mail.Sent, m => m.TenantId == tenant);
+        var log = await api.ClientFor(tenant, RecuroRoles.HrHead).GetFromJsonAsync<JsonElement>("/api/v1/notifications/delivery-log");
+        Assert.All(log.EnumerateArray(), row => Assert.Equal("Suppressed", row.GetProperty("status").GetString()));
+        Assert.Equal(2, log.GetArrayLength());
+    }
+
+    [Fact]
+    public async Task Role_mail_goes_to_the_people_Identity_lists_and_they_are_remembered_for_when_Identity_is_down()
+    {
+        var tenant = Guid.NewGuid();
+        api.Backends.Staff[(tenant, RecuroRoles.HrHead)] = [new StaffContact("head-7", "K. Menon", "k.menon@example.test")];
+
+        await api.PublishAsync("bgv.adverse.flagged.v1", new { appId = "APP-I1", checkType = "Education" }, tenant: tenant);
+        api.Backends.Staff.TryRemove((tenant, RecuroRoles.HrHead), out _);
+        await api.PublishAsync("bgv.adverse.flagged.v1", new { appId = "APP-I2", checkType = "Education" }, tenant: tenant);
+        await DispatchAsync();
+
+        var sent = api.Mail.Sent.Where(m => m.TenantId == tenant).ToList();
+        Assert.Equal(2, sent.Count);
+        Assert.All(sent, m => Assert.Equal(("k.menon@example.test", "K. Menon"), (m.ToAddress, m.ToName)));
+        Assert.Contains(api.Backends.Seen, s => s.Path == "/api/v1/identity/users" && s.Tenant == tenant.ToString());
     }
 
     [Fact]
