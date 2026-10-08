@@ -47,8 +47,8 @@ public sealed class OfferApiTests(OfferApiFactory api) : IClassFixture<OfferApiF
             new { appId, reqId = "REQ-2026-0001", candidateId = "CAN-" + appId, source = "manual", from = "Interview", to, actor = "A. Sharma", at = DateTimeOffset.UtcNow, dwellMs = 1000 },
             tenant);
 
-    private Task BgvAsync(string appId, string type, string? checkType = null) =>
-        PublishAsync(type, $"Application/{appId}", new { appId, checkType });
+    private Task BgvAsync(string appId, string type, string? checkType = null, string? status = null) =>
+        PublishAsync(type, $"Application/{appId}", new { caseId = Guid.NewGuid(), appId, reqId = "REQ-2026-0001", vendorId = "VEN-1", checkType, status });
 
     private static object Draft(string appId, decimal fix = 17, decimal variable = 2.8m) => new
     {
@@ -168,10 +168,39 @@ public sealed class OfferApiTests(OfferApiFactory api) : IClassFixture<OfferApiF
         await BgvAsync("APP-COND", "bgv.adverse.flagged.v1", "Education");
         Assert.Equal(HttpStatusCode.Conflict, (await HrHead().PostAsJsonAsync($"{Offers}/{id}/send", new { conditional = true })).StatusCode);
 
-        await BgvAsync("APP-COND", "bgv.resolved.v1");
+        await BgvAsync("APP-COND", "bgv.resolved.v1", "Education", "ResolvedCleared");
         var conditional = await HrHead().PostAsJsonAsync($"{Offers}/{id}/send", new { conditional = true });
         Assert.Equal(HttpStatusCode.OK, conditional.StatusCode);
         Assert.True((await conditional.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("conditional").GetBoolean());
+    }
+
+    [Fact]
+    public async Task An_override_that_clears_the_last_flag_opens_release_in_either_event_order()
+    {
+        foreach (var (appId, clearedFirst) in new[] { ("APP-OVR1", true), ("APP-OVR2", false) })
+        {
+            var id = await ApprovedAsync(appId);
+            await BgvAsync(appId, "bgv.case.initiated.v1");
+            await BgvAsync(appId, "bgv.adverse.flagged.v1", "Education", "Flagged");
+            if (clearedFirst)
+            {
+                await BgvAsync(appId, "bgv.cleared.v1");
+                await BgvAsync(appId, "bgv.resolved.v1", "Education", "ResolvedCleared");
+            }
+            else
+            {
+                await BgvAsync(appId, "bgv.resolved.v1", "Education", "ResolvedCleared");
+                Assert.Equal(HttpStatusCode.Conflict, (await HrTa().PostAsync($"{Offers}/{id}/send", null)).StatusCode);
+                await BgvAsync(appId, "bgv.cleared.v1");
+            }
+
+            Assert.Equal(HttpStatusCode.OK, (await HrTa().PostAsync($"{Offers}/{id}/send", null)).StatusCode);
+        }
+
+        var rescinded = await ApprovedAsync("APP-RES");
+        await BgvAsync("APP-RES", "bgv.adverse.flagged.v1", "Employment", "Flagged");
+        await BgvAsync("APP-RES", "bgv.resolved.v1", "Employment", "ResolvedAdverse");
+        Assert.Equal(HttpStatusCode.Conflict, (await HrHead().PostAsJsonAsync($"{Offers}/{rescinded}/send", new { conditional = true })).StatusCode);
     }
 
     [Fact]

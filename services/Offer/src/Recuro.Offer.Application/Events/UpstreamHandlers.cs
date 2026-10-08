@@ -33,9 +33,10 @@ public sealed class PipelineStageChangedHandler(IApplicationTrackRepository trac
 
 /// <summary>
 /// The fields of the <c>bgv.*</c> events this service reads (tolerant reader): <c>appId</c> on all of them,
-/// <c>checkType</c> on <c>bgv.adverse.flagged</c>, <c>outcome</c> on <c>bgv.resolved</c>.
+/// <c>checkType</c> on <c>bgv.adverse.flagged</c> and <c>bgv.resolved</c>, and <c>status</c>
+/// (<c>ResolvedCleared</c> or <c>ResolvedAdverse</c>) on <c>bgv.resolved</c>.
 /// </summary>
-public sealed record BgvEventPayload(string AppId, string? CheckType, string? Outcome);
+public sealed record BgvEventPayload(string AppId, string? CheckType, string? Status);
 
 /// <summary>
 /// RCU-OFR-007: the release gate, kept from Bgv's events. <c>bgv.case.initiated</c> opens it as in
@@ -72,8 +73,7 @@ public sealed class BgvGateHandler(IBgvTrackRepository tracks, IOfferRepository 
 
                 break;
             case EventTypes.Bgv.Resolved:
-                var adverse = data.Outcome?.Contains("Adverse", StringComparison.OrdinalIgnoreCase) == true;
-                track.Apply(adverse ? BgvGate.Adverse : BgvGate.InProgress, adverse ? track.Blockers : [], at);
+                ApplyResolution(track, data, at);
                 break;
             default:
                 // bgv.case.initiated: in progress unless something newer is already known.
@@ -82,6 +82,30 @@ public sealed class BgvGateHandler(IBgvTrackRepository tracks, IOfferRepository 
         }
 
         await unitOfWork.SaveChangesAsync(ct);
+    }
+
+    /// <summary>
+    /// A rescind keeps the hold. An override lifts that check's hold only; release still waits for
+    /// <c>bgv.cleared</c>, which Bgv emits in the same transaction when it was the last flag, so either
+    /// arrival order ends cleared.
+    /// </summary>
+    private static void ApplyResolution(BgvTrack track, BgvEventPayload data, DateTimeOffset at)
+    {
+        var check = string.IsNullOrWhiteSpace(data.CheckType) ? null : data.CheckType.Trim();
+        if (string.Equals(data.Status, "ResolvedAdverse", StringComparison.Ordinal))
+        {
+            var blockers = check is null || track.Blockers.Contains(check, StringComparer.Ordinal) ? track.Blockers : [.. track.Blockers, check];
+            track.Apply(BgvGate.Adverse, blockers, at);
+            return;
+        }
+
+        if (track.Gate == BgvGate.Cleared)
+        {
+            return;
+        }
+
+        var remaining = check is null ? [] : track.Blockers.Where(b => !string.Equals(b, check, StringComparison.Ordinal)).ToList();
+        track.Apply(track.Gate == BgvGate.Adverse && remaining.Count > 0 ? BgvGate.Adverse : BgvGate.InProgress, remaining, at);
     }
 }
 
