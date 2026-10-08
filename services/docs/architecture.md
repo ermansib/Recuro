@@ -68,8 +68,7 @@ through this file first. JSON is camelCase. Calls between services are authentic
 
 ### Service-to-service authentication (owner: Identity, RCU-AUT-005; used by every service)
 
-This is the contract for the Identity PR that is still in review. Until it merges, calls with no user
-have no token.
+Built in PR #21 (`ServiceTokenHandler` in `Recuro.BuildingBlocks.Web.Auth`).
 
 - **Calls made for a user** forward the caller's `Authorization` header first, so masking and RBAC
   apply to that user. `CorrelationHeadersHandler` forwards only the correlation ids.
@@ -89,8 +88,9 @@ have no token.
   - `TokenEndpoint` is derived from `Auth:MetadataAddress` or `Auth:Authority`.
   - `RenewBefore` sets how early a token is renewed.
 - **The receiving side**: a validated token with role `service` and no `tenant_id` claim takes its
-  tenant from `X-Recuro-Tenant`. User tokens ignore that header, and the gateway strips it from
-  outside requests.
+  tenant from `X-Recuro-Tenant`. User tokens ignore that header. The gateway strips
+  `X-Recuro-Tenant`, along with `X-User-Id`, `X-User-Roles` and `X-Tenant-Id`, from every outside
+  request, so only a service inside the network can set it.
 - **`Auth:Mode=Development`**: the handler sends `X-Dev-User: recuro-svc-<service>`,
   `X-Dev-Roles: service` and `X-Dev-Tenant` instead of a token.
 - **Local Keycloak** has 16 clients named `recuro-svc-<service>`. Compose sets `KC_HOSTNAME` so
@@ -308,14 +308,14 @@ service option until Config carries an IJP rule. When it does, both services rea
 | `employee.referral.submitted.v1` | `referralId, referrerId, reqId, appId, candidateId, relationship, bonusEligible, possibleDuplicate` |
 
 **Intake calls** to Candidate and Pipeline run as the `service` role, using Keycloak clients
-`recuro-svc-careers` and `recuro-svc-employee`. Until the RCU-AUT-005 `ServiceTokenHandler` merges,
+`recuro-svc-careers` and `recuro-svc-employee`. PR #22 was written before RCU-AUT-005 merged, so
 each service uses a `ServiceCallerHandler` stand-in:
 
 - In Development mode, it sends the `X-Dev-*` service headers.
 - In OIDC mode, it returns 503 rather than call without a token.
 - It never bypasses masking.
 
-Replace the stand-in with `ServiceTokenHandler` once that merges.
+`ServiceTokenHandler` is now on main (PR #21). The stand-in should be replaced with it in a follow-up.
 
 **Planned additions that other threads own** (not built yet):
 
