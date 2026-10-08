@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Recuro.BuildingBlocks.Web;
+using Recuro.BuildingBlocks.Web.Auth;
+using Recuro.BuildingBlocks.Web.Middleware;
 using Recuro.Notification.Api.Endpoints;
 using Recuro.Notification.Application;
 using Recuro.Notification.Infrastructure;
@@ -12,6 +14,13 @@ builder.Services
     .AddNotificationApplication()
     .AddNotificationInfrastructure(builder.Configuration)
     .AddNotificationPolicies();
+// Event handlers have no caller to forward, so they call Candidate and Identity as this service (RCU-AUT-005).
+builder.Services.AddCandidateContacts()
+    .AddHttpMessageHandler<ServiceTokenHandler>()
+    .AddHttpMessageHandler<CorrelationHeadersHandler>();
+builder.Services.AddStaffDirectory()
+    .AddHttpMessageHandler<ServiceTokenHandler>()
+    .AddHttpMessageHandler<CorrelationHeadersHandler>();
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<RememberContactFilter>();
 builder.Services.AddOptions<NotificationStreamOptions>().BindConfiguration(NotificationStreamOptions.SectionName);

@@ -87,9 +87,10 @@ public interface IUnreadCountCache
 }
 
 /// <summary>
-/// A candidate's email address for candidate-facing mail (regret emails). Candidate owns that PII; the
-/// stand-in returns null until Candidate publishes a contact contract, and the email is then logged as
-/// suppressed for lack of an address.
+/// A candidate record's name and address, read from the Candidate service as this service (RCU-AUT-005;
+/// the service role sees name and email unmasked). Null when the candidate is unknown or has no usable
+/// address; the email is then logged as suppressed. Throws when Candidate can't answer, so the event is
+/// retried instead of the email being dropped.
 /// </summary>
 public interface ICandidateContacts
 {
@@ -97,6 +98,18 @@ public interface ICandidateContacts
 }
 
 public sealed record CandidateContact(string? Name, string Email);
+
+/// <summary>
+/// The tenant's people in a role, from Identity (<c>GET /api/v1/identity/users?role=</c>, called as this
+/// service). Null when Identity can't answer; recipients then come from the local directory, which
+/// Identity's events and people's own sign-ins keep.
+/// </summary>
+public interface IStaffDirectory
+{
+    Task<IReadOnlyList<StaffContact>?> UsersInRoleAsync(string role, CancellationToken ct);
+}
+
+public sealed record StaffContact(string UserId, string? Name, string? Email);
 
 /// <summary>Templates for the current tenant: its override (RCU-CFG-004, admin portal) first, then the default.</summary>
 public interface ITemplateSource

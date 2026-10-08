@@ -84,6 +84,8 @@ public sealed class ReminderTests(NotificationApiFactory api)
     public async Task An_offer_chase_emails_the_candidate_and_tells_HR_TA()
     {
         var tenant = Guid.NewGuid();
+        var candidate = Guid.NewGuid();
+        api.Backends.Candidates[candidate] = ("R. Das", "r.das@example.test");
         await api.PublishAsync(
             "offer.chase_due.v1",
             new
@@ -91,7 +93,7 @@ public sealed class ReminderTests(NotificationApiFactory api)
                 offerId = "OFF-7",
                 appId = "APP-7",
                 reqId = "REQ-7",
-                candidateId = "CND-7",
+                candidateId = candidate,
                 sentAt = "2026-10-01T09:00:00Z",
                 chaseNumber = 1,
                 expiresAt = "2026-10-15T23:59:59Z",
@@ -100,7 +102,7 @@ public sealed class ReminderTests(NotificationApiFactory api)
         await ActivatorUtilities.CreateInstance<EmailDispatchJob>(api.Services).RunOnceAsync(CancellationToken.None);
 
         var sent = Assert.Single(api.Mail.Sent, m => m.TenantId == tenant);
-        Assert.Equal("cnd-7@example.test", sent.ToAddress);
+        Assert.Equal("r.das@example.test", sent.ToAddress);
         Assert.Equal("Your offer is awaiting your response", sent.Subject);
 
         var item = Assert.Single(await BellAsync(api.ClientFor(tenant, RecuroRoles.HrTa)));

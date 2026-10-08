@@ -67,7 +67,7 @@ public sealed record MatrixRule(string EventType, string TemplateKey, Channels C
 /// </summary>
 public static class NotificationMatrix
 {
-    public const string Version = "ntf-matrix-2026.10.2";
+    public const string Version = "ntf-matrix-2026.10.3";
 
     // Role keys: the same strings as the frontend Role type and the Keycloak realm roles.
     private const string HrTa = "hrta";
@@ -112,9 +112,9 @@ public static class NotificationMatrix
         // §5.6 #9 / RCU-CAR-006: the regret email goes out on the date Pipeline set (≤ 3 working days).
         new("pipeline.application.final_rejected.v1", "candidate.regret", Channels.Email, Critical: false, [RecipientRule.ForPayloadCandidate("candidateId")], SendAtField: "regretSendAt"),
 
-        // New applications land with HR-TA; a signed-in applicant gets a confirmation.
+        // New applications land with HR-TA; the applicant (a candidate record, no portal account) gets an email confirmation.
         new("pipeline.application.created.v1", "application.created", Channels.InApp, Critical: false, [RecipientRule.ForRole(HrTa)]),
-        new("career.job.applied.v1", "career.applied.confirmation", Both, Critical: false, [RecipientRule.ForActor(Candidate)]),
+        new("career.job.applied.v1", "career.applied.confirmation", Channels.Email, Critical: false, [RecipientRule.ForPayloadCandidate("candidateId")]),
 
         // §5.6 #5–#8: interviews.
         new("interview.scheduled.v1", "interview.scheduled", Both, Critical: false, [RecipientRule.ForPayloadUsers("panel", HrTa)]),
