@@ -43,7 +43,7 @@ the project files as `recuro/backenduserstories.html`). Decisions behind this ma
 | 7 | **Candidate** | CND-001..006 | candidates (PII encrypted), consents, merges | `candidate.created/merged/purged` | `pipeline.application.final_rejected` | Identity (masking), Vendor (active check) | 5107 |
 | 8 | **Pipeline** | PPL-001..008 | applications, stage history, TAT clocks, holds | `pipeline.*` | `recruitment.sourcing.unlocked`, `recruitment.mrf.cancelled`, `interview.selection.ratified`, `bgv.*`, `offer.accepted` | Requisition (sourcing gate), Candidate | 5108 |
 | 9 | **Interview** | INT-001..007 | rounds, schedules, Annexure B assessments, selection summaries | `interview.*` | `pipeline.stage.changed` | Config (round templates), Workflow (ratification) | 5109 |
-| 10 | **Bgv** | BGV-001..009 | BGV cases, checks, vendor refs, webhook dedupe | `bgv.*` | `pipeline.stage.changed`, `vendor.de_empanelled` | Config (check matrix), Vendor, Candidate (consent) | 5110 |
+| 10 | **Bgv** | BGV-001..009 | BGV cases, checks, consent, vendor refs, webhook dedupe | `bgv.*` | `pipeline.stage.changed`, `vendor.de_empanelled`, `workflow.task.completed` (type `bgv-adverse`) | Config (check matrix, escalation), Vendor (status), Workflow (adverse saga), Identity (masking) | 5110 |
 | 11 | **Offer** | OFR-001..007 | offers, CTC breakup, letters, verbal log | `offer.*` | `workflow.task.completed`, `bgv.cleared`, `bgv.adverse.flagged`, `bgv.resolved`, `candidate.purged` | Config (offer matrix), Workflow, Bgv (release gate) | 5111 |
 | 12 | **Onboarding** | ONB-001..006 | onboarding cases, Day-1 checklist, documents, probation | `onboarding.*` | `offer.accepted`, `bgv.cleared/adverse.flagged` | Config (checklist) | 5112 |
 | 13 | **Vendor** (P1) | VND-001..005 | vendors, empanelment gates, agreements, SLA snapshots | `vendor.*` | `bgv.check.updated` | — | 5113 |
@@ -204,14 +204,77 @@ Keys that other services use:
 | TAT stages | `mrf-approval`, `sourcing`, `interview`, `bgv`, `offer-issuance`, `offer-to-joining`, `onboarding-day1`, `overall-junior`, `overall-managerial`, `overall-kmp` |
 | Calendar location | `default` when none is given |
 
-### Vendor: consultant status (owner: Vendor, wave 2; caller: Candidate)
+### Vendor: status (owner: Vendor; callers: Candidate, Bgv; PR #24)
 
-**`GET /api/v1/vendors/{vendorId}/status`** (RCU-CND-005, VND-001)
+**`GET /api/v1/vendors/{vendorId}/status`** (RCU-CND-005, VND-001). Any signed-in caller, user or
+service, may read it.
 
-This returns `{ "vendorId": "string", "status": "active | pending | off", "active": true }`. An unknown
-id returns 404, which the caller treats as not active (400 `vendor_not_active`). Until Vendor ships,
-Candidate's `UncheckedVendorDirectory` accepts every id and logs a warning. Vendor also publishes
-`vendor.de_empanelled`, so a caller may cache a status for up to 5 minutes.
+- Returns `{ "vendorId", "status": "active | pending | off", "active": bool, "name", "type": "Consultant | BgvAgency" }`.
+  `name` and `type` were added later; the change is additive.
+- An unknown id, or one that isn't a GUID, returns 404. The caller treats that as not active
+  (Candidate returns 400 `vendor_not_active`).
+- A caller may cache a status for up to 5 minutes, because Vendor also publishes
+  `vendor.de_empanelled`.
+
+The other Vendor routes under `/api/v1/vendors`, all for HR Head:
+
+- `GET /` lists vendors.
+- `POST /` registers a vendor.
+- `GET /{vendorId}` returns one vendor.
+- `PUT /{vendorId}/empanelment` updates the six empanelment gates.
+- `POST /{vendorId}/empanel` and `POST /{vendorId}/de-empanel` change the vendor's status.
+
+The fee band (5–8.33% of CTC) stays in Vendor's own configuration until Config has a vendor matrix.
+
+### Background verification (owner: Bgv 5110; PR #24)
+
+Routes under `/api/v1/bgv`. `{caseRef}` is either the `appId` or the case id.
+
+| Route | Purpose |
+|---|---|
+| `GET /dashboard/ta` | dashboard fragment (see the TA dashboard section) |
+| `POST /cases` | start a case. Consent is owned by Bgv, so a missing consent returns 400 `consent_required` |
+| `GET /cases/{caseRef}` | case with its checks |
+| `GET /cases/{caseRef}/release-gate` | whether an offer may be released. The `service` role can read it, for Offer (OFR-007) |
+| `POST /cases/{caseRef}/release` | release the gate. Returns 409 `bgv_release_blocked` while checks are open or adverse |
+| `POST /cases/{caseRef}/checks/{checkType}` | update one check |
+| `POST /cases/{caseRef}/adverse` | report an adverse finding, which starts the adverse saga |
+| `GET /cases/reassignment`, `POST /cases/reassign` | list cases left with a de-empanelled vendor, and move them to an active vendor |
+
+**Events** (schemas in `services/contracts/events`):
+
+| Type | Notes |
+|---|---|
+| `bgv.case.initiated.v1` | |
+| `bgv.check.updated.v1` | |
+| `bgv.adverse.flagged.v1` | |
+| `bgv.cleared.v1` | carries `onTime` for vendor SLA |
+| `bgv.resolved.v1` | outcome `ResolvedCleared` or `ResolvedAdverse`; decision `override` or `rescind` |
+| `vendor.empanelled.v1` | |
+| `vendor.de_empanelled.v1` | carries `reassignmentHint: "reassign-open-cases"` |
+
+**Adverse saga.** Bgv starts a Workflow instance with type `bgv-adverse`, subject `BgvCase/{caseId}`
+and presentation kind `AdverseBgv`.
+
+- Its legs are HR Head, then MD/CEO, taken from Config's `adverse-bgv` escalation.
+- When `workflow.task.completed` arrives with action `rescind` or `override`, Bgv publishes
+  `bgv.resolved.v1`.
+- Pipeline and Offer react to `bgv.adverse.flagged` and `bgv.resolved`.
+
+**No Bgv TAT-breach event.** Pipeline's `pipeline.tat.breached.v1` already covers the BGV stage,
+using the same Config TAT, so escalation happens only once.
+
+**Outgoing calls.** Bgv's HTTP clients run `ForwardCallerHandler` and then `ServiceTokenHandler`. A
+call made for a user carries that user's token, and a call from a consumer or job gets a service
+token.
+
+**Planned (not built yet):**
+
+- **Identity:** a `bgvCheck` masking resource with `sensitiveNote` hidden for `mdceo`, `employee`,
+  `candidate` and `service`. Until it exists, Bgv applies the same rule locally.
+- **Config** (optional): BGV matrix rows may carry
+  `appliesWhen { always, grades[], anyFlags[] }`. Until they do, Bgv uses the built-in FRD §5.5
+  rules.
 
 ### Gateway BFF: log a candidate (owner: Gateway; calls Candidate, then Pipeline)
 
