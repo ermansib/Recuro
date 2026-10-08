@@ -48,7 +48,7 @@ public sealed class ReminderTests(NotificationApiFactory api)
         var tenant = Guid.NewGuid();
         var task = new { taskId = Guid.NewGuid(), instanceId = Guid.NewGuid(), type = "MRF", subjectType = "Requisition", subjectId = "REQ-2026-0300" };
         await api.PublishAsync("workflow.task.created.v1", new { task.taskId, task.instanceId, task.type, task.subjectType, task.subjectId, assignee = "mdceo", dueAt = "2026-10-09T12:00:00Z", configVersionId = "doa-1" }, tenant: tenant);
-        await api.PublishAsync("workflow.task.reminder_due.v1", new { task.taskId, task.instanceId, leg = "MD", task.subjectType, task.subjectId, assigneeIds = new[] { "mdceo" }, thresholdPercent = 100, dueAt = "2026-10-09T12:00:00Z" }, tenant: tenant);
+        await api.PublishAsync("workflow.task.reminder_due.v1", new { task.taskId, task.instanceId, leg = "MD", task.subjectType, task.subjectId, assigneeIds = Array.Empty<string>(), assigneeRole = "mdceo", thresholdPercent = 100, dueAt = "2026-10-09T12:00:00Z" }, tenant: tenant);
         await api.PublishAsync("workflow.escalated.v1", new { task.taskId, task.instanceId, task.type, task.subjectType, task.subjectId, assignee = "mdceo", level = 1, escalateTo = "hrhead", dueAt = "2026-10-10T12:00:00Z" }, tenant: tenant);
 
         Assert.Equal(

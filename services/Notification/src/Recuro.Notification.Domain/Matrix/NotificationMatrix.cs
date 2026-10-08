@@ -95,8 +95,10 @@ public static class NotificationMatrix
         // §5.6 #1: the approving leg hears about its task (Workflow names the assignee).
         new("workflow.task.created.v1", "approval.task.assigned", Both, Critical: true, [RecipientRule.ForPayloadUser("assignee", HrHead, fallbackToRole: true)]),
 
-        // RCU-WFL-003: reminders at 50% and 100% of the task's SLA go to its assignees; escalation stays workflow.escalated.
-        new("workflow.task.reminder_due.v1", "approval.task.reminder", Both, Critical: false, [RecipientRule.ForPayloadUsers("assigneeIds", HrHead)]),
+        // RCU-WFL-003: reminders at 50% and 100% of the task's SLA go to its assignees (named users, or the role
+        // Workflow assigned it to in assigneeRole); escalation stays workflow.escalated.
+        new("workflow.task.reminder_due.v1", "approval.task.reminder", Both, Critical: false,
+            [RecipientRule.ForPayloadUsers("assigneeIds", HrHead), RecipientRule.ForPayloadUser("assigneeRole", HrHead)]),
 
         // §5.6 #2: the initiator hears the outcome; the reason is quoted on reject.
         new("recruitment.mrf.approved.v1", "mrf.approved", Both, Critical: true, [RecipientRule.ForSubjectOwner(HrTa)]),
