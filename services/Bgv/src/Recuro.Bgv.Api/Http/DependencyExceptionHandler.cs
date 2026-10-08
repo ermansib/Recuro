@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using Recuro.Bgv.Application.Abstractions;
 using Recuro.BuildingBlocks.Domain;
 using Recuro.BuildingBlocks.Web.Http;
-using Recuro.Bgv.Application.Abstractions;
 
 namespace Recuro.Bgv.Api.Http;
 

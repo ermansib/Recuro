@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/bgv.cleared.v1.schema.json",
+  "title": "bgv.cleared.v1",
+  "description": "Producer: Bgv. Every applicable check cleared; raised once per case and unlocks offer release (RCU-BGV-005, RCU-OFF gate).",
+  "type": "object",
+  "required": [
+    "caseId",
+    "appId",
+    "reqId",
+    "vendorId",
+    "vendorRef",
+    "status",
+    "clearedAt",
+    "dueAt",
+    "onTime"
+  ],
+  "properties": {
+    "caseId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "vendorId": {
+      "type": "string"
+    },
+    "vendorRef": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "const": "Cleared"
+    },
+    "clearedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dueAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "onTime": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": true
+}

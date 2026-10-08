@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/bgv.case.initiated.v1.schema.json",
+  "title": "bgv.case.initiated.v1",
+  "description": "Producer: Bgv. A BGV case started after recorded consent; checks planned from the Config BGV matrix (RCU-BGV-001/002).",
+  "type": "object",
+  "required": [
+    "caseId",
+    "appId",
+    "reqId",
+    "candidateId",
+    "vendorId",
+    "vendorRef",
+    "scope",
+    "grade",
+    "checks",
+    "notApplicable",
+    "dueAt",
+    "configVersionId"
+  ],
+  "properties": {
+    "caseId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "vendorId": {
+      "type": "string"
+    },
+    "vendorRef": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "Full",
+        "Delta"
+      ]
+    },
+    "grade": {
+      "type": "string"
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notApplicable": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dueAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "configVersionId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}
