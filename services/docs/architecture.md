@@ -370,23 +370,25 @@ service option until Config carries an IJP rule. When it does, both services rea
 | `employee.ijp.applied.v1` | `employeeId, reqId, appId, candidateId` |
 | `employee.referral.submitted.v1` | `referralId, referrerId, reqId, appId, candidateId, relationship, bonusEligible, possibleDuplicate` |
 
-**Intake calls** to Candidate and Pipeline run as the `service` role, using Keycloak clients
-`recuro-svc-careers` and `recuro-svc-employee`. PR #22 was written before RCU-AUT-005 merged, so
-each service uses a `ServiceCallerHandler` stand-in:
+**Intake calls** to Candidate and Pipeline run as the `service` role with BuildingBlocks'
+`ServiceTokenHandler` (RCU-AUT-005), using Keycloak clients `recuro-svc-careers` and
+`recuro-svc-employee`. The Config calendar call forwards the HR user's own credentials.
 
-- In Development mode, it sends the `X-Dev-*` service headers.
-- In OIDC mode, it returns 503 rather than call without a token.
-- It never bypasses masking.
+**Candidate additions the intake sagas use** (built in PR #25):
 
-`ServiceTokenHandler` is now on main (PR #21). The stand-in should be replaced with it in a follow-up.
+- `POST /api/v1/candidates/{id}/tombstone` (role `service` only) is the compensation step of the
+  candidate-intake saga when the application can't be created. It returns:
+  - 204, also on a repeat call (idempotent).
+  - 404 for an unknown id.
+  - 409 `legal_hold` when the candidate is under legal hold.
+  - 409 `candidate_in_use` when the candidate has an active application.
 
-**Planned additions that other threads own** (not built yet):
-
-- Candidate: `POST /api/v1/candidates/{id}/tombstone` (role `service`). It is the compensation step
-  of the candidate-intake saga when the application can't be created.
-- Candidate: the 409 `duplicate_candidate` problem gains an `existingId` extension, so the intake
-  sagas can link to the existing candidate. The gateway's `/bff/candidates` keeps returning the 409
-  unchanged to HR-TA.
+  On success it publishes `candidate.purged` with `purgeScope` `"anonymised"`.
+- The 409 `duplicate_candidate` problem carries an `existingId` extension member (the existing
+  candidate's id as a string guid), so the intake sagas can link to it. The title is unchanged, and
+  the gateway's `/bff/candidates` still returns the 409 unchanged to HR-TA.
+- BuildingBlocks' `Error` has an optional `Extensions` dictionary, which `ToProblem` merges into the
+  `ProblemDetails`. It is additive, and any service can use it.
 
 ### Reminder and chase events (catalog additions)
 
