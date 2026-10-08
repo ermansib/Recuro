@@ -27,6 +27,7 @@ public static class MatrixJson
         MatrixType.Escalation => typeof(EscalationMatrix),
         MatrixType.Bgv => typeof(BgvMatrix),
         MatrixType.Calendar => typeof(CalendarMatrix),
+        MatrixType.Interview => typeof(InterviewMatrix),
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
     };
 

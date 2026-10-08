@@ -27,6 +27,18 @@ public class RecipientResolverTests
         Assert.False(values.ContainsKey("nested"));
     }
 
+    [Theory]
+    [InlineData(187_200_000L, "2d 4h")]
+    [InlineData(12_000_000L, "3h 20m")]
+    [InlineData(2_700_000L, "45m")]
+    public void Millisecond_durations_also_read_as_text(long varianceMs, string expected)
+    {
+        var values = EventPayload.TemplateValues(Metadata, JsonSerializer.SerializeToElement(new { varianceMs }));
+
+        Assert.Equal(expected, values["variance"]);
+        Assert.Equal(varianceMs.ToString(System.Globalization.CultureInfo.InvariantCulture), values["varianceMs"]);
+    }
+
     [Fact]
     public async Task A_role_with_nobody_in_the_directory_gets_one_role_wide_item_and_one_unaddressed_email()
     {

@@ -67,7 +67,7 @@ public sealed record MatrixRule(string EventType, string TemplateKey, Channels C
 /// </summary>
 public static class NotificationMatrix
 {
-    public const string Version = "ntf-matrix-2026.10.3";
+    public const string Version = "ntf-matrix-2026.10.4";
 
     // Role keys: the same strings as the frontend Role type and the Keycloak realm roles.
     private const string HrTa = "hrta";
@@ -131,6 +131,7 @@ public static class NotificationMatrix
         new("offer.approved.v1", "offer.approved", Both, Critical: true, [RecipientRule.ForRole(HrTa)]),
         new("offer.accepted.v1", "offer.accepted", Channels.InApp, Critical: false, [RecipientRule.ForRole(HrTa)]),
         new("offer.declined.v1", "offer.declined", Channels.InApp, Critical: false, [RecipientRule.ForRole(HrHead)]),
+        new("offer.withdrawn.v1", "offer.withdrawn", Both, Critical: false, [RecipientRule.ForRole(HrTa)]),
 
         // RCU-OFR-006: an unanswered offer chases the candidate by email and tells HR-TA in the bell.
         new("offer.chase_due.v1", "offer.chase.candidate", Channels.Email, Critical: false, [RecipientRule.ForPayloadCandidate("candidateId")]),

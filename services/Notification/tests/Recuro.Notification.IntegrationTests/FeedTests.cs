@@ -35,6 +35,28 @@ public sealed class FeedTests(NotificationApiFactory api)
     }
 
     [Fact]
+    public async Task A_TAT_breach_shows_the_overrun_readably()
+    {
+        // pipeline.tat.breached.v1 sends the overrun as varianceMs.
+        var tenant = Guid.NewGuid();
+        await api.PublishAsync("pipeline.tat.breached.v1", new { entity = "APP-T1", appId = "APP-T1", reqId = "REQ-T1", stage = "Interview", dueAt = "2026-10-07T12:00:00Z", varianceMs = 187_200_000L, escalationPath = "HR Head" }, tenant: tenant);
+
+        var item = Assert.Single(await BellAsync(api.ClientFor(tenant, RecuroRoles.HrTa)));
+        Assert.Equal("Interview · variance 2d 4h · escalation HR Head", item.GetProperty("body").GetString());
+    }
+
+    [Fact]
+    public async Task A_withdrawn_offer_tells_HR_TA_why()
+    {
+        var tenant = Guid.NewGuid();
+        await api.PublishAsync("offer.withdrawn.v1", new { offerId = "OFF-W1", appId = "APP-W1", reqId = "REQ-W1", candidateId = Guid.NewGuid(), from = "Sent", reason = "Position put on hold" }, tenant: tenant);
+
+        var item = Assert.Single(await BellAsync(api.ClientFor(tenant, RecuroRoles.HrTa)));
+        Assert.Equal("Offer withdrawn — OFF-W1", item.GetProperty("title").GetString());
+        Assert.Equal("APP-W1 · Position put on hold", item.GetProperty("body").GetString());
+    }
+
+    [Fact]
     public async Task Other_roles_and_other_tenants_never_see_it()
     {
         var req = NewReq();
