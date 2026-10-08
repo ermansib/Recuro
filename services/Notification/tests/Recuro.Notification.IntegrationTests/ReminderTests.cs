@@ -43,6 +43,21 @@ public sealed class ReminderTests(NotificationApiFactory api)
     }
 
     [Fact]
+    public async Task Tasks_assigned_to_a_role_reach_everyone_in_that_role()
+    {
+        var tenant = Guid.NewGuid();
+        var task = new { taskId = Guid.NewGuid(), instanceId = Guid.NewGuid(), type = "MRF", subjectType = "Requisition", subjectId = "REQ-2026-0300" };
+        await api.PublishAsync("workflow.task.created.v1", new { task.taskId, task.instanceId, task.type, task.subjectType, task.subjectId, assignee = "mdceo", dueAt = "2026-10-09T12:00:00Z", configVersionId = "doa-1" }, tenant: tenant);
+        await api.PublishAsync("workflow.task.reminder_due.v1", new { task.taskId, task.instanceId, leg = "MD", task.subjectType, task.subjectId, assigneeIds = new[] { "mdceo" }, thresholdPercent = 100, dueAt = "2026-10-09T12:00:00Z" }, tenant: tenant);
+        await api.PublishAsync("workflow.escalated.v1", new { task.taskId, task.instanceId, task.type, task.subjectType, task.subjectId, assignee = "mdceo", level = 1, escalateTo = "hrhead", dueAt = "2026-10-10T12:00:00Z" }, tenant: tenant);
+
+        Assert.Equal(
+            ["Approval needed — REQ-2026-0300", "Approval reminder — REQ-2026-0300"],
+            Titles(await BellAsync(api.ClientFor(tenant, RecuroRoles.MdCeo, "md-1"))).Order(StringComparer.Ordinal));
+        Assert.Equal(["Escalation — REQ-2026-0300"], Titles(await BellAsync(api.ClientFor(tenant, RecuroRoles.HrHead, "head-1"))));
+    }
+
+    [Fact]
     public async Task A_feedback_reminder_reaches_interviewers_who_have_not_submitted()
     {
         var tenant = Guid.NewGuid();

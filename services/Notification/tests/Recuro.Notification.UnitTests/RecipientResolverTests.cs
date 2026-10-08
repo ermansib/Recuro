@@ -76,6 +76,23 @@ public class RecipientResolverTests
     }
 
     [Fact]
+    public async Task A_payload_value_naming_a_staff_role_reaches_that_role()
+    {
+        // Workflow assigns tasks to roles: { "assignee": "mdceo" } and { "assigneeIds": ["hrhead", "u-7"] }.
+        var resolver = new RecipientResolver(new FakeStore(), FakeContacts.None);
+
+        var single = await resolver.ResolveAsync(RecipientRule.ForPayloadUser("assignee", "hrhead", fallbackToRole: true), Metadata,
+            JsonSerializer.SerializeToElement(new { assignee = "mdceo" }), CancellationToken.None);
+        var mixed = await resolver.ResolveAsync(RecipientRule.ForPayloadUsers("assigneeIds", "hrhead"), Metadata,
+            JsonSerializer.SerializeToElement(new { assigneeIds = new[] { "hrhead", "u-7" } }), CancellationToken.None);
+
+        var role = Assert.Single(single.InApp);
+        Assert.True(role.IsRoleWide);
+        Assert.Equal("mdceo", role.Role);
+        Assert.Equal([(true, "hrhead", null), (false, "hrhead", "u-7")], mixed.InApp.Select(r => (r.IsRoleWide, r.Role, r.UserId)));
+    }
+
+    [Fact]
     public async Task Panel_members_are_deduplicated()
     {
         var data = JsonSerializer.SerializeToElement(new { panel = new[] { "u-1", "u-1", "u-2" } });

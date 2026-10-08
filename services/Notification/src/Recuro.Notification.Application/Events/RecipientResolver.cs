@@ -14,8 +14,9 @@ public sealed record ResolvedRecipients(IReadOnlyList<Recipient> InApp, IReadOnl
 /// <summary>
 /// Turns a matrix <see cref="RecipientRule"/> into people (RCU-NTF-001 "role-in-context"). A role gets
 /// one role-wide bell item and one email per person the directory knows in that role; a named user gets
-/// both addressed to them. People the directory does not know yet still get their bell item; their
-/// email is logged as suppressed for lack of an address.
+/// both addressed to them, and a payload value that names a staff role (Workflow's assignees) reaches
+/// that role. People the directory does not know yet still get their bell item; their email is logged
+/// as suppressed for lack of an address.
 /// </summary>
 public sealed class RecipientResolver(INotificationStore store, ICandidateContacts candidates)
 {
@@ -44,15 +45,28 @@ public sealed class RecipientResolver(INotificationStore store, ICandidateContac
             return await ForRoleAsync(rule.Role, ct);
         }
 
-        var people = new List<Recipient>();
-        foreach (var userId in userIds.Distinct(StringComparer.Ordinal))
+        // Workflow assigns tasks to roles (e.g. "hrhead"), so a payload value naming a staff role reaches that
+        // role; anything else is a user id.
+        var inApp = new List<Recipient>();
+        var email = new List<Recipient>();
+        foreach (var value in userIds.Distinct(StringComparer.Ordinal))
         {
-            var known = await store.FindUserAsync(userId, ct);
-            var name = known?.Name ?? (userId == metadata.ActorId ? metadata.ActorName : null);
-            people.Add(new Recipient(rule.Role, userId, name, known?.Email));
+            if (NotificationMatrix.BroadcastRoles.Contains(value))
+            {
+                var role = await ForRoleAsync(value, ct);
+                inApp.AddRange(role.InApp);
+                email.AddRange(role.Email);
+                continue;
+            }
+
+            var known = await store.FindUserAsync(value, ct);
+            var name = known?.Name ?? (value == metadata.ActorId ? metadata.ActorName : null);
+            var person = new Recipient(rule.Role, value, name, known?.Email);
+            inApp.Add(person);
+            email.Add(person);
         }
 
-        return new ResolvedRecipients(people, people);
+        return new ResolvedRecipients(inApp, email);
     }
 
     /// <summary>

@@ -104,7 +104,7 @@ public static class NotificationMatrix
         new("recruitment.mrf.cancelled.v1", "mrf.cancelled", Channels.InApp, Critical: false, [RecipientRule.ForRole(HrTa)]),
 
         // §5.6 #3 and §16: escalations go to whoever Workflow escalated to, else HR Head.
-        new("workflow.escalated.v1", "workflow.escalated", Both, Critical: true, [RecipientRule.ForPayloadUser("assignee", HrHead, fallbackToRole: true)]),
+        new("workflow.escalated.v1", "workflow.escalated", Both, Critical: true, [RecipientRule.ForPayloadUser("escalateTo", HrHead, fallbackToRole: true)]),
         new("pipeline.tat.breached.v1", "tat.breached", Both, Critical: true, [RecipientRule.ForRole(HrTa)]),
 
         // §5.6 #9 / RCU-CAR-006: the regret email goes out on the date Pipeline set (≤ 3 working days).
