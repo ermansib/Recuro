@@ -60,3 +60,11 @@ internal sealed class FakeContacts(CandidateContact? contact) : ICandidateContac
 
     public Task<CandidateContact?> FindAsync(string candidateId, CancellationToken ct) => Task.FromResult(contact);
 }
+
+/// <summary>Identity's role lookup: null means Identity didn't answer and the local directory is used.</summary>
+internal sealed class FakeStaff(IReadOnlyList<StaffContact>? people) : IStaffDirectory
+{
+    public static FakeStaff None { get; } = new(null);
+
+    public Task<IReadOnlyList<StaffContact>?> UsersInRoleAsync(string role, CancellationToken ct) => Task.FromResult(people);
+}

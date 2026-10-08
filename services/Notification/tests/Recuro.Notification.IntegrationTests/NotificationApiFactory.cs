@@ -1,9 +1,12 @@
 using System.Collections.Concurrent;
+using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http;
 using Recuro.BuildingBlocks.Infrastructure.Messaging;
 using Recuro.BuildingBlocks.Web.Auth;
 using Recuro.Notification.Application.Abstractions;
@@ -22,6 +25,9 @@ public sealed class NotificationApiFactory : WebApplicationFactory<Program>, IAs
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17-alpine").Build();
 
     public FakeEmailTransport Mail { get; } = new();
+
+    /// <summary>Candidate and Identity, as Notification calls them (RCU-AUT-005).</summary>
+    public FakeServices Backends { get; } = new();
 
     public async Task InitializeAsync()
     {
@@ -79,10 +85,15 @@ public sealed class NotificationApiFactory : WebApplicationFactory<Program>, IAs
         builder.UseSetting("Email:RetryBackoff", "00:00:00");
         builder.UseSetting("NotificationStream:HeartbeatInterval", "00:00:01");
         builder.UseSetting("Database:MigrateOnStartup", "false");
+        builder.UseSetting("Services:Candidate:BaseUrl", "http://candidate.test/");
+        builder.UseSetting("Services:Identity:BaseUrl", "http://identity.test/");
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton<IEmailTransport>(Mail);
-            services.AddSingleton<ICandidateContacts>(new KnownCandidates());
+            foreach (var client in new[] { nameof(ICandidateContacts), nameof(IStaffDirectory) })
+            {
+                services.Configure<HttpClientFactoryOptions>(client, o => o.HttpMessageHandlerBuilderActions.Add(b => b.PrimaryHandler = Backends));
+            }
         });
     }
 }
@@ -106,11 +117,50 @@ public sealed class FakeEmailTransport : IEmailTransport
     }
 }
 
-/// <summary>Candidate contacts for tests: <c>CND-*</c> ids have an address, others do not.</summary>
-public sealed class KnownCandidates : ICandidateContacts
+/// <summary>
+/// Fake Candidate and Identity. Candidate knows the ids in <see cref="Candidates"/> (404 otherwise);
+/// Identity lists the people in <see cref="Staff"/> for a tenant and role, and answers 503 for anything
+/// else, so Notification falls back to its local directory.
+/// </summary>
+public sealed class FakeServices : HttpMessageHandler
 {
-    public Task<CandidateContact?> FindAsync(string candidateId, CancellationToken ct) =>
-        Task.FromResult(candidateId.StartsWith("CND-", StringComparison.Ordinal)
-            ? new CandidateContact("A Candidate", $"{candidateId.ToLowerInvariant()}@example.test")
-            : null);
+    public ConcurrentDictionary<Guid, (string Name, string Email)> Candidates { get; } = new();
+
+    public ConcurrentDictionary<(Guid Tenant, string Role), StaffContact[]> Staff { get; } = new();
+
+    public ConcurrentBag<(string Path, string? Roles, string? Tenant)> Seen { get; } = [];
+
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var path = request.RequestUri!.AbsolutePath;
+        var roles = Header(request, DevelopmentAuthenticationHandler.RolesHeader);
+        var tenant = Header(request, DevelopmentAuthenticationHandler.TenantHeader);
+        Seen.Add((path, roles, tenant));
+        if (roles != RecuroRoles.Service || !Guid.TryParse(tenant, out var tenantId))
+        {
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized));
+        }
+
+        if (request.RequestUri.Host == "candidate.test"
+            && Guid.TryParse(path[(path.LastIndexOf('/') + 1)..], out var id)
+            && Candidates.TryGetValue(id, out var candidate))
+        {
+            return Json(new { id, name = candidate.Name, email = candidate.Email, phone = "**********" });
+        }
+
+        if (request.RequestUri.Host == "identity.test"
+            && System.Web.HttpUtility.ParseQueryString(request.RequestUri.Query)["role"] is { } role
+            && Staff.TryGetValue((tenantId, role), out var people))
+        {
+            return Json(people.Select(p => new { id = p.UserId, tenantId, name = p.Name, role, email = p.Email }));
+        }
+
+        return Task.FromResult(new HttpResponseMessage(request.RequestUri.Host == "identity.test" ? HttpStatusCode.ServiceUnavailable : HttpStatusCode.NotFound));
+    }
+
+    private static string? Header(HttpRequestMessage request, string name) =>
+        request.Headers.TryGetValues(name, out var values) ? values.FirstOrDefault() : null;
+
+    private static Task<HttpResponseMessage> Json(object body) =>
+        Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(body, options: JsonSerializerOptions.Web) });
 }

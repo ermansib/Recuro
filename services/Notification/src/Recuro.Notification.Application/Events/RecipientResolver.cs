@@ -18,7 +18,7 @@ public sealed record ResolvedRecipients(IReadOnlyList<Recipient> InApp, IReadOnl
 /// that role. People the directory does not know yet still get their bell item; their email is logged
 /// as suppressed for lack of an address.
 /// </summary>
-public sealed class RecipientResolver(INotificationStore store, ICandidateContacts candidates)
+public sealed class RecipientResolver(INotificationStore store, ICandidateContacts candidates, IStaffDirectory staff, TimeProvider clock)
 {
     public async Task<ResolvedRecipients> ResolveAsync(RecipientRule rule, EventMetadata metadata, JsonElement data, CancellationToken ct)
     {
@@ -88,11 +88,34 @@ public sealed class RecipientResolver(INotificationStore store, ICandidateContac
 
     private async Task<ResolvedRecipients> ForRoleAsync(string role, CancellationToken ct)
     {
-        var members = await store.UsersInRoleAsync(role, ct);
+        var members = await staff.UsersInRoleAsync(role, ct) is { } current
+            ? await RememberAsync(role, current, ct)
+            : await store.UsersInRoleAsync(role, ct);
         IReadOnlyList<Recipient> email = members.Count == 0
             ? [Recipient.Everyone(role)]
             : members.Select(m => ToRecipient(role, m)).ToList();
         return new ResolvedRecipients([Recipient.Everyone(role)], email);
+    }
+
+    /// <summary>Keeps the local directory in step with Identity, so it can stand in when Identity can't answer.</summary>
+    private async Task<IReadOnlyList<DirectoryUser>> RememberAsync(string role, IReadOnlyList<StaffContact> people, CancellationToken ct)
+    {
+        var now = clock.GetUtcNow();
+        var members = new List<DirectoryUser>();
+        foreach (var person in people.Where(p => !string.IsNullOrWhiteSpace(p.UserId)).DistinctBy(p => p.UserId, StringComparer.Ordinal))
+        {
+            var entry = await store.FindUserAsync(person.UserId, ct);
+            if (entry is null)
+            {
+                entry = DirectoryUser.Create(person.UserId, now);
+                store.Add(entry);
+            }
+
+            entry.Update(person.Name, person.Email, entry.Roles.Contains(role, StringComparer.Ordinal) ? null : [.. entry.Roles, role], now);
+            members.Add(entry);
+        }
+
+        return members;
     }
 
     private static Recipient ToRecipient(string role, DirectoryUser user) => new(role, user.UserId, user.Name, user.Email);
