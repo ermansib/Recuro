@@ -23,6 +23,9 @@ public enum MatrixType
 
     /// <summary>Interview round templates, feedback SLA and selection ratification (RCU-ASM-001/004/006).</summary>
     Interview,
+
+    /// <summary>Annexure E Day-1 checklist, §13 documents, pre-boarding and probation timings (RCU-ONB-001..004).</summary>
+    Onboarding,
 }
 
 public static class MatrixTypes

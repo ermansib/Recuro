@@ -7,20 +7,21 @@ public sealed record BusinessCalendar(string Location, IReadOnlyList<DayOfWeek> 
 
     /// <summary>
     /// <paramref name="from"/> plus <paramref name="days"/> working days: the start day itself never
-    /// counts, and 0 returns <paramref name="from"/>. The only working-day calculation in the backend.
+    /// counts, 0 returns <paramref name="from"/>, and negative days count backwards (T-5 before a joining
+    /// date). The only working-day calculation in the backend.
     /// </summary>
     public DateOnly AddWorkingDays(DateOnly from, int days)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(days);
         if (WeekendDays.Distinct().Count() >= 7)
         {
             throw new InvalidOperationException($"Calendar '{Location}' has no working days.");
         }
 
+        var step = days < 0 ? -1 : 1;
         var day = from;
-        for (var added = 0; added < days;)
+        for (var added = 0; added < Math.Abs(days);)
         {
-            day = day.AddDays(1);
+            day = day.AddDays(step);
             if (IsWorkingDay(day))
             {
                 added++;

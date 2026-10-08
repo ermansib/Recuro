@@ -69,3 +69,23 @@ public sealed record BgvAppliesWhen(bool Always = false, IReadOnlyList<string>? 
 
 /// <summary>The BGV applicability matrix (§5.5).</summary>
 public sealed record BgvMatrix(IReadOnlyList<BgvCheckRule> Checks);
+
+/// <summary>One Day-1 checklist item (Annexure E, RCU-ONB-002).</summary>
+public sealed record OnboardingChecklistItem(string Key, string Label);
+
+/// <summary>One §13 joining document; the file can't be completed while a mandatory one is missing (RCU-ONB-003).</summary>
+public sealed record OnboardingDocument(string Type, string Label, bool Mandatory);
+
+/// <summary>
+/// The onboarding matrix: the Day-1 checklist, the §13 document list, the §9.9 pre-boarding touchpoints
+/// (engagement calls and the IT/Admin ticket before joining) and the §9.10 probation timings.
+/// </summary>
+public sealed record OnboardingMatrix(
+    IReadOnlyList<OnboardingChecklistItem> Checklist,
+    IReadOnlyList<OnboardingDocument> Documents,
+    IReadOnlyList<int> EngagementDaysBefore,
+    int ProvisioningWorkingDaysBefore,
+    int ProbationMonths,
+    int CheckInDay,
+    int ReviewDay,
+    int ReviewWindowEndDay);

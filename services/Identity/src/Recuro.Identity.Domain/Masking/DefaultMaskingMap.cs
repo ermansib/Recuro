@@ -6,7 +6,7 @@ namespace Recuro.Identity.Domain.Masking;
 /// </summary>
 public static class DefaultMaskingMap
 {
-    public const string Version = "masking-2026.10.3";
+    public const string Version = "masking-2026.10.4";
 
     private static Dictionary<string, MaskStrategy> OfferNoAccess() => new()
     {
@@ -85,6 +85,16 @@ public static class DefaultMaskingMap
                 [PersonaRoles.Candidate] = new Dictionary<string, MaskStrategy> { ["sensitiveNote"] = MaskStrategy.Hide },
                 [PersonaRoles.Service] = new Dictionary<string, MaskStrategy> { ["sensitiveNote"] = MaskStrategy.Hide },
             },
-        });
+            ["report"] = new Dictionary<string, IReadOnlyDictionary<string, MaskStrategy>>
+            {
+                // Recruitment cost KPIs (RCU-RPT): HR-TA sees cost per hire but not channel spend.
+                // Only the roles listed here see reports at all.
+                [PersonaRoles.HrTa] = new Dictionary<string, MaskStrategy> { ["sourceCost"] = MaskStrategy.Hide },
+                [PersonaRoles.HrHead] = new Dictionary<string, MaskStrategy>(),
+                [PersonaRoles.MdCeo] = new Dictionary<string, MaskStrategy>(),
+                [PersonaRoles.Service] = new Dictionary<string, MaskStrategy>(),
+            },
+        },
+        listedRolesOnly: ["report"]);
     }
 }

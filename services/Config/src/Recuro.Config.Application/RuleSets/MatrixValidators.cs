@@ -17,6 +17,7 @@ internal static partial class MatrixValidators
         MatrixType.Bgv => new BgvMatrixValidator().Validate((BgvMatrix)matrix),
         MatrixType.Calendar => new CalendarMatrixValidator().Validate((CalendarMatrix)matrix),
         MatrixType.Interview => new InterviewMatrixValidator().Validate((InterviewMatrix)matrix),
+        MatrixType.Onboarding => new OnboardingMatrixValidator().Validate((OnboardingMatrix)matrix),
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
     };
 
@@ -186,6 +187,38 @@ internal sealed class InterviewMatrixValidator : AbstractValidator<InterviewMatr
         RuleFor(m => m.Ratification.Role).MustBePersona();
         RuleFor(m => m.Ratification.Label).Label();
         RuleFor(m => m.Ratification.SlaWorkingDays).InclusiveBetween(1, ConfigLimits.MaxWorkingDays);
+    }
+}
+
+internal sealed class OnboardingMatrixValidator : AbstractValidator<OnboardingMatrix>
+{
+    public OnboardingMatrixValidator()
+    {
+        RuleFor(m => m.Checklist).NotEmpty()
+            .Must(c => c.Select(x => x.Key).Distinct(StringComparer.Ordinal).Count() == c.Count)
+            .WithMessage("Each checklist key appears once.");
+        RuleForEach(m => m.Checklist).ChildRules(item =>
+        {
+            item.RuleFor(i => i.Key).MustBeRoleKey().WithMessage("Checklist keys are lowercase letters, digits and dashes, e.g. bgv-report.");
+            item.RuleFor(i => i.Label).Label();
+        });
+        RuleFor(m => m.Documents)
+            .Must(d => d.Select(x => x.Type).Distinct(StringComparer.Ordinal).Count() == d.Count)
+            .WithMessage("Each document type appears once.");
+        RuleForEach(m => m.Documents).ChildRules(document =>
+        {
+            document.RuleFor(d => d.Type).MustBeRoleKey().WithMessage("Document types are lowercase letters, digits and dashes, e.g. address-proof.");
+            document.RuleFor(d => d.Label).Label();
+        });
+        RuleFor(m => m.EngagementDaysBefore)
+            .Must(d => d.Distinct().Count() == d.Count)
+            .WithMessage("Each engagement touchpoint appears once.");
+        RuleForEach(m => m.EngagementDaysBefore).InclusiveBetween(1, 90);
+        RuleFor(m => m.ProvisioningWorkingDaysBefore).InclusiveBetween(0, 60);
+        RuleFor(m => m.ProbationMonths).InclusiveBetween(1, 24);
+        RuleFor(m => m.CheckInDay).InclusiveBetween(1, 365);
+        RuleFor(m => m.ReviewDay).InclusiveBetween(1, 365).GreaterThan(m => m.CheckInDay);
+        RuleFor(m => m.ReviewWindowEndDay).InclusiveBetween(1, 365).GreaterThanOrEqualTo(m => m.ReviewDay);
     }
 }
 
