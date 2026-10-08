@@ -496,6 +496,14 @@ decides probation (standing in for the HOD until a HOD lookup exists).
 | `onboarding.employee.confirmed.v1` | `onbId, appId, reqId, candidateId, joiningDate, confirmedAt, cycle, decidedBy` |
 | `onboarding.probation.extended.v1` (new) | `onbId, appId, reqId, candidateId, cycle, extendedByMonths, newProbationEnd, reason, decidedBy` |
 
+**Who Notification tells** (PR #35):
+
+- `onboarding.joining_instructions_sent.v1`: an email to the candidate (`candidateId`).
+- `onboarding.day1.ready.v1`: `hrta`. There is no Finance or Payroll role yet.
+- `onboarding.milestone.due.v1`: the `assigneeRoles`, plus the reporting manager by user id
+  (`reportingManagerId`) for probation milestones.
+- `onboarding.employee.confirmed.v1` and `onboarding.probation.extended.v1`: `hrta`.
+
 **Planned (requested of other threads):**
 
 - Config: an `onboarding` matrix (the checklist template), and working-day counts that can go
@@ -546,12 +554,15 @@ Policies: `reports.view` is `hrta`, `hrhead` and `mdceo`. `reports.manage` is `h
 - `resolve/matrices/tat`: `stages[].maxWorkingDays` for `mrf-approval` and the `overall-*` stages.
 - `resolve/matrices/doa`: `routes[].overallTat.maxDays`.
 
+**Pack delivery** (Notification, PR #35): Notification emails every user in `recipientRole` with
+absolute PDF and CSV links, built from its `Email:DownloadBaseUrl` setting and the pack's `pdfPath`
+and `csvPath`. It publishes one `notification.email.dispatched.v1` or
+`notification.email.failed.v1` per recipient. Both events already require `sourceEventId`, which
+Reporting uses to match each outcome to its pack.
+
 **Planned (requested of other threads):**
 
 - Identity: a `report` masking resource covering `costPerHire` and `sourceCost`.
-- Notification: a `report.pack` template, and an optional `sourceEventId` on
-  `notification.email.dispatched.v1` and `notification.email.failed.v1`, so Reporting can match
-  delivery to its pack.
 
 ### Reminder and chase events (catalog additions)
 
