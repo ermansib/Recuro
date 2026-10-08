@@ -67,7 +67,7 @@ public sealed record MatrixRule(string EventType, string TemplateKey, Channels C
 /// </summary>
 public static class NotificationMatrix
 {
-    public const string Version = "ntf-matrix-2026.10.4";
+    public const string Version = "ntf-matrix-2026.10.5";
 
     // Role keys: the same strings as the frontend Role type and the Keycloak realm roles.
     private const string HrTa = "hrta";
@@ -145,6 +145,23 @@ public static class NotificationMatrix
 
         // §5.6 #17: vendor SLA roll-up.
         new("vendor.sla.breached.v1", "vendor.sla.breached", Both, Critical: false, [RecipientRule.ForRole(HrHead)]),
+
+        // RCU-ONB-001: the new joiner (still a candidate record) gets the joining instructions and the documents to bring.
+        new("onboarding.joining_instructions_sent.v1", "onboarding.joining.instructions", Channels.Email, Critical: false, [RecipientRule.ForPayloadCandidate("candidateId")]),
+
+        // RCU-ONB-002: Day-1 Ready is for Finance and Payroll. There is no such role yet, so HR-TA hears it and passes it on.
+        new("onboarding.day1.ready.v1", "onboarding.day1.ready", Both, Critical: false, [RecipientRule.ForRole(HrTa)]),
+
+        // RCU-ONB-001/004: a touchpoint or probation milestone falls due: its assignee roles, plus the reporting manager on probation.
+        new("onboarding.milestone.due.v1", "onboarding.milestone.due", Both, Critical: false,
+            [RecipientRule.ForPayloadUsers("assigneeRoles", HrTa), RecipientRule.ForPayloadUser("reportingManagerId", Employee)]),
+
+        // RCU-ONB-005: the probation outcome.
+        new("onboarding.employee.confirmed.v1", "onboarding.employee.confirmed", Channels.InApp, Critical: false, [RecipientRule.ForRole(HrTa)]),
+        new("onboarding.probation.extended.v1", "onboarding.probation.extended", Both, Critical: false, [RecipientRule.ForRole(HrTa)]),
+
+        // RCU-RPT-003: a KPI pack is emailed to everyone in the role Reporting names; the email links to the downloads.
+        new("reporting.pack.ready.v1", "report.pack", Channels.Email, Critical: false, [RecipientRule.ForPayloadUser("recipientRole", HrHead, fallbackToRole: true)]),
     ];
 
     /// <summary>Every event type the service subscribes to.</summary>

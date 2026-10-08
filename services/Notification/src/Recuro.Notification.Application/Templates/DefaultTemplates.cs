@@ -10,7 +10,7 @@ namespace Recuro.Notification.Application.Templates;
 /// </summary>
 public sealed class DefaultTemplates : ITemplateSource
 {
-    public const string Version = "default-2026.10.3";
+    public const string Version = "default-2026.10.4";
 
     private static readonly IReadOnlyDictionary<string, NotificationTemplate> Catalog = new[]
     {
@@ -85,6 +85,25 @@ public sealed class DefaultTemplates : ITemplateSource
             "Confirmation", "Your referral for {reqId}", ["Thank you. Your referral for {reqId} was received."], null),
         T("vendor.sla.breached", "⚠", "Vendor SLA breach — {vendorId}", "Review empanelment.", "/vendors",
             "Vendor", "Vendor SLA breach — {vendorId}", ["Vendor {vendorId} has breached its SLA."], "Open Vendors"),
+        T("onboarding.joining.instructions", "👋", "Joining instructions sent — {appId}", "Joining {joiningDate}.", null,
+            "Welcome", "Your joining instructions",
+            ["We look forward to welcoming you on {joiningDate}.", "Please bring these documents on your first day: {documents}.", "If you have any questions before then, reply to this email."],
+            null),
+        T("onboarding.day1.ready", "✅", "Day-1 ready — {appId}", "Joining {joiningDate} · pre-boarding complete · Finance & Payroll to set up.", "/onboarding",
+            "Onboarding", "✅ Day-1 ready — {appId}",
+            ["Pre-boarding for {appId} is complete and the new joiner starts on {joiningDate}.", "Please make sure Finance and Payroll set them up before Day 1."], "Open Onboarding"),
+        T("onboarding.milestone.due", "📌", "{label} — {appId}", "Due {dueOn}.", "/onboarding",
+            "Onboarding", "📌 {label} due — {appId}",
+            ["{label} for {appId} is due on {dueOn}."], "Open Onboarding"),
+        T("onboarding.employee.confirmed", "🎉", "Employee confirmed — {appId}", "Probation completed.", "/onboarding",
+            "Onboarding", "Employee confirmed — {appId}", ["{appId} has completed probation and is confirmed."], null),
+        T("onboarding.probation.extended", "⏳", "Probation extended — {appId}", "+{extendedByMonths} months · new end {newProbationEnd} · {reason}", "/onboarding",
+            "Onboarding", "Probation extended — {appId}",
+            ["Probation for {appId} was extended by {extendedByMonths} months, to {newProbationEnd}.", "Reason given: {reason}"], "Open Onboarding"),
+        T("report.pack", "📊", "KPI pack ready — {periodLabel}", "{onTrack} metrics on track.", "/reports",
+            "Report", "📊 {cadence} KPI pack — {periodLabel}",
+            ["The {cadence} KPI pack for {periodLabel} is ready: {onTrack} metrics on track.", "PDF: {pdfUrl}", "CSV: {csvUrl}", "Sign-in is required to download."],
+            "Open Reports"),
     }.ToDictionary(t => t.Key, StringComparer.Ordinal);
 
     public static IReadOnlyCollection<string> Keys => (IReadOnlyCollection<string>)Catalog.Keys;
