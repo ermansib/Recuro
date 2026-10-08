@@ -129,6 +129,10 @@ namespace Recuro.Pipeline.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<DateOnly?>("ExpectedJoiningDate")
+                        .HasColumnType("date")
+                        .HasColumnName("expected_joining_date");
+
                     b.Property<DateTimeOffset?>("HeldAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("held_at");

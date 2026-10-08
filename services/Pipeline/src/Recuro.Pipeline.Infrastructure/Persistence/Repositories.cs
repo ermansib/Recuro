@@ -38,6 +38,24 @@ internal sealed class ApplicationRepository(PipelineDbContext db) : IApplication
             .Take(limit)
             .ToListAsync(ct);
 
+    public async Task<IReadOnlyDictionary<ApplicationStage, int>> CountByStageAsync(CancellationToken ct) =>
+        await db.Applications.AsNoTracking()
+            .GroupBy(a => a.Stage)
+            .Select(g => new { Stage = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.Stage, g => g.Count, ct);
+
+    public async Task<IReadOnlyList<ApplicationEntity>> ListTatBreachedAsync(int limit, CancellationToken ct) =>
+        await db.Applications.AsNoTracking()
+            .Where(a => a.TatBreachedAt != null && a.Stage != ApplicationStage.Hold && !Closed.Contains(a.Stage))
+            .OrderBy(a => a.StageEnteredAt)
+            .Take(limit)
+            .ToListAsync(ct);
+
+    public Task<int> CountJoiningBetweenAsync(DateOnly from, DateOnly to, CancellationToken ct) =>
+        db.Applications.CountAsync(
+            a => a.Stage == ApplicationStage.PreBoarding && a.ExpectedJoiningDate >= from && a.ExpectedJoiningDate <= to,
+            ct);
+
     public void Add(ApplicationEntity application) => db.Applications.Add(application);
 }
 

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/interview.feedback.reminder_due.v1.schema.json",
+  "title": "interview.feedback.reminder_due.v1",
+  "description": "Producer: Interview. Feedback is still missing 24h after the interview ended (RCU-INT-004). Notification reminds the interviewers who haven't submitted. interview.feedback.overdue.v1 follows at 48h. Subject: Interview/<interviewId>.",
+  "type": "object",
+  "properties": {
+    "interviewId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "round": {
+      "type": "string"
+    },
+    "pendingInterviewerIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "endedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "overdueAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "interviewId",
+    "appId",
+    "reqId",
+    "round",
+    "pendingInterviewerIds",
+    "endedAt",
+    "overdueAt"
+  ],
+  "additionalProperties": true
+}

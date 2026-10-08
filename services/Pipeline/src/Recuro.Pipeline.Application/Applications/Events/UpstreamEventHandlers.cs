@@ -17,6 +17,9 @@ public sealed record RequisitionCancelledPayload(string ReqId, string? Reason);
 /// <summary>Any event about one application: <c>interview.selection.ratified</c>, <c>bgv.cleared</c>, <c>bgv.adverse.flagged</c>, <c>offer.accepted</c>.</summary>
 public sealed record ApplicationRefPayload(string AppId);
 
+/// <summary><c>offer.accepted</c>: the application plus the agreed joining date, when the Offer service sends one.</summary>
+public sealed record OfferAcceptedPayload(string AppId, DateOnly? JoiningDate);
+
 /// <summary>Keeps the local sourcing gate in step with the Requisition service (RCU-PPL-001).</summary>
 public sealed class RequisitionEventsHandler(
     ISourcingGateRepository gates,
@@ -112,9 +115,25 @@ public sealed class BgvAdverseFlaggedHandler(ProgressEventsHandler progress) : I
         progress.AdvanceAsync(integrationEvent, ApplicationStage.BGV, ApplicationStage.Hold, ct);
 }
 
-/// <summary><c>offer.accepted</c>: Offer → PreBoarding.</summary>
-public sealed class OfferAcceptedHandler(ProgressEventsHandler progress) : IIntegrationEventHandler<ApplicationRefPayload>
+/// <summary><c>offer.accepted</c>: Offer → PreBoarding, keeping the joining date for the dashboard.</summary>
+public sealed class OfferAcceptedHandler(IApplicationRepository applications, IUnitOfWork unitOfWork, TimeProvider clock)
+    : IIntegrationEventHandler<OfferAcceptedPayload>
 {
-    public Task Handle(IntegrationEvent<ApplicationRefPayload> integrationEvent, CancellationToken ct) =>
-        progress.AdvanceAsync(integrationEvent, ApplicationStage.Offer, ApplicationStage.PreBoarding, ct);
+    public async Task Handle(IntegrationEvent<OfferAcceptedPayload> integrationEvent, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(integrationEvent);
+        var application = await applications.GetAsync(integrationEvent.Data.AppId, ct);
+        if (application is null)
+        {
+            return;
+        }
+
+        application.Advance(ApplicationStage.Offer, ApplicationStage.PreBoarding, Actors.FromEvent(integrationEvent.Metadata), clock.GetUtcNow());
+        if (integrationEvent.Data.JoiningDate is { } joiningDate)
+        {
+            application.RecordExpectedJoining(joiningDate);
+        }
+
+        await unitOfWork.SaveChangesAsync(ct);
+    }
 }

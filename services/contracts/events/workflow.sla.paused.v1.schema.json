@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/workflow.sla.paused.v1.schema.json",
+  "title": "workflow.sla.paused.v1",
+  "description": "A query was raised on the task; its SLA clock stopped (RCU-WFL-004). Subject: WorkflowTask/{taskId}.",
+  "type": "object",
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "instanceId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "type": {
+      "type": "string",
+      "description": "Workflow kind, e.g. MRF, Offer."
+    },
+    "subjectType": {
+      "type": "string"
+    },
+    "subjectId": {
+      "type": "string"
+    },
+    "assignee": {
+      "type": "string",
+      "description": "Assignee role."
+    },
+    "dueAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "taskId",
+    "instanceId",
+    "type",
+    "subjectType",
+    "subjectId",
+    "assignee"
+  ],
+  "additionalProperties": true
+}

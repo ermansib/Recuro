@@ -22,6 +22,7 @@ services/
                                            Keycloak JWT, correlation, idempotency, Result → HTTP
   Gateway/               YARP gateway (port 5100)
   Audit/                 the worked example: append-only, hash-chained audit trail (port 5103)
+  Notification/          bell, email centre, email delivery and the live stream (port 5104), see its README
   contracts/events/      JSON schemas for integration events
   tests/                 architecture tests for every service
   infra/postgres/        creates one database and login per service

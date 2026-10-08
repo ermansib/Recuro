@@ -55,6 +55,9 @@ public sealed class Application : AggregateRoot, ITenantOwned
 
     public DateTimeOffset CreatedAt { get; private set; }
 
+    /// <summary>The joining date from the accepted offer, when the Offer service reports one (dashboard "Joining ≤ 30d").</summary>
+    public DateOnly? ExpectedJoiningDate { get; private set; }
+
     public static Application Create(string appId, string reqId, string candidateId, string source, string note, StageActor actor, DateTimeOffset now)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(appId);
@@ -122,6 +125,9 @@ public sealed class Application : AggregateRoot, ITenantOwned
     /// </summary>
     public Result Advance(ApplicationStage expectedFrom, ApplicationStage to, StageActor actor, DateTimeOffset now) =>
         Stage == expectedFrom ? Transition(to, actor, now) : Result.Success();
+
+    /// <summary>Records the joining date of the accepted offer; a later report replaces an earlier one.</summary>
+    public void RecordExpectedJoining(DateOnly joiningDate) => ExpectedJoiningDate = joiningDate;
 
     /// <summary>
     /// RCU-PPL-005: raises the TAT breach for the current stage once, when <paramref name="dueAt"/> has passed.

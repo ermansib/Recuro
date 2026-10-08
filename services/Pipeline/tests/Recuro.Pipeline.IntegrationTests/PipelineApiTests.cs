@@ -288,6 +288,73 @@ public sealed class PipelineApiTests(PipelineApiFactory api) : IClassFixture<Pip
         Assert.Matches("\"escalationPath\": ?\"hrhead\"", envelope);
     }
 
+    [Fact]
+    public async Task The_TA_dashboard_fragment_has_the_funnel_and_stage_breaches()
+    {
+        var tenant = Guid.NewGuid();
+        var reqId = await OpenRequisitionAsync(tenant);
+        var breached = await CreateAsync(tenant, reqId);
+        var screened = await CreateAsync(tenant, reqId);
+        await MoveAsync(tenant, screened, "Screened");
+        var job = api.Services.GetServices<Microsoft.Extensions.Hosting.IHostedService>().OfType<TatScanJob>().Single();
+        api.Clock.Advance(TimeSpan.FromDays(12));
+        try
+        {
+            await job.ScanAllTenantsAsync(CancellationToken.None);
+        }
+        finally
+        {
+            api.Clock.Advance(TimeSpan.FromDays(-12));
+        }
+
+        var fragment = await api.ClientFor(tenant, RecuroRoles.HrTa).GetFromJsonAsync<JsonElement>("/api/v1/pipeline/dashboard/ta");
+
+        Assert.Equal(["pipeline", "stats", "tatBreaches"], fragment.EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal));
+        var funnel = fragment.GetProperty("pipeline").EnumerateArray().ToList();
+        Assert.Equal(["Sourced", "Screened", "Interview", "Selection", "BGV", "Offer"], funnel.Select(f => f.GetProperty("stage").GetString()));
+        Assert.Equal(1, funnel[0].GetProperty("count").GetInt32());
+        Assert.Equal(["color", "count", "stage"], funnel[0].EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal));
+
+        // Both stages overran (7 working days each); rows carry the frontend tatBreaches fields.
+        var rows = fragment.GetProperty("tatBreaches").EnumerateArray().ToList();
+        Assert.Equal(2, rows.Count);
+        Assert.Contains(rows, r => r.GetProperty("position").GetString() == AppId(breached));
+        Assert.Equal(["escalation", "link", "position", "reqId", "stage", "stageTone"], rows[0].EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal));
+        Assert.Equal("HR Head", rows[0].GetProperty("escalation").GetString());
+        Assert.EndsWith("d / 7d TAT", rows[0].GetProperty("stage").GetString(), StringComparison.Ordinal);
+        var tiles = fragment.GetProperty("stats").EnumerateArray().ToList();
+        Assert.Equal(["Joining ≤ 30d", "TAT Breaches"], tiles.Select(t => t.GetProperty("label").GetString()));
+        Assert.Equal("2", tiles[1].GetProperty("value").GetString());
+        Assert.Equal("r", tiles[1].GetProperty("tone").GetString());
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await api.ClientFor(tenant, RecuroRoles.Employee).GetAsync("/api/v1/pipeline/dashboard/ta")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Accepted_offers_with_a_joining_date_count_towards_joining_within_30_days()
+    {
+        var tenant = Guid.NewGuid();
+        var reqId = await OpenRequisitionAsync(tenant);
+        var soon = await CreateAsync(tenant, reqId);
+        var later = await CreateAsync(tenant, reqId);
+        foreach (var application in new[] { soon, later })
+        {
+            foreach (var stage in new[] { "Screened", "Interview", "Selection", "BGV", "Offer" })
+            {
+                await MoveAsync(tenant, application, stage);
+            }
+        }
+
+        var today = DateOnly.FromDateTime(api.Clock.GetUtcNow().UtcDateTime);
+        await ProcessAsync(tenant, EventTypes.Offer.Accepted, new { appId = AppId(soon), joiningDate = today.AddDays(10) });
+        await ProcessAsync(tenant, EventTypes.Offer.Accepted, new { appId = AppId(later), joiningDate = today.AddDays(45) });
+
+        Assert.Equal("PreBoarding", (await GetAsync(tenant, AppId(soon))).GetProperty("stage").GetString());
+        var fragment = await api.ClientFor(tenant, RecuroRoles.HrTa).GetFromJsonAsync<JsonElement>("/api/v1/pipeline/dashboard/ta");
+        var joining = fragment.GetProperty("stats").EnumerateArray().Single(t => t.GetProperty("label").GetString() == "Joining ≤ 30d");
+        Assert.Equal("1", joining.GetProperty("value").GetString());
+    }
+
     private static string AppId(JsonElement application) => application.GetProperty("appId").GetString()!;
 
     private async Task<JsonElement> GetAsync(Guid tenant, string appId) =>

@@ -35,6 +35,7 @@ public static class EventTypes
     {
         public const string Scheduled = "interview.scheduled.v1";
         public const string FeedbackSubmitted = "interview.feedback.submitted.v1";
+        public const string FeedbackReminderDue = "interview.feedback.reminder_due.v1";
         public const string FeedbackOverdue = "interview.feedback.overdue.v1";
         public const string SelectionRatified = "interview.selection.ratified.v1";
     }
@@ -53,6 +54,7 @@ public static class EventTypes
         public const string Submitted = "offer.submitted.v1";
         public const string Approved = "offer.approved.v1";
         public const string Sent = "offer.sent.v1";
+        public const string ChaseDue = "offer.chase_due.v1";
         public const string Accepted = "offer.accepted.v1";
         public const string Declined = "offer.declined.v1";
         public const string Expired = "offer.expired.v1";
@@ -88,6 +90,7 @@ public static class EventTypes
     {
         public const string TaskCreated = "workflow.task.created.v1";
         public const string TaskCompleted = "workflow.task.completed.v1";
+        public const string TaskReminderDue = "workflow.task.reminder_due.v1";
         public const string Escalated = "workflow.escalated.v1";
         public const string SlaPaused = "workflow.sla.paused.v1";
         public const string SlaResumed = "workflow.sla.resumed.v1";

@@ -1,6 +1,6 @@
 # Recuro services, local development. Free and open-source images only.
 #
-#   docker compose up -d                       PostgreSQL, Valkey (Redis), RabbitMQ, Keycloak
+#   docker compose up -d                       PostgreSQL, Valkey (Redis), RabbitMQ, Keycloak, Mailpit
 #   docker compose --profile apps up -d        ...plus the gateway and the services, built from source
 #   docker compose --profile observability up -d   ...plus Jaeger for traces
 #
@@ -58,6 +58,13 @@ services:
     volumes:
       - ../admin/keycloak:/opt/keycloak/data/import:ro
 
+  # Mailpit: catches every email the services send (MIT). Web UI http://localhost:8025.
+  mailpit:
+    image: axllent/mailpit:v1.31
+    ports:
+      - "${RECURO_SMTP_PORT:-1025}:1025"
+      - "${RECURO_MAIL_UI_PORT:-8025}:8025"
+
   jaeger:
     image: jaegertracing/all-in-one:1.65.0
     profiles: ["observability"]
@@ -82,9 +89,16 @@ services:
       ReverseProxy__Clusters__config__Destinations__primary__Address: http://config:8080/
       ReverseProxy__Clusters__candidate__Destinations__primary__Address: http://candidate:8080/
       ReverseProxy__Clusters__pipeline__Destinations__primary__Address: http://pipeline:8080/
+      ReverseProxy__Clusters__notification__Destinations__primary__Address: http://notification:8080/
+      Bff__Candidates__CandidatesUrl: http://candidate:8080/api/v1/candidates
+      Bff__Candidates__ApplicationsUrl: http://pipeline:8080/api/v1/pipeline/applications
+      Bff__Dashboard__Sources__pipeline__Url: http://pipeline:8080/api/v1/pipeline/dashboard/ta
+      ReverseProxy__Clusters__requisition__Destinations__primary__Address: http://requisition:8080/
+      ReverseProxy__Clusters__workflow__Destinations__primary__Address: http://workflow:8080/
+      Bff__Dashboard__Sources__requisition__Url: http://requisition:8080/api/v1/requisitions/dashboard/ta
     ports:
       - "5100:8080"
-    depends_on: [redis, keycloak, audit, identity, config, candidate, pipeline]
+    depends_on: [redis, keycloak, audit, identity, config, candidate, pipeline, notification, requisition, workflow]
 
   identity:
     profiles: ["apps"]
@@ -177,6 +191,67 @@ services:
       Services__Config__BaseUrl: http://config:8080/
     ports:
       - "5108:8080"
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+
+  notification:
+    profiles: ["apps"]
+    build:
+      context: .
+      dockerfile: Notification/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__notification: Host=postgres;Database=recuro_notification;Username=recuro_notification;Password=recuro_notification
+      ConnectionStrings__rabbitmq: amqp://recuro:recuro@rabbitmq:5672/
+      ConnectionStrings__redis: redis:6379
+      Auth__Authority: http://localhost:${KEYCLOAK_PORT:-8080}/realms/recuro
+      Auth__MetadataAddress: http://keycloak:8080/realms/recuro/.well-known/openid-configuration
+      Smtp__Host: mailpit
+      Smtp__Port: "1025"
+    ports:
+      - "5104:8080"
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      mailpit: { condition: service_started }
+
+
+  requisition:
+    profiles: ["apps"]
+    build:
+      context: .
+      dockerfile: Requisition/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__requisition: Host=postgres;Database=recuro_requisition;Username=recuro_requisition;Password=recuro_requisition
+      ConnectionStrings__rabbitmq: amqp://recuro:recuro@rabbitmq:5672/
+      ConnectionStrings__redis: redis:6379
+      Auth__Authority: http://localhost:${KEYCLOAK_PORT:-8080}/realms/recuro
+      Auth__MetadataAddress: http://keycloak:8080/realms/recuro/.well-known/openid-configuration
+      Services__Config: http://config:8080/
+      Services__Workflow: http://workflow:8080/
+    ports:
+      - "5105:8080"
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+
+  workflow:
+    profiles: ["apps"]
+    build:
+      context: .
+      dockerfile: Workflow/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__workflow: Host=postgres;Database=recuro_workflow;Username=recuro_workflow;Password=recuro_workflow
+      ConnectionStrings__rabbitmq: amqp://recuro:recuro@rabbitmq:5672/
+      ConnectionStrings__redis: redis:6379
+      Auth__Authority: http://localhost:${KEYCLOAK_PORT:-8080}/realms/recuro
+      Auth__MetadataAddress: http://keycloak:8080/realms/recuro/.well-known/openid-configuration
+      Services__Config: http://config:8080/
+    ports:
+      - "5106:8080"
     depends_on:
       postgres: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/recruitment.mrf.rejected.v1.schema.json",
+  "title": "recruitment.mrf.rejected.v1",
+  "description": "The MRF's approval workflow ended: rejected with a documented reason (RCU-REQ-004). Subject: Requisition/{reqId}.",
+  "type": "object",
+  "properties": {
+    "reqId": {
+      "type": "string"
+    },
+    "decision": {
+      "enum": [
+        "approve",
+        "reject"
+      ]
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "configVersionId": {
+      "type": "string"
+    },
+    "from": {
+      "type": "string",
+      "description": "Requisition state (FRD §6)."
+    },
+    "to": {
+      "type": "string",
+      "description": "Requisition state (FRD §6)."
+    }
+  },
+  "required": [
+    "reqId",
+    "decision",
+    "configVersionId",
+    "from",
+    "to"
+  ],
+  "additionalProperties": true
+}

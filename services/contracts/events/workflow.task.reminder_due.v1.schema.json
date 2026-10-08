@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/workflow.task.reminder_due.v1.schema.json",
+  "title": "workflow.task.reminder_due.v1",
+  "description": "Producer: Workflow. An open task reached a reminder point of its SLA (RCU-WFL-003: 50% and 100% of the working-day duration). Notification reminds the users holding assigneeRole, plus any users in assigneeIds. Raised once per task and threshold. Subject: WorkflowTask/<taskId>.",
+  "type": "object",
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "instanceId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "leg": {
+      "type": "string"
+    },
+    "subjectType": {
+      "type": "string",
+      "description": "What the workflow decides on, e.g. Requisition or Offer."
+    },
+    "subjectId": {
+      "type": "string"
+    },
+    "assigneeIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "User ids to remind. Empty today: Workflow assigns tasks to a role, not a person."
+    },
+    "assigneeRole": {
+      "type": "string",
+      "description": "Role key the task is assigned to (hrta, hrhead, mdceo, ...). Notification resolves it to that role's users."
+    },
+    "thresholdPercent": {
+      "type": "integer",
+      "enum": [
+        50,
+        100
+      ]
+    },
+    "dueAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "taskId",
+    "instanceId",
+    "subjectType",
+    "subjectId",
+    "assigneeIds",
+    "assigneeRole",
+    "thresholdPercent",
+    "dueAt"
+  ],
+  "additionalProperties": true
+}

@@ -31,7 +31,7 @@ public static class DependencyInjection
             .Subscribe<ApplicationRefPayload, SelectionRatifiedHandler>(EventTypes.Interview.SelectionRatified)
             .Subscribe<ApplicationRefPayload, BgvClearedHandler>(EventTypes.Bgv.Cleared)
             .Subscribe<ApplicationRefPayload, BgvAdverseFlaggedHandler>(EventTypes.Bgv.AdverseFlagged)
-            .Subscribe<ApplicationRefPayload, OfferAcceptedHandler>(EventTypes.Offer.Accepted);
+            .Subscribe<OfferAcceptedPayload, OfferAcceptedHandler>(EventTypes.Offer.Accepted);
 
         services.AddOptions<TatScanOptions>().BindConfiguration(TatScanOptions.SectionName);
         services.AddHostedService<TatScanJob>();

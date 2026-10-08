@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/notification.email.dispatched.v1.schema.json",
+  "title": "notification.email.dispatched.v1",
+  "description": "Producer: Notification. The mail provider accepted an email (RCU-NTF-002/004). No addresses or text. Subject: Email/<emailId>.",
+  "type": "object",
+  "properties": {
+    "emailId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "templateKey": {
+      "type": "string"
+    },
+    "templateVersion": {
+      "type": "string"
+    },
+    "recipientRole": {
+      "type": "string",
+      "enum": [
+        "hrta",
+        "hrhead",
+        "mdceo",
+        "employee",
+        "candidate"
+      ]
+    },
+    "recipientUserId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Sent",
+        "Failed"
+      ]
+    },
+    "attempts": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "providerMessageId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sourceEventId": {
+      "type": "string",
+      "format": "uuid"
+    }
+  },
+  "required": [
+    "emailId",
+    "templateKey",
+    "templateVersion",
+    "recipientRole",
+    "status",
+    "attempts",
+    "sourceEventId"
+  ],
+  "additionalProperties": true
+}

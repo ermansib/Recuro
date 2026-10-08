@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/recruitment.mrf.submitted.v1.schema.json",
+  "title": "recruitment.mrf.submitted.v1",
+  "description": "An MRF was submitted and its approval workflow opened (RCU-REQ-002). Subject: Requisition/{reqId}.",
+  "type": "object",
+  "properties": {
+    "reqId": {
+      "type": "string"
+    },
+    "grade": {
+      "type": "string"
+    },
+    "routeRef": {
+      "type": "string",
+      "description": "Workflow instance id."
+    },
+    "configVersionId": {
+      "type": "string"
+    },
+    "budgetStatus": {
+      "enum": [
+        "in",
+        "oob"
+      ]
+    },
+    "from": {
+      "type": "string",
+      "description": "Requisition state (FRD §6)."
+    },
+    "to": {
+      "type": "string",
+      "description": "Requisition state (FRD §6)."
+    }
+  },
+  "required": [
+    "reqId",
+    "grade",
+    "routeRef",
+    "configVersionId",
+    "budgetStatus",
+    "from",
+    "to"
+  ],
+  "additionalProperties": true
+}

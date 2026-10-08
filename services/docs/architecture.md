@@ -33,11 +33,11 @@ the project files as `recuro/backenduserstories.html`). Decisions behind this ma
 | # | Service (folder) | Stories | Owns (data) | Publishes | Consumes | Calls (sync) | Port |
 |---|---|---|---|---|---|---|---|
 | — | **BuildingBlocks** | PLT-001..004 | outbox, inbox tables (in each service DB) | — | — | — | — |
-| 0 | **Gateway** | GTW-001..005 | rate-limit state (Valkey) | — | `notification.created` (SSE, later) | every service (proxy), BFF fan-out | 5100 |
+| 0 | **Gateway** | GTW-001..005 | rate-limit state (Valkey) | — | — | every service (proxy); BFF: `/bff/candidates`, `/bff/dashboard/ta`; proxies Notification's SSE stream | 5100 |
 | 1 | **Identity** | AUT-001..005 | user mirror (JIT from Keycloak), role/policy map, masking map | `identity.user.provisioned`, `identity.role.changed` | — | Keycloak admin API | 5101 |
 | 2 | **Config** (rules) | CFG-001..003, 005 | versioned DOA / TAT / offer / escalation / BGV matrices, business calendars | `config.version.activated` | — | — | 5102 |
 | 3 | **Audit** ✅ built here | AUD-001..003 | hash-chained audit entries, seals | — | **all** events | — | 5103 |
-| 4 | **Notification** | NTF-001..006 | feed items, delivery log, preferences, email templates | `notification.created`, `notification.email.dispatched/failed` | event matrix §5.6 | Config (templates via admin), Identity (recipients) | 5104 |
+| 4 | **Notification** | NTF-001..006 | feed items, delivery log, email templates; SSE stream; preferences (NTF-005, P2) and scheduled dispatch (NTF-006, P1) not built yet | `notification.created`, `notification.email.dispatched/failed` | event matrix §5.6, including the reminder and chase events | Config (templates via admin), Identity (recipients) | 5104 |
 | 5 | **Requisition** (MRF + JD) | REQ-001..008, JD screens | requisitions, tracker, job descriptions | `recruitment.mrf.*`, `recruitment.sourcing.unlocked` | `workflow.task.completed` | Config (resolve DOA), Workflow (create instance) | 5105 |
 | 6 | **Workflow** | WFL-001..007 | workflow instances, tasks, SLA timers, delegations | `workflow.task.*`, `workflow.escalated`, `workflow.sla.*` | submit events | Config (route, calendar), Identity (PDP) | 5106 |
 | 7 | **Candidate** | CND-001..006 | candidates (PII encrypted), consents, merges | `candidate.created/merged/purged` | `pipeline.application.final_rejected` | Identity (masking), Vendor (active check) | 5107 |
@@ -63,9 +63,40 @@ Notes:
 ## Synchronous contracts
 
 The owning service implements these shapes exactly, and callers code against them. Any change goes
-through this file first. JSON is camelCase. Until service accounts exist, callers forward the incoming
-`Authorization` bearer token on the outgoing call. `CorrelationHeadersHandler` forwards only the
-correlation ids, so the token is the caller's job.
+through this file first. JSON is camelCase. Calls between services are authenticated as described in
+"Service-to-service authentication" below.
+
+### Service-to-service authentication (owner: Identity, RCU-AUT-005; used by every service)
+
+This is the contract for the Identity PR that is still in review. Until it merges, calls with no user
+have no token.
+
+- **Calls made for a user** forward the caller's `Authorization` header first, so masking and RBAC
+  apply to that user. `CorrelationHeadersHandler` forwards only the correlation ids.
+- **Calls with no user** come from bus consumers, jobs and schedulers. On these calls
+  `ServiceTokenHandler` (`Recuro.BuildingBlocks.Web.Auth`) runs on the `HttpClient` after any
+  forwarding handler. It signs only requests that carry no `Authorization` or `X-Dev-User` header.
+  It sends:
+  - a client-credentials bearer token for the Keycloak client `recuro-svc-<service>`, whose
+    service-account user holds the realm role `service`;
+  - `X-Recuro-Tenant`, taken from `ScopeContext.Current`, which the bus processor and the web
+    middleware set.
+- **Tokens** are cached until 60 seconds before they expire, and fetched again after a 401.
+- **Configuration** lives in the `ServiceAuth` section:
+  - `ClientId` defaults to `recuro-svc-{Service:Name}`.
+  - `ClientSecret` comes from `ServiceAuth__ClientSecret`. Only in Development does it default to
+    `{ClientId}-dev-secret`. It is never committed for other environments.
+  - `TokenEndpoint` is derived from `Auth:MetadataAddress` or `Auth:Authority`.
+  - `RenewBefore` sets how early a token is renewed.
+- **The receiving side**: a validated token with role `service` and no `tenant_id` claim takes its
+  tenant from `X-Recuro-Tenant`. User tokens ignore that header, and the gateway strips it from
+  outside requests.
+- **`Auth:Mode=Development`**: the handler sends `X-Dev-User: recuro-svc-<service>`,
+  `X-Dev-Roles: service` and `X-Dev-Tenant` instead of a token.
+- **Local Keycloak** has 16 clients named `recuro-svc-<service>`. Compose sets `KC_HOSTNAME` so
+  tokens carry the localhost issuer that the services expect.
+- **What service accounts may see** is set by the `service` masking map below. Rules for individual
+  clients come later.
 
 ### Config: resolve rules (owner: Config, callers: Requisition, Workflow)
 
@@ -198,6 +229,72 @@ The client's `Idempotency-Key` is forwarded to both calls with a step suffix (`<
 `<key>:application`). If the first call succeeded and the second failed, a retry replays the stored
 candidate response instead of tripping the duplicate check, then creates the application. No compensation is needed: a candidate without an application is valid data, and it ages
 out under the retention policy. The BFF forwards the caller's bearer token and correlation ids.
+
+### Gateway BFF: TA dashboard (owner: Gateway; each area owns its fragment)
+
+**`GET /bff/dashboard/ta`** returns the frontend `DashboardData` (`frontend/src/domain/types.ts`). The
+gateway calls these four services in parallel, forwarding the caller's token, and merges what comes
+back:
+
+| Order | Service | Fragment endpoint | Tiles it owns |
+|---|---|---|---|
+| 1 | Requisition (5105) | `GET /api/v1/requisitions/dashboard/ta` | Open MRFs |
+| 2 | Offer (5111) | `GET /api/v1/offers/dashboard/ta` | Offers Pending |
+| 3 | Bgv (5110) | `GET /api/v1/bgv/dashboard/ta` | BGV in Progress |
+| 4 | Pipeline (5108) | `GET /api/v1/pipeline/dashboard/ta` | Joining ≤ 30d, TAT Breaches |
+
+- Each fragment returns any subset of `{ stats[], tatBreaches[], pipeline[], kpis[], upcoming[] }`,
+  using exactly the item shapes in `DashboardData`.
+- The gateway merges the fragments in the order shown in the table and sets `dateLabel` and
+  `kpiPeriodLabel` itself. Sources, order, tiles and the timeout are configuration (`Bff:Dashboard`).
+- A fragment that fails, or takes longer than 2 seconds (`SourceTimeout`), contributes its tiles with
+  the value "—", so the dashboard still loads. The `X-Recuro-Degraded` response header names the
+  sources that didn't answer, so the client can tell "—" from zero.
+- Each service owns its own fragment and builds it from its own data only.
+
+### Live updates: notification stream (owner: Notification; proxied by Gateway, GTW-003)
+
+- Notification serves Server-Sent Events at `GET /stream/notifications`, scoped to the caller's
+  tenant and user. The gateway proxies it under the same path, with buffering and its request timeout
+  turned off for that route.
+- Each event's `data` is the bell item that `GET /notifications` returns.
+- The browser `EventSource` API can't send a bearer token, so the frontend uses a fetch-based SSE
+  client that sends `Authorization` and reconnects with `Last-Event-ID`.
+
+### Reminder and chase events (catalog additions)
+
+These three types are now in `EventTypes`, with schemas in `services/contracts/events`. The wave-2
+producers publish them. Notification needs a matrix row for each, which isn't built yet, to remind
+the people named by id. All three are idempotent per subject and
+threshold, so a retry never sends a second reminder.
+
+| Type | Producer | When | Payload |
+|---|---|---|---|
+| `workflow.task.reminder_due.v1` | Workflow | An open task reaches 50% and then 100% of its SLA (WFL-003). Escalation stays `workflow.escalated.v1`. | `taskId, instanceId, leg, subjectType, subjectId, assigneeIds[], assigneeRole, thresholdPercent, dueAt` |
+| `interview.feedback.reminder_due.v1` | Interview | Feedback is still missing 24h after the interview (INT-004). `interview.feedback.overdue.v1` follows at 48h. | `interviewId, appId, reqId, round, pendingInterviewerIds[], endedAt, overdueAt` |
+| `offer.chase_due.v1` | Offer | A sent offer is unanswered after 3 working days, then weekly until it is accepted, declined, withdrawn or expires (OFR-006). | `offerId, appId, reqId, candidateId, sentAt, chaseNumber, expiresAt` |
+
+**Workflow assigns tasks to roles, not people.** In every `workflow.*` event, `assignee`,
+`assigneeRole` and `escalateTo` are role keys (`hrta`, `hrhead`, `mdceo`, ...), never user ids.
+Notification sends each one to that role's users in the tenant. `assigneeIds` on
+`workflow.task.reminder_due.v1` stays in the payload for person-level tasks later, but it is empty
+today. Adding `assigneeRole` was additive, so the event stays v1.
+
+Escalating `interview.feedback.overdue.v1` to the HOD needs a recipient lookup that Identity is adding
+to `GET /api/v1/identity/users`. Until then, Notification sends it to the panel and HR-TA.
+
+### Fields consumers already rely on, for events wave 2 will publish
+
+Offer adds `offer.accepted.v1.schema.json` when it first publishes the event, and that schema must
+carry at least these fields:
+
+| Event | Field | Type | Who reads it |
+|---|---|---|---|
+| `offer.accepted.v1` | `appId` | string, required | Pipeline moves the application from Offer to PreBoarding |
+| `offer.accepted.v1` | `joiningDate` | `YYYY-MM-DD`, optional | Pipeline's "Joining ≤ 30d" dashboard tile (PR #17) |
+
+Pipeline's fragment (`GET /api/v1/pipeline/dashboard/ta`) is live. If `joiningDate` is missing, the
+application still moves to PreBoarding, but it isn't counted in that tile.
 
 ### Integration event change: `pipeline.application.final_rejected` v1
 
