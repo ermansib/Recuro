@@ -42,9 +42,9 @@ the project files as `recuro/backenduserstories.html`). Decisions behind this ma
 | 6 | **Workflow** | WFL-001..007 | workflow instances, tasks, SLA timers, delegations | `workflow.task.*`, `workflow.escalated`, `workflow.sla.*` | submit events | Config (route, calendar), Identity (PDP) | 5106 |
 | 7 | **Candidate** | CND-001..006 | candidates (PII encrypted), consents, merges | `candidate.created/merged/purged` | `pipeline.application.final_rejected` | Identity (masking), Vendor (active check) | 5107 |
 | 8 | **Pipeline** | PPL-001..008 | applications, stage history, TAT clocks, holds | `pipeline.*` | `recruitment.sourcing.unlocked`, `recruitment.mrf.cancelled`, `interview.selection.ratified`, `bgv.*`, `offer.accepted` | Requisition (sourcing gate), Candidate | 5108 |
-| 9 | **Interview** | INT-001..007 | rounds, schedules, Annexure B assessments, selection summaries | `interview.*` | `pipeline.stage.changed` | Config (round templates), Workflow (ratification) | 5109 |
+| 9 | **Interview** | INT-001..007 | rounds, schedules, Annexure B assessments, selection summaries | `interview.*` | `pipeline.stage.changed`, `workflow.task.completed` | Config (interview matrix), Requisition (job description), Identity (PDP), Workflow (ratification) | 5109 |
 | 10 | **Bgv** | BGV-001..009 | BGV cases, checks, consent, vendor refs, webhook dedupe | `bgv.*` | `pipeline.stage.changed`, `vendor.de_empanelled`, `workflow.task.completed` (type `bgv-adverse`) | Config (check matrix, escalation), Vendor (status), Workflow (adverse saga), Identity (masking) | 5110 |
-| 11 | **Offer** | OFR-001..007 | offers, CTC breakup, letters, verbal log | `offer.*` | `workflow.task.completed`, `bgv.cleared`, `bgv.adverse.flagged`, `bgv.resolved`, `candidate.purged` | Config (offer matrix), Workflow, Bgv (release gate) | 5111 |
+| 11 | **Offer** | OFR-001..007 | offers, CTC breakup, letters, verbal log | `offer.*` | `pipeline.stage.changed`, `workflow.task.completed`, `bgv.case.initiated`, `bgv.cleared`, `bgv.adverse.flagged`, `bgv.resolved`, `candidate.purged` | Config (offer matrix, working days), Requisition, Identity (masking), Workflow; release gate fed by `bgv.*` events | 5111 |
 | 12 | **Onboarding** | ONB-001..006 | onboarding cases, Day-1 checklist, documents, probation | `onboarding.*` | `offer.accepted`, `bgv.cleared/adverse.flagged` | Config (checklist) | 5112 |
 | 13 | **Vendor** (P1) | VND-001..005 | vendors, empanelment gates, agreements, SLA snapshots | `vendor.*` | `bgv.check.updated` | — | 5113 |
 | 14 | **Reporting** (P1) | RPT-001..005 | read-model projections, KPI snapshots | — | nearly all events | — | 5114 |
@@ -235,13 +235,13 @@ Routes under `/api/v1/bgv`. `{caseRef}` is either the `appId` or the case id.
 | `GET /dashboard/ta` | dashboard fragment (see the TA dashboard section) |
 | `POST /cases` | start a case. Consent is owned by Bgv, so a missing consent returns 400 `consent_required` |
 | `GET /cases/{caseRef}` | case with its checks |
-| `GET /cases/{caseRef}/release-gate` | whether an offer may be released. The `service` role can read it, for Offer (OFR-007) |
+| `GET /cases/{caseRef}/release-gate` | whether an offer may be released (OFR-007): `{appId, caseId, cleared, status, blockers[]}`. The `service` role can read it |
 | `POST /cases/{caseRef}/release` | release the gate. Returns 409 `bgv_release_blocked` while checks are open or adverse |
 | `POST /cases/{caseRef}/checks/{checkType}` | update one check |
 | `POST /cases/{caseRef}/adverse` | report an adverse finding, which starts the adverse saga |
 | `GET /cases/reassignment`, `POST /cases/reassign` | list cases left with a de-empanelled vendor, and move them to an active vendor |
 
-**Events** (schemas in `services/contracts/events`):
+**Events** (schemas in `services/contracts/events`). The four case events below all carry `caseId, appId, reqId, vendorId`.
 
 | Type | Notes |
 |---|---|
@@ -249,7 +249,7 @@ Routes under `/api/v1/bgv`. `{caseRef}` is either the `appId` or the case id.
 | `bgv.check.updated.v1` | |
 | `bgv.adverse.flagged.v1` | |
 | `bgv.cleared.v1` | carries `onTime` for vendor SLA |
-| `bgv.resolved.v1` | outcome `ResolvedCleared` or `ResolvedAdverse`; decision `override` or `rescind` |
+| `bgv.resolved.v1` | `status` `ResolvedCleared` or `ResolvedAdverse`, `decision` `override` or `rescind`, plus `checkType` and `decidedBy`. There is no `outcome` field |
 | `vendor.empanelled.v1` | |
 | `vendor.de_empanelled.v1` | carries `reassignmentHint: "reassign-open-cases"` |
 
@@ -390,6 +390,50 @@ service option until Config carries an IJP rule. When it does, both services rea
 - BuildingBlocks' `Error` has an optional `Extensions` dictionary, which `ToProblem` merges into the
   `ProblemDetails`. It is additive, and any service can use it.
 
+### Interview and Offer (owners: Interview 5109, Offer 5111; PR #29)
+
+Databases `recuro_interview` and `recuro_offer`.
+
+**Interview** (RCU-INT):
+
+- Synchronous calls: Config `resolve/matrices/interview` (round templates), Requisition
+  `GET /api/v1/requisitions/{reqId}/job-description`, Identity `POST /identity/decide` for
+  `assessment.submit`, and Workflow for ratification.
+- Consumes `pipeline.stage.changed.v1` and `workflow.task.completed.v1`.
+- Publishes:
+
+| Type | Notes |
+|---|---|
+| `interview.scheduled.v1` | adds `roundId`, `panel` and `dueAt` (feedback due) |
+| `interview.feedback.submitted.v1` | one per assessment revision; `roundComplete` when the panel is done |
+| `interview.feedback.reminder_due.v1` | see the reminder events below |
+| `interview.feedback.overdue.v1` | adds `roundId`, `panel` and `dueAt`. Recipients are the panel and HR-TA |
+| `interview.selection.ratified.v1` | `{appId, reqId, ratifiedBy, avg, rounds}`; Pipeline moves the application on |
+
+**Offer** (RCU-OFR):
+
+- Synchronous calls: Config `resolve/matrices/offer` and `resolve/working-days`, Requisition
+  `GET /api/v1/requisitions/{reqId}`, Identity's masking map with resource `offer` (fails closed if
+  there is none), and Workflow (start, cancel, `GET` instance, `POST approvals/{taskId}/decision`).
+- Consumes `pipeline.stage.changed.v1`, `workflow.task.completed.v1`, `bgv.case.initiated.v1`,
+  `bgv.cleared.v1`, `bgv.adverse.flagged.v1`, `bgv.resolved.v1` and `candidate.purged.v1`.
+- Publishes `offer.submitted.v1`, `offer.approved.v1`, `offer.sent.v1`, `offer.chase_due.v1`,
+  `offer.accepted.v1`, `offer.declined.v1`, `offer.expired.v1`, and the new `offer.withdrawn.v1`
+  `{offerId, appId, reqId, candidateId, from, reason}`.
+
+**Gateway routes.** `/api/v1/interviews/**` and `/api/v1/offers/**` need a signed-in user. Only two
+Offer routes are anonymous, and both use the `public` rate limit:
+
+- `GET /api/v1/offers/letters/**`: the letter link, protected by an HMAC presigned URL.
+- `POST /api/v1/offers/esign/callback`: the e-sign provider's callback, protected by an HMAC body
+  signature.
+
+**Planned (requested of other threads):**
+
+- Config: an `interview` matrix, and optional extra fields on the offer matrix.
+- Identity: an `offer` masking map.
+- Bgv: the `bgv.*` events above (PR #24).
+
 ### Reminder and chase events (catalog additions)
 
 These three types are now in `EventTypes`, with schemas in `services/contracts/events`. The wave-2
@@ -414,8 +458,7 @@ to `GET /api/v1/identity/users`. Until then, Notification sends it to the panel 
 
 ### Fields consumers already rely on, for events wave 2 will publish
 
-Offer adds `offer.accepted.v1.schema.json` when it first publishes the event, and that schema must
-carry at least these fields:
+`offer.accepted.v1.schema.json` (PR #29) carries these fields:
 
 | Event | Field | Type | Who reads it |
 |---|---|---|---|
