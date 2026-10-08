@@ -21,8 +21,39 @@ public sealed record OfferApproval(string Label, string ApproverRole);
 /// <summary>§5.3 offer approval rule: the frontend's <c>OfferMatrixRule</c>.</summary>
 public sealed record OfferMatrixRule(IReadOnlyList<string> Levels, OfferApproval WithinBand, OfferApproval Deviation);
 
-/// <summary>The offer approval matrix (§5.3, Annexure D).</summary>
-public sealed record OfferMatrix(IReadOnlyList<OfferMatrixRule> Rules);
+/// <summary>A tenant compensation rule (RCU-OFF-001): a CTC component's share of the total, in percent.</summary>
+public sealed record CtcRule(string Id, string Component, decimal? MinPercent, decimal? MaxPercent);
+
+/// <summary>
+/// The offer approval matrix (§5.3, Annexure D), plus the offer policy the Offer service applies:
+/// CTC structure rules, how long an offer stays open and when unaccepted offers are chased (RCU-OFF-006).
+/// </summary>
+public sealed record OfferMatrix(
+    IReadOnlyList<OfferMatrixRule> Rules,
+    IReadOnlyList<CtcRule>? CtcRules = null,
+    int ValidityWorkingDays = OfferMatrix.DefaultValidityWorkingDays,
+    int FirstChaseAfterWorkingDays = OfferMatrix.DefaultFirstChaseAfterWorkingDays,
+    int ChaseEveryDays = OfferMatrix.DefaultChaseEveryDays)
+{
+    public const int DefaultValidityWorkingDays = 5;
+    public const int DefaultFirstChaseAfterWorkingDays = 3;
+    public const int DefaultChaseEveryDays = 7;
+}
+
+/// <summary>One interview round in a template, e.g. <c>{ type: "functional", label: "Functional" }</c>.</summary>
+public sealed record InterviewRoundTemplate(string Type, string Label);
+
+/// <summary>The rounds a grade goes through, in order (RCU-ASM-001).</summary>
+public sealed record InterviewTemplate(string Grade, IReadOnlyList<InterviewRoundTemplate> Rounds);
+
+/// <summary>The feedback SLA after an interview (RCU-ASM-004): remind the interviewer, then escalate.</summary>
+public sealed record FeedbackPolicy(int ReminderAfterHours, int OverdueAfterHours);
+
+/// <summary>Which grades need the selection ratified, by whom and how fast (RCU-ASM-006).</summary>
+public sealed record RatificationRule(IReadOnlyList<string> Grades, string Role, string Label, int SlaWorkingDays);
+
+/// <summary>The interview matrix.</summary>
+public sealed record InterviewMatrix(IReadOnlyList<InterviewTemplate> Templates, FeedbackPolicy Feedback, RatificationRule Ratification);
 
 /// <summary>
 /// §5.5 BGV check: the frontend's <c>BgvCheckRule</c>, plus an optional machine-readable

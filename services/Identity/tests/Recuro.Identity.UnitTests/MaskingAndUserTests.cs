@@ -59,6 +59,17 @@ public class MaskingAndUserTests
     }
 
     [Fact]
+    public void Offers_hide_the_CTC_breakup_and_band_from_MD_CEO_and_services_and_everything_from_outsiders()
+    {
+        var map = DefaultMaskingMap.Create();
+
+        Assert.Equal(["band", "components"], map.For(PersonaRoles.MdCeo, "offer")!.Keys.Order());
+        Assert.Equal(["band", "components"], map.For(PersonaRoles.Service, "offer")!.Keys.Order());
+        Assert.Equal(["band", "candidateName", "components"], map.For(PersonaRoles.Employee, "offer")!.Keys.Order());
+        Assert.Empty(map.For(PersonaRoles.HrHead, "offer")!);
+    }
+
+    [Fact]
     public void Service_accounts_are_never_mirrored_as_users() => Assert.False(PersonaRoles.IsMirrored(PersonaRoles.Service));
 
     [Fact]

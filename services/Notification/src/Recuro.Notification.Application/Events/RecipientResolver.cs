@@ -171,10 +171,27 @@ public static class EventPayload
                 {
                     values[property.Name] = text;
                 }
+
+                // Durations travel as milliseconds (e.g. Pipeline's varianceMs); templates show them readably as {variance}.
+                if (property.Name.Length > 2 && property.Name.EndsWith("Ms", StringComparison.Ordinal)
+                    && property.Value.ValueKind == JsonValueKind.Number && property.Value.TryGetInt64(out var ms))
+                {
+                    values.TryAdd(property.Name[..^2], Duration(TimeSpan.FromMilliseconds(ms)));
+                }
             }
         }
 
         return values;
+    }
+
+    /// <summary>"2d 4h", "3h 20m" or "45m": the two largest units, enough for a TAT overrun.</summary>
+    public static string Duration(TimeSpan span)
+    {
+        var sign = span < TimeSpan.Zero ? "-" : string.Empty;
+        span = span.Duration();
+        return span.TotalDays >= 1 ? $"{sign}{(int)span.TotalDays}d {span.Hours}h"
+            : span.TotalHours >= 1 ? $"{sign}{(int)span.TotalHours}h {span.Minutes}m"
+            : $"{sign}{(int)span.TotalMinutes}m";
     }
 
     private static string? AsText(JsonElement value) => value.ValueKind switch
