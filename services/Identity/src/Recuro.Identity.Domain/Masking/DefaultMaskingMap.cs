@@ -6,7 +6,7 @@ namespace Recuro.Identity.Domain.Masking;
 /// </summary>
 public static class DefaultMaskingMap
 {
-    public const string Version = "masking-2026.10.1";
+    public const string Version = "masking-2026.10.2";
 
     public static MaskingMap Create()
     {
@@ -53,6 +53,14 @@ public static class DefaultMaskingMap
                 [PersonaRoles.Employee] = new Dictionary<string, MaskStrategy> { ["sensitive"] = MaskStrategy.Hide },
                 [PersonaRoles.Candidate] = new Dictionary<string, MaskStrategy> { ["sensitive"] = MaskStrategy.Hide },
                 [PersonaRoles.Service] = new Dictionary<string, MaskStrategy> { ["sensitive"] = MaskStrategy.Hide },
+            },
+            ["bgvCheck"] = new Dictionary<string, IReadOnlyDictionary<string, MaskStrategy>>
+            {
+                // A check's adverse-finding note is for HR-TA and HR Head only (FRD §3.2, §5.5).
+                [PersonaRoles.MdCeo] = new Dictionary<string, MaskStrategy> { ["sensitiveNote"] = MaskStrategy.Hide },
+                [PersonaRoles.Employee] = new Dictionary<string, MaskStrategy> { ["sensitiveNote"] = MaskStrategy.Hide },
+                [PersonaRoles.Candidate] = new Dictionary<string, MaskStrategy> { ["sensitiveNote"] = MaskStrategy.Hide },
+                [PersonaRoles.Service] = new Dictionary<string, MaskStrategy> { ["sensitiveNote"] = MaskStrategy.Hide },
             },
         });
     }

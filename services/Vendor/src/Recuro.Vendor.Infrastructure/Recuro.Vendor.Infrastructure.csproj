@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Recuro.Vendor.Application\Recuro.Vendor.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\src\Recuro.BuildingBlocks.Infrastructure\Recuro.BuildingBlocks.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Recuro.Vendor.IntegrationTests" />
+  </ItemGroup>
+</Project>

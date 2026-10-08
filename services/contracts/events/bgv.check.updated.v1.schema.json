@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/bgv.check.updated.v1.schema.json",
+  "title": "bgv.check.updated.v1",
+  "description": "Producer: Bgv. One check moved along the BGV check state machine; Vendor rolls these into SLA metrics (RCU-BGV-003, RCU-VND-004).",
+  "type": "object",
+  "required": [
+    "caseId",
+    "appId",
+    "vendorId",
+    "vendorRef",
+    "checkType",
+    "from",
+    "status",
+    "actor",
+    "at"
+  ],
+  "properties": {
+    "caseId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "vendorId": {
+      "type": "string"
+    },
+    "vendorRef": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "checkType": {
+      "type": "string"
+    },
+    "from": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "InProgress",
+        "Cleared",
+        "Flagged",
+        "NotApplicable"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "InProgress",
+        "Cleared",
+        "Flagged",
+        "NotApplicable"
+      ]
+    },
+    "actor": {
+      "type": "string",
+      "description": "User id of whoever recorded the update."
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": true
+}

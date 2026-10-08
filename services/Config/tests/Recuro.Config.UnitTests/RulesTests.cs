@@ -64,6 +64,21 @@ public class RulesTests
         }
     }
 
+    [Theory]
+    [InlineData("""{"always":true}""", true)]
+    [InlineData("""{"grades":["VP","KMP"],"anyFlags":["customerFacing"]}""", true)]
+    [InlineData("""{"always":true,"grades":["VP"]}""", false)]
+    [InlineData("""{}""", false)]
+    [InlineData("""{"anyFlags":["Customer facing"]}""", false)]
+    public void A_BGV_check_can_say_when_it_applies(string appliesWhen, bool valid)
+    {
+        var content = JsonDocument.Parse($$"""{"checks":[{"type":"credit","label":"Credit","detail":"x","condition":"Finance","appliesWhen":{{appliesWhen}}}]}""").RootElement;
+
+        var result = new ProposeVersionCommandValidator().Validate(new ProposeVersionCommand(MatrixType.Bgv, DateTimeOffset.UtcNow, content, null));
+
+        Assert.Equal(valid, result.IsValid);
+    }
+
     [Fact]
     public void Unknown_properties_are_refused_rather_than_ignored()
     {
