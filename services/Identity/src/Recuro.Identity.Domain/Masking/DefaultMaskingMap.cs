@@ -6,7 +6,14 @@ namespace Recuro.Identity.Domain.Masking;
 /// </summary>
 public static class DefaultMaskingMap
 {
-    public const string Version = "masking-2026.10.2";
+    public const string Version = "masking-2026.10.3";
+
+    private static Dictionary<string, MaskStrategy> OfferNoAccess() => new()
+    {
+        ["candidateName"] = MaskStrategy.Hide,
+        ["components"] = MaskStrategy.Hide,
+        ["band"] = MaskStrategy.Hide,
+    };
 
     public static MaskingMap Create()
     {
@@ -53,6 +60,22 @@ public static class DefaultMaskingMap
                 [PersonaRoles.Employee] = new Dictionary<string, MaskStrategy> { ["sensitive"] = MaskStrategy.Hide },
                 [PersonaRoles.Candidate] = new Dictionary<string, MaskStrategy> { ["sensitive"] = MaskStrategy.Hide },
                 [PersonaRoles.Service] = new Dictionary<string, MaskStrategy> { ["sensitive"] = MaskStrategy.Hide },
+            },
+            ["offer"] = new Dictionary<string, IReadOnlyDictionary<string, MaskStrategy>>
+            {
+                // CTC breakup and band follow the candidate CTC rule; people outside HR see nothing.
+                [PersonaRoles.MdCeo] = new Dictionary<string, MaskStrategy>
+                {
+                    ["components"] = MaskStrategy.Hide,
+                    ["band"] = MaskStrategy.Hide,
+                },
+                [PersonaRoles.Employee] = OfferNoAccess(),
+                [PersonaRoles.Candidate] = OfferNoAccess(),
+                [PersonaRoles.Service] = new Dictionary<string, MaskStrategy>
+                {
+                    ["components"] = MaskStrategy.Hide,
+                    ["band"] = MaskStrategy.Hide,
+                },
             },
             ["bgvCheck"] = new Dictionary<string, IReadOnlyDictionary<string, MaskStrategy>>
             {

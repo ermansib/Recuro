@@ -16,6 +16,7 @@ internal static partial class MatrixValidators
         MatrixType.Escalation => new EscalationMatrixValidator().Validate((EscalationMatrix)matrix),
         MatrixType.Bgv => new BgvMatrixValidator().Validate((BgvMatrix)matrix),
         MatrixType.Calendar => new CalendarMatrixValidator().Validate((CalendarMatrix)matrix),
+        MatrixType.Interview => new InterviewMatrixValidator().Validate((InterviewMatrix)matrix),
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
     };
 
@@ -135,6 +136,56 @@ internal sealed class OfferMatrixValidator : AbstractValidator<OfferMatrix>
             rule.RuleFor(r => r.Deviation.Label).Label();
             rule.RuleFor(r => r.Deviation.ApproverRole).MustBePersona();
         });
+        RuleFor(m => m.CtcRules!)
+            .Must(r => r.Select(x => x.Id).Distinct(StringComparer.Ordinal).Count() == r.Count)
+            .WithMessage("Each CTC rule id appears once.")
+            .When(m => m.CtcRules is not null);
+        RuleForEach(m => m.CtcRules).ChildRules(rule =>
+        {
+            rule.RuleFor(r => r.Id).NotEmpty().MaximumLength(50);
+            rule.RuleFor(r => r.Component).NotEmpty().MaximumLength(100);
+            rule.RuleFor(r => r.MinPercent).InclusiveBetween(0, 100);
+            rule.RuleFor(r => r.MaxPercent).InclusiveBetween(0, 100);
+            rule.RuleFor(r => r)
+                .Must(r => r.MinPercent is not null || r.MaxPercent is not null)
+                .WithMessage("Set minPercent, maxPercent or both.")
+                .OverridePropertyName("minPercent");
+            rule.RuleFor(r => r.MaxPercent)
+                .GreaterThanOrEqualTo(r => r.MinPercent)
+                .When(r => r.MinPercent is not null && r.MaxPercent is not null);
+        });
+        RuleFor(m => m.ValidityWorkingDays).InclusiveBetween(1, 60);
+        RuleFor(m => m.FirstChaseAfterWorkingDays).InclusiveBetween(1, 60);
+        RuleFor(m => m.ChaseEveryDays).InclusiveBetween(1, 60);
+    }
+}
+
+internal sealed class InterviewMatrixValidator : AbstractValidator<InterviewMatrix>
+{
+    public InterviewMatrixValidator()
+    {
+        RuleFor(m => m.Templates).NotEmpty()
+            .Must(t => t.Select(x => x.Grade.ToUpperInvariant()).Distinct().Count() == t.Count)
+            .WithMessage("Each grade has one template.");
+        RuleForEach(m => m.Templates).ChildRules(template =>
+        {
+            template.RuleFor(t => t.Grade).NotEmpty().MaximumLength(20);
+            template.RuleFor(t => t.Rounds).NotEmpty()
+                .Must(r => r.Select(x => x.Type).Distinct(StringComparer.Ordinal).Count() == r.Count)
+                .WithMessage("Each round type appears once per template.");
+            template.RuleForEach(t => t.Rounds).ChildRules(round =>
+            {
+                round.RuleFor(r => r.Type).MustBeRoleKey().WithMessage("Round types are lowercase letters, digits and dashes, e.g. hr-screen.");
+                round.RuleFor(r => r.Label).Label();
+            });
+        });
+        RuleFor(m => m.Feedback.ReminderAfterHours).InclusiveBetween(1, 720);
+        RuleFor(m => m.Feedback.OverdueAfterHours).InclusiveBetween(1, 720)
+            .GreaterThan(m => m.Feedback.ReminderAfterHours);
+        RuleForEach(m => m.Ratification.Grades).NotEmpty().MaximumLength(20);
+        RuleFor(m => m.Ratification.Role).MustBePersona();
+        RuleFor(m => m.Ratification.Label).Label();
+        RuleFor(m => m.Ratification.SlaWorkingDays).InclusiveBetween(1, ConfigLimits.MaxWorkingDays);
     }
 }
 
