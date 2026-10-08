@@ -43,13 +43,13 @@ the project files as `recuro/backenduserstories.html`). Decisions behind this ma
 | 7 | **Candidate** | CND-001..006 | candidates (PII encrypted), consents, merges | `candidate.created/merged/purged` | `pipeline.application.final_rejected` | Identity (masking), Vendor (active check) | 5107 |
 | 8 | **Pipeline** | PPL-001..008 | applications, stage history, TAT clocks, holds | `pipeline.*` | `recruitment.sourcing.unlocked`, `recruitment.mrf.cancelled`, `interview.selection.ratified`, `bgv.*`, `offer.accepted` | Requisition (sourcing gate), Candidate | 5108 |
 | 9 | **Interview** | INT-001..007 | rounds, schedules, Annexure B assessments, selection summaries | `interview.*` | `pipeline.stage.changed` | Config (round templates), Workflow (ratification) | 5109 |
-| 10 | **Bgv** | BGV-001..009 | BGV cases, checks, vendor refs, webhook dedupe | `bgv.*` | `pipeline.stage.changed`, `vendor.de_empanelled` | Config (check matrix), Vendor, Candidate (consent) | 5110 |
+| 10 | **Bgv** | BGV-001..009 | BGV cases, checks, consent, vendor refs, webhook dedupe | `bgv.*` | `pipeline.stage.changed`, `vendor.de_empanelled`, `workflow.task.completed` (type `bgv-adverse`) | Config (check matrix, escalation), Vendor (status), Workflow (adverse saga), Identity (masking) | 5110 |
 | 11 | **Offer** | OFR-001..007 | offers, CTC breakup, letters, verbal log | `offer.*` | `workflow.task.completed`, `bgv.cleared`, `bgv.adverse.flagged`, `bgv.resolved`, `candidate.purged` | Config (offer matrix), Workflow, Bgv (release gate) | 5111 |
 | 12 | **Onboarding** | ONB-001..006 | onboarding cases, Day-1 checklist, documents, probation | `onboarding.*` | `offer.accepted`, `bgv.cleared/adverse.flagged` | Config (checklist) | 5112 |
 | 13 | **Vendor** (P1) | VND-001..005 | vendors, empanelment gates, agreements, SLA snapshots | `vendor.*` | `bgv.check.updated` | — | 5113 |
 | 14 | **Reporting** (P1) | RPT-001..005 | read-model projections, KPI snapshots | — | nearly all events | — | 5114 |
-| 15 | **Careers** (public API) | CAR-001..007 | postings, public applications, throttle state | `career.job.applied` | `recruitment.sourcing.unlocked`, `recruitment.mrf.cancelled`, `pipeline.application.final_rejected` | Candidate, Pipeline (intake saga), Requisition (gate) | 5115 |
-| 16 | **Employee** (portal API, P1) | EMP-001..005 | IJP applications, referrals | `employee.ijp.applied`, `employee.referral.submitted` | `recruitment.sourcing.unlocked`, `pipeline.stage.changed` | Candidate, Pipeline (intake saga) | 5116 |
+| 15 | **Careers** (public API) | CAR-001..007 | postings, public applications, throttle state | `career.job.applied` | `recruitment.sourcing.unlocked`, `recruitment.mrf.cancelled`, `pipeline.application.final_rejected`, `pipeline.stage.changed`, `notification.email.dispatched` (regret delivery, template `candidate.regret`) | Candidate, Pipeline (intake saga), Requisition (gate) | 5115 |
+| 16 | **Employee** (portal API, P1) | EMP-001..005 | IJP applications, referrals | `employee.ijp.applied`, `employee.referral.submitted` | `recruitment.sourcing.unlocked`, `recruitment.mrf.cancelled`, `pipeline.stage.changed`, `pipeline.application.final_rejected` | Candidate, Pipeline (intake saga) | 5116 |
 
 Notes:
 
@@ -68,8 +68,7 @@ through this file first. JSON is camelCase. Calls between services are authentic
 
 ### Service-to-service authentication (owner: Identity, RCU-AUT-005; used by every service)
 
-This is the contract for the Identity PR that is still in review. Until it merges, calls with no user
-have no token.
+Built in PR #21 (`ServiceTokenHandler` in `Recuro.BuildingBlocks.Web.Auth`).
 
 - **Calls made for a user** forward the caller's `Authorization` header first, so masking and RBAC
   apply to that user. `CorrelationHeadersHandler` forwards only the correlation ids.
@@ -89,8 +88,9 @@ have no token.
   - `TokenEndpoint` is derived from `Auth:MetadataAddress` or `Auth:Authority`.
   - `RenewBefore` sets how early a token is renewed.
 - **The receiving side**: a validated token with role `service` and no `tenant_id` claim takes its
-  tenant from `X-Recuro-Tenant`. User tokens ignore that header, and the gateway strips it from
-  outside requests.
+  tenant from `X-Recuro-Tenant`. User tokens ignore that header. The gateway strips
+  `X-Recuro-Tenant`, along with `X-User-Id`, `X-User-Roles` and `X-Tenant-Id`, from every outside
+  request, so only a service inside the network can set it.
 - **`Auth:Mode=Development`**: the handler sends `X-Dev-User: recuro-svc-<service>`,
   `X-Dev-Roles: service` and `X-Dev-Tenant` instead of a token.
 - **Local Keycloak** has 16 clients named `recuro-svc-<service>`. Compose sets `KC_HOSTNAME` so
@@ -204,14 +204,77 @@ Keys that other services use:
 | TAT stages | `mrf-approval`, `sourcing`, `interview`, `bgv`, `offer-issuance`, `offer-to-joining`, `onboarding-day1`, `overall-junior`, `overall-managerial`, `overall-kmp` |
 | Calendar location | `default` when none is given |
 
-### Vendor: consultant status (owner: Vendor, wave 2; caller: Candidate)
+### Vendor: status (owner: Vendor; callers: Candidate, Bgv; PR #24)
 
-**`GET /api/v1/vendors/{vendorId}/status`** (RCU-CND-005, VND-001)
+**`GET /api/v1/vendors/{vendorId}/status`** (RCU-CND-005, VND-001). Any signed-in caller, user or
+service, may read it.
 
-This returns `{ "vendorId": "string", "status": "active | pending | off", "active": true }`. An unknown
-id returns 404, which the caller treats as not active (400 `vendor_not_active`). Until Vendor ships,
-Candidate's `UncheckedVendorDirectory` accepts every id and logs a warning. Vendor also publishes
-`vendor.de_empanelled`, so a caller may cache a status for up to 5 minutes.
+- Returns `{ "vendorId", "status": "active | pending | off", "active": bool, "name", "type": "Consultant | BgvAgency" }`.
+  `name` and `type` were added later; the change is additive.
+- An unknown id, or one that isn't a GUID, returns 404. The caller treats that as not active
+  (Candidate returns 400 `vendor_not_active`).
+- A caller may cache a status for up to 5 minutes, because Vendor also publishes
+  `vendor.de_empanelled`.
+
+The other Vendor routes under `/api/v1/vendors`, all for HR Head:
+
+- `GET /` lists vendors.
+- `POST /` registers a vendor.
+- `GET /{vendorId}` returns one vendor.
+- `PUT /{vendorId}/empanelment` updates the six empanelment gates.
+- `POST /{vendorId}/empanel` and `POST /{vendorId}/de-empanel` change the vendor's status.
+
+The fee band (5–8.33% of CTC) stays in Vendor's own configuration until Config has a vendor matrix.
+
+### Background verification (owner: Bgv 5110; PR #24)
+
+Routes under `/api/v1/bgv`. `{caseRef}` is either the `appId` or the case id.
+
+| Route | Purpose |
+|---|---|
+| `GET /dashboard/ta` | dashboard fragment (see the TA dashboard section) |
+| `POST /cases` | start a case. Consent is owned by Bgv, so a missing consent returns 400 `consent_required` |
+| `GET /cases/{caseRef}` | case with its checks |
+| `GET /cases/{caseRef}/release-gate` | whether an offer may be released. The `service` role can read it, for Offer (OFR-007) |
+| `POST /cases/{caseRef}/release` | release the gate. Returns 409 `bgv_release_blocked` while checks are open or adverse |
+| `POST /cases/{caseRef}/checks/{checkType}` | update one check |
+| `POST /cases/{caseRef}/adverse` | report an adverse finding, which starts the adverse saga |
+| `GET /cases/reassignment`, `POST /cases/reassign` | list cases left with a de-empanelled vendor, and move them to an active vendor |
+
+**Events** (schemas in `services/contracts/events`):
+
+| Type | Notes |
+|---|---|
+| `bgv.case.initiated.v1` | |
+| `bgv.check.updated.v1` | |
+| `bgv.adverse.flagged.v1` | |
+| `bgv.cleared.v1` | carries `onTime` for vendor SLA |
+| `bgv.resolved.v1` | outcome `ResolvedCleared` or `ResolvedAdverse`; decision `override` or `rescind` |
+| `vendor.empanelled.v1` | |
+| `vendor.de_empanelled.v1` | carries `reassignmentHint: "reassign-open-cases"` |
+
+**Adverse saga.** Bgv starts a Workflow instance with type `bgv-adverse`, subject `BgvCase/{caseId}`
+and presentation kind `AdverseBgv`.
+
+- Its legs are HR Head, then MD/CEO, taken from Config's `adverse-bgv` escalation.
+- When `workflow.task.completed` arrives with action `rescind` or `override`, Bgv publishes
+  `bgv.resolved.v1`.
+- Pipeline and Offer react to `bgv.adverse.flagged` and `bgv.resolved`.
+
+**No Bgv TAT-breach event.** Pipeline's `pipeline.tat.breached.v1` already covers the BGV stage,
+using the same Config TAT, so escalation happens only once.
+
+**Outgoing calls.** Bgv's HTTP clients run `ForwardCallerHandler` and then `ServiceTokenHandler`. A
+call made for a user carries that user's token, and a call from a consumer or job gets a service
+token.
+
+**Planned (not built yet):**
+
+- **Identity:** a `bgvCheck` masking resource with `sensitiveNote` hidden for `mdceo`, `employee`,
+  `candidate` and `service`. Until it exists, Bgv applies the same rule locally.
+- **Config** (optional): BGV matrix rows may carry
+  `appliesWhen { always, grades[], anyFlags[] }`. Until they do, Bgv uses the built-in FRD §5.5
+  rules.
 
 ### Gateway BFF: log a candidate (owner: Gateway; calls Candidate, then Pipeline)
 
@@ -260,6 +323,70 @@ back:
 - Each event's `data` is the bell item that `GET /notifications` returns.
 - The browser `EventSource` API can't send a bearer token, so the frontend uses a fetch-based SSE
   client that sends `Authorization` and reconnects with `Last-Event-ID`.
+
+### Careers and Employee portal APIs (owners: Careers 5115, Employee 5116; PR #22)
+
+**Public careers site** (CAR-001..007). These routes are anonymous. The gateway route
+`careers-public` applies the `public` rate limit, and the tenant comes from the URL, never from a
+token.
+
+| Method and path | Request | Response |
+|---|---|---|
+| `GET /api/v1/careers/public/{tenantId}/jobs` | `q`, `location`, `industry`, `cursor`, `limit` | `{ items: JobPosting[], nextCursor }`, using the frontend `JobPosting` shape |
+| `POST /api/v1/careers/public/{tenantId}/applications` | frontend `PublicApplicationInput` | `{ appId, position }` |
+| `GET /api/v1/careers/public/{tenantId}/applications/{appId}/status` | — | `{ appId, stage, status }` |
+
+A public applicant is never told that they match an existing candidate. `duplicateOf` is not returned,
+and the possible duplicate is flagged to HR through `career.job.applied.v1` instead.
+
+**Careers HR routes**, for HR staff:
+
+- `GET /api/v1/careers/postings` lists postings.
+- `PUT /api/v1/careers/postings/{reqId}` creates or updates a posting.
+- `POST /api/v1/careers/postings/{reqId}/publish` takes `{ openBeforeIjpWindowEnds, justification }`.
+  Publishing externally before the IJP window ends is HR Head only and needs a justification.
+- `POST /api/v1/careers/postings/{reqId}/unpublish` takes `{ reason }`.
+
+**Employee portal** (EMP-001..005):
+
+| Route | Who |
+|---|---|
+| `GET /api/v1/employee/ijp` | open IJP postings, for any employee |
+| `PUT /api/v1/employee/ijp/{reqId}` | HR-TA |
+| `POST /api/v1/employee/ijp/{reqId}/applications` | employee |
+| `POST /api/v1/employee/referrals` | employee; `coiAccepted` must be true |
+| `GET /api/v1/employee/me/applications`, `GET /api/v1/employee/me/referrals` | the signed-in employee |
+
+**IJP window.** Careers and Employee each compute the window as the time of the
+`recruitment.sourcing.unlocked` event plus 5 working days, using Config's `resolve/working-days`.
+There is no shared state, and both get the same answer from the same calendar. The 5 days are a
+service option until Config carries an IJP rule. When it does, both services read it from there.
+
+**Events** (schemas in `services/contracts/events`):
+
+| Type | Payload |
+|---|---|
+| `career.job.applied.v1` | `appId, jobId, reqId, candidateId, possibleDuplicate, consents { dataPrivacy, conflictOfInterest }` |
+| `employee.ijp.applied.v1` | `employeeId, reqId, appId, candidateId` |
+| `employee.referral.submitted.v1` | `referralId, referrerId, reqId, appId, candidateId, relationship, bonusEligible, possibleDuplicate` |
+
+**Intake calls** to Candidate and Pipeline run as the `service` role, using Keycloak clients
+`recuro-svc-careers` and `recuro-svc-employee`. PR #22 was written before RCU-AUT-005 merged, so
+each service uses a `ServiceCallerHandler` stand-in:
+
+- In Development mode, it sends the `X-Dev-*` service headers.
+- In OIDC mode, it returns 503 rather than call without a token.
+- It never bypasses masking.
+
+`ServiceTokenHandler` is now on main (PR #21). The stand-in should be replaced with it in a follow-up.
+
+**Planned additions that other threads own** (not built yet):
+
+- Candidate: `POST /api/v1/candidates/{id}/tombstone` (role `service`). It is the compensation step
+  of the candidate-intake saga when the application can't be created.
+- Candidate: the 409 `duplicate_candidate` problem gains an `existingId` extension, so the intake
+  sagas can link to the existing candidate. The gateway's `/bff/candidates` keeps returning the 409
+  unchanged to HR-TA.
 
 ### Reminder and chase events (catalog additions)
 
