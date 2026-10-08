@@ -7,6 +7,7 @@ using Recuro.Pipeline.Application.Applications.Commands.RejectApplication;
 using Recuro.Pipeline.Application.Applications.Queries.GetApplication;
 using Recuro.Pipeline.Application.Applications.Queries.GetBoard;
 using Recuro.Pipeline.Application.Applications.Queries.ListPipelineCards;
+using Recuro.Pipeline.Application.Dashboard;
 
 namespace Recuro.Pipeline.Api.Endpoints;
 
@@ -41,8 +42,15 @@ internal static class PipelineEndpoints
             .RequireAuthorization(PipelinePolicies.Move)
             .WithSummary("RCU-PPL-003: final rejection with a mandatory reason (frontend rejectApplication).");
 
+        group.MapGet("/dashboard/ta", GetTaDashboardAsync)
+            .RequireAuthorization(PipelinePolicies.Read)
+            .WithSummary("S-01: Pipeline's part of the HR-TA dashboard (funnel, stage TAT breaches), called by the gateway BFF.");
+
         return app;
     }
+
+    private static async Task<IResult> GetTaDashboardAsync(IQueryHandler<GetTaDashboardQuery, TaDashboardFragmentDto> handler, CancellationToken ct) =>
+        (await handler.Handle(new GetTaDashboardQuery(), ct)).ToHttpResult();
 
     private static async Task<IResult> ListCardsAsync(
         string reqId,

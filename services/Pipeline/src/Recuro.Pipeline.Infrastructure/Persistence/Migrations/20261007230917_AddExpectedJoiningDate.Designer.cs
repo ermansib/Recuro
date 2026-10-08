@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Recuro.Pipeline.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using Recuro.Pipeline.Infrastructure.Persistence;
 namespace Recuro.Pipeline.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(PipelineDbContext))]
-    partial class PipelineDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261007230917_AddExpectedJoiningDate")]
+    partial class AddExpectedJoiningDate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
