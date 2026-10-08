@@ -150,8 +150,12 @@ public static class EventPayload
             ? value
             : null;
 
-    /// <summary>Template values: the payload's top-level scalar fields plus the subject id and actor name.</summary>
-    public static IReadOnlyDictionary<string, string> TemplateValues(EventMetadata metadata, JsonElement data)
+    /// <summary>
+    /// Template values: the payload's top-level scalar fields plus the subject id and actor name. A list reads
+    /// as its items (objects by their <c>label</c>); with <paramref name="linkBase"/>, a gateway path field such
+    /// as <c>pdfPath</c> also reads as an absolute link <c>{pdfUrl}</c>.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> TemplateValues(EventMetadata metadata, JsonElement data, Uri? linkBase = null)
     {
         ArgumentNullException.ThrowIfNull(metadata);
         var values = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -165,7 +169,7 @@ public static class EventPayload
             foreach (var property in data.EnumerateObject())
             {
                 var text = property.Value.ValueKind == JsonValueKind.Array
-                    ? string.Join(", ", property.Value.EnumerateArray().Select(AsText).OfType<string>())
+                    ? string.Join(", ", property.Value.EnumerateArray().Select(AsListItem).OfType<string>())
                     : AsText(property.Value);
                 if (text is not null)
                 {
@@ -177,6 +181,13 @@ public static class EventPayload
                     && property.Value.ValueKind == JsonValueKind.Number && property.Value.TryGetInt64(out var ms))
                 {
                     values.TryAdd(property.Name[..^2], Duration(TimeSpan.FromMilliseconds(ms)));
+                }
+
+                // Download paths travel gateway-relative (e.g. Reporting's pdfPath); emails need them absolute as {pdfUrl}.
+                if (linkBase is not null && property.Name.Length > 4 && property.Name.EndsWith("Path", StringComparison.Ordinal)
+                    && text is not null && text.StartsWith('/') && !text.StartsWith("//", StringComparison.Ordinal))
+                {
+                    values.TryAdd($"{property.Name[..^4]}Url", new Uri(linkBase, text.TrimStart('/')).ToString());
                 }
             }
         }
@@ -193,6 +204,9 @@ public static class EventPayload
             : span.TotalHours >= 1 ? $"{sign}{(int)span.TotalHours}h {span.Minutes}m"
             : $"{sign}{(int)span.TotalMinutes}m";
     }
+
+    private static string? AsListItem(JsonElement value) =>
+        value.ValueKind == JsonValueKind.Object && value.TryGetProperty("label", out var label) ? AsText(label) : AsText(value);
 
     private static string? AsText(JsonElement value) => value.ValueKind switch
     {

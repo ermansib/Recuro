@@ -40,6 +40,24 @@ public class RecipientResolverTests
     }
 
     [Fact]
+    public void Lists_of_objects_read_as_their_labels_and_gateway_paths_as_links()
+    {
+        var data = JsonSerializer.SerializeToElement(new
+        {
+            documents = new[] { new { type = "id", label = "Identity proof" }, new { type = "pan", label = "PAN card" } },
+            pdfPath = "/api/v1/reports/packs/p-1/pdf",
+            otherPath = "relative/x",
+        });
+
+        var values = EventPayload.TemplateValues(Metadata, data, new Uri("https://portal.example.test/"));
+
+        Assert.Equal("Identity proof, PAN card", values["documents"]);
+        Assert.Equal("https://portal.example.test/api/v1/reports/packs/p-1/pdf", values["pdfUrl"]);
+        Assert.False(values.ContainsKey("otherUrl"));
+        Assert.False(EventPayload.TemplateValues(Metadata, data).ContainsKey("pdfUrl"));
+    }
+
+    [Fact]
     public async Task A_role_with_nobody_in_the_directory_gets_one_role_wide_item_and_one_unaddressed_email()
     {
         var resolver = new RecipientResolver(new FakeStore(), FakeContacts.None, FakeStaff.None, TimeProvider.System);
