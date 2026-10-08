@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/career.job.applied.v1.schema.json",
+  "title": "career.job.applied.v1",
+  "description": "Producer: Careers. A public applicant's intake finished: the candidate is recorded and the Pipeline application exists (RCU-CAR-002/004). The applicant has no user id; reach them through candidateId.",
+  "type": "object",
+  "required": [
+    "appId",
+    "jobId",
+    "reqId",
+    "candidateId",
+    "possibleDuplicate",
+    "consents"
+  ],
+  "properties": {
+    "appId": {
+      "type": "string",
+      "description": "Pipeline's APP-ID."
+    },
+    "jobId": {
+      "type": "string",
+      "description": "The careers posting id, e.g. post-2026-0156."
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "possibleDuplicate": {
+      "type": "boolean",
+      "description": "True when the applicant matched a candidate already on file (RCU-CND-002)."
+    },
+    "consents": {
+      "type": "object",
+      "description": "Wording versions of the consents given on the form.",
+      "required": [
+        "dataPrivacy",
+        "conflictOfInterest"
+      ],
+      "properties": {
+        "dataPrivacy": {
+          "type": "string"
+        },
+        "conflictOfInterest": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

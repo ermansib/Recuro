@@ -96,9 +96,11 @@ services:
       ReverseProxy__Clusters__requisition__Destinations__primary__Address: http://requisition:8080/
       ReverseProxy__Clusters__workflow__Destinations__primary__Address: http://workflow:8080/
       Bff__Dashboard__Sources__requisition__Url: http://requisition:8080/api/v1/requisitions/dashboard/ta
+      ReverseProxy__Clusters__careers__Destinations__primary__Address: http://careers:8080/
+      ReverseProxy__Clusters__employee__Destinations__primary__Address: http://employee:8080/
     ports:
       - "5100:8080"
-    depends_on: [redis, keycloak, audit, identity, config, candidate, pipeline, notification, requisition, workflow]
+    depends_on: [redis, keycloak, audit, identity, config, candidate, pipeline, notification, requisition, workflow, careers, employee]
 
   identity:
     profiles: ["apps"]
@@ -252,6 +254,48 @@ services:
       Services__Config: http://config:8080/
     ports:
       - "5106:8080"
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+
+  careers:
+    profiles: ["apps"]
+    build:
+      context: .
+      dockerfile: Careers/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__careers: Host=postgres;Database=recuro_careers;Username=recuro_careers;Password=recuro_careers
+      ConnectionStrings__rabbitmq: amqp://recuro:recuro@rabbitmq:5672/
+      ConnectionStrings__redis: redis:6379
+      Auth__Authority: http://localhost:${KEYCLOAK_PORT:-8080}/realms/recuro
+      Auth__MetadataAddress: http://keycloak:8080/realms/recuro/.well-known/openid-configuration
+      Services__Candidate__BaseUrl: http://candidate:8080/
+      Services__Pipeline__BaseUrl: http://pipeline:8080/
+      Services__Config__BaseUrl: http://config:8080/
+    ports:
+      - "5115:8080"
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+
+  employee:
+    profiles: ["apps"]
+    build:
+      context: .
+      dockerfile: Employee/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__employee: Host=postgres;Database=recuro_employee;Username=recuro_employee;Password=recuro_employee
+      ConnectionStrings__rabbitmq: amqp://recuro:recuro@rabbitmq:5672/
+      ConnectionStrings__redis: redis:6379
+      Auth__Authority: http://localhost:${KEYCLOAK_PORT:-8080}/realms/recuro
+      Auth__MetadataAddress: http://keycloak:8080/realms/recuro/.well-known/openid-configuration
+      Services__Candidate__BaseUrl: http://candidate:8080/
+      Services__Pipeline__BaseUrl: http://pipeline:8080/
+      Services__Config__BaseUrl: http://config:8080/
+    ports:
+      - "5116:8080"
     depends_on:
       postgres: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
