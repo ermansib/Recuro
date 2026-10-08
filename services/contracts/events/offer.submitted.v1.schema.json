@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/offer.submitted.v1.schema.json",
+  "title": "offer.submitted.v1",
+  "description": "Producer: Offer. An offer was submitted for approval with its Annexure D route and the pinned Config version (RCU-OFR-002). No amounts. Subject: Offer/<offerId>.",
+  "type": "object",
+  "properties": {
+    "offerId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "grade": {
+      "type": "string"
+    },
+    "withinBand": {
+      "type": "boolean"
+    },
+    "approverRole": {
+      "type": "string"
+    },
+    "route": {
+      "type": "string"
+    },
+    "configVersionId": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "offerId",
+    "appId",
+    "reqId",
+    "grade",
+    "withinBand",
+    "approverRole",
+    "route",
+    "configVersionId"
+  ],
+  "additionalProperties": true
+}

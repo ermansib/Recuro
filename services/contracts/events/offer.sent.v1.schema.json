@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/offer.sent.v1.schema.json",
+  "title": "offer.sent.v1",
+  "description": "Producer: Offer. The offer was released to the candidate for e-sign (RCU-OFR-004/007). conditional is true when HR Head released it before BGV cleared. Subject: Offer/<offerId>.",
+  "type": "object",
+  "properties": {
+    "offerId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "sentAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "conditional": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "offerId",
+    "appId",
+    "reqId",
+    "candidateId",
+    "sentAt",
+    "expiresAt",
+    "conditional"
+  ],
+  "additionalProperties": true
+}

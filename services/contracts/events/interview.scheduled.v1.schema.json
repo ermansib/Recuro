@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/interview.scheduled.v1.schema.json",
+  "title": "interview.scheduled.v1",
+  "description": "Producer: Interview. A round was booked, or moved when rescheduledFrom is set (RCU-INT-001/002). Notification invites the panel; dueAt is when feedback is due. Ids only. Subject: Interview/<interviewId>.",
+  "type": "object",
+  "properties": {
+    "interviewId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "roundId": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Round number within the application."
+    },
+    "round": {
+      "type": "string"
+    },
+    "roundType": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "Telephonic",
+        "Video",
+        "InPerson"
+      ]
+    },
+    "panel": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Interviewer user ids."
+    },
+    "scheduledFor": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "endsAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dueAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "rescheduledFrom": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "interviewId",
+    "appId",
+    "reqId",
+    "candidateId",
+    "roundId",
+    "round",
+    "roundType",
+    "mode",
+    "panel",
+    "scheduledFor",
+    "endsAt",
+    "dueAt"
+  ],
+  "additionalProperties": true
+}

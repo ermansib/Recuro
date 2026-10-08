@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/offer.withdrawn.v1.schema.json",
+  "title": "offer.withdrawn.v1",
+  "description": "Producer: Offer. HR Head or MD/CEO withdrew the offer with a documented reason (RCU-OFR-006). from is the state it was withdrawn from. Subject: Offer/<offerId>.",
+  "type": "object",
+  "properties": {
+    "offerId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "from": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "PendingApproval",
+        "Approved",
+        "Sent",
+        "Accepted"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "offerId",
+    "appId",
+    "reqId",
+    "candidateId",
+    "from",
+    "reason"
+  ],
+  "additionalProperties": true
+}

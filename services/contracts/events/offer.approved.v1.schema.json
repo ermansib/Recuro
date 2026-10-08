@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/offer.approved.v1.schema.json",
+  "title": "offer.approved.v1",
+  "description": "Producer: Offer. The resolved approver approved the offer; letterVersion is the letter generated for it (RCU-OFR-003). Subject: Offer/<offerId>.",
+  "type": "object",
+  "properties": {
+    "offerId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "approvedBy": {
+      "type": "string"
+    },
+    "letterVersion": {
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "required": [
+    "offerId",
+    "appId",
+    "reqId",
+    "approvedBy",
+    "letterVersion"
+  ],
+  "additionalProperties": true
+}

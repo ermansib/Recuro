@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/interview.selection.ratified.v1.schema.json",
+  "title": "interview.selection.ratified.v1",
+  "description": "Producer: Interview. The selection was ratified (or needed no ratification for the grade) (RCU-INT-005/006). Pipeline moves the application from Interview to Selection. Subject: Application/<appId>.",
+  "type": "object",
+  "properties": {
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "ratifiedBy": {
+      "type": "string"
+    },
+    "avg": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "rounds": {
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "required": [
+    "appId",
+    "reqId",
+    "ratifiedBy",
+    "rounds"
+  ],
+  "additionalProperties": true
+}
