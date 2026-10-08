@@ -10,7 +10,7 @@ namespace Recuro.Notification.Application.Templates;
 /// </summary>
 public sealed class DefaultTemplates : ITemplateSource
 {
-    public const string Version = "default-2026.10.2";
+    public const string Version = "default-2026.10.3";
 
     private static readonly IReadOnlyDictionary<string, NotificationTemplate> Catalog = new[]
     {
@@ -73,6 +73,8 @@ public sealed class DefaultTemplates : ITemplateSource
             "Offer", "Your offer is awaiting your response",
             ["This is a friendly reminder that your offer for application {appId} is waiting for your response.", "The offer is valid until {expiresAt}. Please accept or decline it before then, or contact us if you have questions."],
             null),
+        T("offer.withdrawn", "⊘", "Offer withdrawn — {offerId}", "{appId} · {reason}", "/offer",
+            "Offer", "Offer withdrawn — {offerId}", ["Offer {offerId} for {appId} was withdrawn.", "Reason given: {reason}"], "Open Offer"),
         T("ijp.applied", "🔁", "IJP application — {reqId}", "Employee {employeeId} applied internally.", "/pipeline",
             "IJP", "IJP application — {reqId}", ["An internal application was submitted for {reqId}."], "Open Pipeline"),
         T("ijp.applied.confirmation", "✅", "IJP application received — {reqId}", "HR-TA will review it.", "/internal-careers",
