@@ -58,6 +58,7 @@ public static class EventTypes
         public const string Accepted = "offer.accepted.v1";
         public const string Declined = "offer.declined.v1";
         public const string Expired = "offer.expired.v1";
+        public const string Withdrawn = "offer.withdrawn.v1";
     }
 
     public static class Onboarding
