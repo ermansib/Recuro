@@ -35,7 +35,7 @@ the project files as `recuro/backenduserstories.html`). Decisions behind this ma
 | — | **BuildingBlocks** | PLT-001..004 | outbox, inbox tables (in each service DB) | — | — | — | — |
 | 0 | **Gateway** | GTW-001..005 | rate-limit state (Valkey) | — | — | every service (proxy); BFF: `/bff/candidates`, `/bff/dashboard/ta`; proxies Notification's SSE stream | 5100 |
 | 1 | **Identity** | AUT-001..005 | user mirror (JIT from Keycloak), role/policy map, masking map | `identity.user.provisioned`, `identity.role.changed` | — | Keycloak admin API | 5101 |
-| 2 | **Config** (rules) | CFG-001..003, 005 | versioned DOA / TAT / offer / escalation / BGV matrices, business calendars | `config.version.activated` | — | — | 5102 |
+| 2 | **Config** (rules) | CFG-001..003, 005 | versioned DOA / TAT / offer / escalation / BGV / interview matrices, business calendars | `config.version.activated` | — | — | 5102 |
 | 3 | **Audit** ✅ built here | AUD-001..003 | hash-chained audit entries, seals | — | **all** events | — | 5103 |
 | 4 | **Notification** | NTF-001..006 | feed items, delivery log, email templates; SSE stream; preferences (NTF-005, P2) and scheduled dispatch (NTF-006, P1) not built yet | `notification.created`, `notification.email.dispatched/failed` | event matrix §5.6, including the reminder and chase events | Config (templates via admin), Identity (recipients) | 5104 |
 | 5 | **Requisition** (MRF + JD) | REQ-001..008, JD screens | requisitions, tracker, job descriptions | `recruitment.mrf.*`, `recruitment.sourcing.unlocked` | `workflow.task.completed` | Config (resolve DOA), Workflow (create instance) | 5105 |
@@ -148,7 +148,7 @@ All Identity endpoints accept a tenant member's token or a service token.
 `/api/v1/identity/masking/mdceo/candidate`
 
 - Returns `{ "resource": "candidate", "role": "mdceo", "version": "string", "fields": { "currentCtc": "hide", "email": "partial", ... } }`.
-- Resources today are `candidate` and `approval`.
+- Resources today are `candidate`, `approval`, `bgvCheck` (PR #26) and `offer` (PR #30).
 - The strategies are:
   - `hide`: the field isn't returned.
   - `partial`: only the last 4 characters are kept.
@@ -158,14 +158,17 @@ All Identity endpoints accept a tenant member's token or a service token.
   every sensitive field", so a missing map fails closed.
 - Callers cache the map per tenant, role and version for up to 5 minutes, and apply it when they
   serialize a response.
-- The current map version is `masking-2026.10.1`.
+- The current map version is `masking-2026.10.2` (adds `bgvCheck`). PR #30 makes it
+  `masking-2026.10.3` (adds `offer`).
+- `bgvCheck`: `sensitiveNote` is hidden for `mdceo`, `employee`, `candidate` and `service`.
+- `offer`: `mdceo` and `service` don't see `components` or `band`. `employee` and `candidate` also
+  don't see `candidateName`. `hrta` and `hrhead` see every field.
 - The role `service`, used by client-credentials tokens, has its own map, and
   `GET /api/v1/identity/masking/service/{resource}` returns 200:
   - On `candidate`, a service account sees `name` and `email`. `phone`, `summary`, `currentCtc` and
     `expectedCtc` are hidden.
   - On `approval`, `sensitive` is hidden.
-  - Per-client rules, such as Offer needing CTC, come with the Keycloak service-account clients
-    (RCU-AUT-005).
+  - On `offer`, `components` and `band` are hidden.
 - Candidate (PR #12) reads its masking rules from this endpoint. For an unknown role it hides every
   personal field. If Identity can't be reached, it uses the last rules it cached, and if it has none,
   the FRD §3.2 table.
@@ -190,11 +193,31 @@ Workflow and Notification find assignees and recipients.
 
 The `resolve/doa` and `resolve/working-days` endpoints are defined above. Config also exposes:
 
-- **`GET /api/v1/resolve/matrices/{doa|tat|offer|escalation|bgv|calendar}?at=<ISO>[&versionId=<guid>]`**
-  returns `{ configVersionId, matrixType, number, effectiveFrom, content }`.
+- **`GET /api/v1/resolve/matrices/{doa|tat|offer|escalation|bgv|calendar|interview}?at=<ISO>[&versionId=<guid>]`**
+  returns `{ configVersionId, matrixType, number, effectiveFrom, content }`. `interview` comes with
+  PR #30.
 - **`GET /api/v1/config/rules`** returns the frontend `RuleConfig`.
 - **`/api/v1/config/{type}/versions`** is version admin: propose, revise, approve and reject, with dual
-  approval. Activation publishes `config.version.activated`.
+  approval. Activation publishes `config.version.activated`, whose `matrixType` can be any of the
+  types above, including `interview`.
+
+Matrix content that other services read:
+
+- **`bgv`** (PR #26): each check may carry an optional
+  `appliesWhen { always?: bool, grades?: string[], anyFlags?: string[] }`. Either `always` is true, or
+  at least one grade or flag is given, never both. Flags are camelCase. `GET /api/v1/config/rules`
+  still returns the frontend `BgvCheckRule` shape, without `appliesWhen`.
+- **`interview`** (PR #30, read by Interview):
+  - `templates[{ grade, rounds[{ type, label }] }]`. The seed gives grade E `hr-screen` and
+    `functional`, M1 and M3 add `business`, and VP and KMP add `final`.
+  - `feedback { reminderAfterHours: 24, overdueAfterHours: 48 }`.
+  - `ratification { grades: [M3, VP, KMP], role: hrhead, label: "HR Head ratification", slaWorkingDays: 2 }`.
+- **`offer`** (PR #30, read by Offer) gains optional fields. Older versions are read with these
+  defaults:
+  - `ctcRules[{ id, component, minPercent?, maxPercent? }]`, seeded empty.
+  - `validityWorkingDays: 5`.
+  - `firstChaseAfterWorkingDays: 3`.
+  - `chaseEveryDays: 7`.
 
 Keys that other services use:
 
@@ -226,7 +249,7 @@ The other Vendor routes under `/api/v1/vendors`, all for HR Head:
 
 The fee band (5–8.33% of CTC) stays in Vendor's own configuration until Config has a vendor matrix.
 
-### Background verification (owner: Bgv 5110; PR #24)
+### Background verification (owner: Bgv 5110; PR #24, merged)
 
 Routes under `/api/v1/bgv`. `{caseRef}` is either the `appId` or the case id.
 
@@ -268,13 +291,11 @@ using the same Config TAT, so escalation happens only once.
 call made for a user carries that user's token, and a call from a consumer or job gets a service
 token.
 
-**Planned (not built yet):**
+**Built in PR #26:**
 
-- **Identity:** a `bgvCheck` masking resource with `sensitiveNote` hidden for `mdceo`, `employee`,
-  `candidate` and `service`. Until it exists, Bgv applies the same rule locally.
-- **Config** (optional): BGV matrix rows may carry
-  `appliesWhen { always, grades[], anyFlags[] }`. Until they do, Bgv uses the built-in FRD §5.5
-  rules.
+- Identity's `bgvCheck` masking resource, which Bgv reads instead of applying its local fallback.
+- Config's optional `appliesWhen` on BGV matrix checks (see "Config: matrices and versions"). A check
+  without it uses the built-in FRD §5.5 rules.
 
 ### Gateway BFF: log a candidate (owner: Gateway; calls Candidate, then Pipeline)
 
@@ -428,11 +449,11 @@ Offer routes are anonymous, and both use the `public` rate limit:
 - `POST /api/v1/offers/esign/callback`: the e-sign provider's callback, protected by an HMAC body
   signature.
 
-**Planned (requested of other threads):**
+**Dependencies on other threads:**
 
-- Config: an `interview` matrix, and optional extra fields on the offer matrix.
-- Identity: an `offer` masking map.
-- Bgv: the `bgv.*` events above (PR #24).
+- Config's `interview` matrix and the extra offer-matrix fields, and Identity's `offer` masking map,
+  come with PR #30 (see the Config and Identity sections).
+- The `bgv.*` events come from Bgv (PR #24, merged).
 
 ### Reminder and chase events (catalog additions)
 
