@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/bgv.resolved.v1.schema.json",
+  "title": "bgv.resolved.v1",
+  "description": "Producer: Bgv. The adverse escalation was decided in the approvals inbox: override clears the check, rescind closes the case adverse (RCU-BGV-006).",
+  "type": "object",
+  "required": [
+    "caseId",
+    "appId",
+    "reqId",
+    "vendorId",
+    "checkType",
+    "status",
+    "decision",
+    "decidedBy"
+  ],
+  "properties": {
+    "caseId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "vendorId": {
+      "type": "string"
+    },
+    "checkType": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ResolvedCleared",
+        "ResolvedAdverse"
+      ]
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "override",
+        "rescind"
+      ]
+    },
+    "decidedBy": {
+      "type": "string",
+      "description": "User id of the decider."
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/vendor.empanelled.v1.schema.json",
+  "title": "vendor.empanelled.v1",
+  "description": "Producer: Vendor. HR Head empanelled a consultant or BGV agency after all six §15 gates passed (RCU-VEN-001, RCU-VND-001).",
+  "type": "object",
+  "required": [
+    "vendorId",
+    "type",
+    "gates",
+    "approvedBy",
+    "empanelledAt"
+  ],
+  "properties": {
+    "vendorId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "Consultant",
+        "BgvAgency"
+      ]
+    },
+    "gates": {
+      "type": "integer",
+      "minimum": 6
+    },
+    "approvedBy": {
+      "type": "string",
+      "description": "User id of the approver."
+    },
+    "empanelledAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": true
+}

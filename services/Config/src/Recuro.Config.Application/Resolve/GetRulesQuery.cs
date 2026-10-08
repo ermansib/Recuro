@@ -17,12 +17,15 @@ public sealed record GetRulesQuery(DateTimeOffset? At) : IQuery<RulesDto>;
 /// <summary>The frontend's <c>DoaRoute</c>.</summary>
 public sealed record DoaRouteDto(string Grade, string Initiating, string Recommending, string Approving, string ApproverRole, string BandLabel, TatRange OverallTat);
 
+/// <summary>The frontend's <c>BgvCheckRule</c>.</summary>
+public sealed record BgvCheckDto(string Type, string Label, string Detail, string Condition);
+
 public sealed record RulesDto(
     string Version,
     string EffectiveFrom,
     IReadOnlyList<DoaRouteDto> Doa,
     IReadOnlyList<OfferMatrixRule> OfferMatrix,
-    IReadOnlyList<BgvCheckRule> BgvChecks);
+    IReadOnlyList<BgvCheckDto> BgvChecks);
 
 internal sealed class GetRulesQueryHandler(RuleSetResolver resolver) : IQueryHandler<GetRulesQuery, RulesDto>
 {
@@ -47,6 +50,6 @@ internal sealed class GetRulesQueryHandler(RuleSetResolver resolver) : IQueryHan
             versions.Max(v => v.EffectiveFrom).UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             routes,
             MatrixJson.Read<OfferMatrix>(offer.Value.Content).Rules,
-            MatrixJson.Read<BgvMatrix>(bgv.Value.Content).Checks);
+            MatrixJson.Read<BgvMatrix>(bgv.Value.Content).Checks.Select(c => new BgvCheckDto(c.Type, c.Label, c.Detail, c.Condition)).ToList());
     }
 }

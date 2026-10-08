@@ -10,6 +10,17 @@
     <Project Path="Audit/tests/Recuro.Audit.IntegrationTests/Recuro.Audit.IntegrationTests.csproj" />
     <Project Path="Audit/tests/Recuro.Audit.UnitTests/Recuro.Audit.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/Bgv/" />
+  <Folder Name="/Bgv/src/">
+    <Project Path="Bgv/src/Recuro.Bgv.Api/Recuro.Bgv.Api.csproj" />
+    <Project Path="Bgv/src/Recuro.Bgv.Application/Recuro.Bgv.Application.csproj" />
+    <Project Path="Bgv/src/Recuro.Bgv.Domain/Recuro.Bgv.Domain.csproj" />
+    <Project Path="Bgv/src/Recuro.Bgv.Infrastructure/Recuro.Bgv.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Bgv/tests/">
+    <Project Path="Bgv/tests/Recuro.Bgv.IntegrationTests/Recuro.Bgv.IntegrationTests.csproj" />
+    <Project Path="Bgv/tests/Recuro.Bgv.UnitTests/Recuro.Bgv.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/BuildingBlocks/" />
   <Folder Name="/BuildingBlocks/src/">
     <Project Path="BuildingBlocks/src/Recuro.BuildingBlocks.Application/Recuro.BuildingBlocks.Application.csproj" />
@@ -137,6 +148,17 @@
   <Folder Name="/Requisition/tests/">
     <Project Path="Requisition/tests/Recuro.Requisition.IntegrationTests/Recuro.Requisition.IntegrationTests.csproj" />
     <Project Path="Requisition/tests/Recuro.Requisition.UnitTests/Recuro.Requisition.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/Vendor/" />
+  <Folder Name="/Vendor/src/">
+    <Project Path="Vendor/src/Recuro.Vendor.Api/Recuro.Vendor.Api.csproj" />
+    <Project Path="Vendor/src/Recuro.Vendor.Application/Recuro.Vendor.Application.csproj" />
+    <Project Path="Vendor/src/Recuro.Vendor.Domain/Recuro.Vendor.Domain.csproj" />
+    <Project Path="Vendor/src/Recuro.Vendor.Infrastructure/Recuro.Vendor.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Vendor/tests/">
+    <Project Path="Vendor/tests/Recuro.Vendor.IntegrationTests/Recuro.Vendor.IntegrationTests.csproj" />
+    <Project Path="Vendor/tests/Recuro.Vendor.UnitTests/Recuro.Vendor.UnitTests.csproj" />
   </Folder>
   <Folder Name="/Workflow/" />
   <Folder Name="/Workflow/src/">

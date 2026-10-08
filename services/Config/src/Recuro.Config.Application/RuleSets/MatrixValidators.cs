@@ -23,6 +23,10 @@ internal static partial class MatrixValidators
     [GeneratedRegex("^[a-z][a-z0-9-]{0,49}$")]
     internal static partial Regex RoleKey();
 
+    /// <summary>Role flags look like <c>customerFacing</c>.</summary>
+    [GeneratedRegex("^[a-z][A-Za-z0-9]{0,49}$")]
+    internal static partial Regex FlagKey();
+
     internal static IRuleBuilderOptions<T, string> MustBeRoleKey<T>(this IRuleBuilder<T, string> rule) =>
         rule.NotEmpty().Must(r => RoleKey().IsMatch(r)).WithMessage("Role keys are lowercase letters, digits and dashes, e.g. hrhead.");
 
@@ -147,6 +151,16 @@ internal sealed class BgvMatrixValidator : AbstractValidator<BgvMatrix>
             check.RuleFor(c => c.Label).Label();
             check.RuleFor(c => c.Detail).Label();
             check.RuleFor(c => c.Condition).Label();
+            check.RuleFor(c => c.AppliesWhen!).ChildRules(when =>
+            {
+                when.RuleFor(w => w)
+                    .Must(w => w.Always != ((w.Grades?.Count ?? 0) + (w.AnyFlags?.Count ?? 0) > 0))
+                    .WithMessage("Set always, or list grades or anyFlags, not both.")
+                    .OverridePropertyName("always");
+                when.RuleForEach(w => w.Grades).NotEmpty().MaximumLength(20);
+                when.RuleForEach(w => w.AnyFlags).NotEmpty().Must(f => MatrixValidators.FlagKey().IsMatch(f))
+                    .WithMessage("Flags are camelCase keys, e.g. customerFacing.");
+            }).When(c => c.AppliesWhen is not null);
         });
     }
 }
