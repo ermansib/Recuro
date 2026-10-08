@@ -20,6 +20,9 @@ public enum MatrixType
 
     /// <summary>Business calendars per location, for every working-day calculation (BNFR-8, BQ-02).</summary>
     Calendar,
+
+    /// <summary>Interview round templates, feedback SLA and selection ratification (RCU-ASM-001/004/006).</summary>
+    Interview,
 }
 
 public static class MatrixTypes

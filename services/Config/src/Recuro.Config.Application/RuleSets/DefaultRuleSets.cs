@@ -26,6 +26,7 @@ public static class DefaultRuleSets
         (MatrixType.Escalation, Escalation),
         (MatrixType.Bgv, Bgv),
         (MatrixType.Calendar, Calendar),
+        (MatrixType.Interview, Interview),
     ];
 
     // §5.6 row 3: MRF SLA breach → HR Head, then MD/CEO 48 h (2 wd) later.
@@ -66,7 +67,33 @@ public static class DefaultRuleSets
         new(["E", "M1"], new("Within band → HR-TA + HOD sign-off", HrHead), new("Deviation → HR Head approval", HrHead)),
         new(["M3", "VP"], new("Within band → HR Head sign-off", HrHead), new("Deviation → MD/CEO approval", MdCeo)),
         new(["KMP"], new("Within band → MD/CEO + NRC recommendation", MdCeo), new("Deviation → Board approval", MdCeo)),
-    ]);
+    ],
+    // Compensation structure rules are tenant policy (RCU-OFF-001); the seed has none.
+    [],
+    OfferMatrix.DefaultValidityWorkingDays,
+    // RCU-OFF-006: chase an unaccepted offer at 3 working days, then weekly (§13 row 14).
+    OfferMatrix.DefaultFirstChaseAfterWorkingDays,
+    OfferMatrix.DefaultChaseEveryDays);
+
+    private static readonly InterviewRoundTemplate HrScreen = new("hr-screen", "HR screen");
+    private static readonly InterviewRoundTemplate Functional = new("functional", "Functional");
+    private static readonly InterviewRoundTemplate Business = new("business", "Business");
+    private static readonly InterviewRoundTemplate Final = new("final", "Final");
+
+    /// <summary>
+    /// RCU-ASM-001 rounds per grade (HR screen → Functional → Business → Final for Sr/KMP), the 48-hour
+    /// feedback SLA with a reminder at 24 hours (ASM-004), and HR Head ratification for M3+ (ASM-006).
+    /// </summary>
+    public static InterviewMatrix Interview { get; } = new(
+        [
+            new("E", [HrScreen, Functional]),
+            new("M1", [HrScreen, Functional, Business]),
+            new("M3", [HrScreen, Functional, Business]),
+            new("VP", [HrScreen, Functional, Business, Final]),
+            new("KMP", [HrScreen, Functional, Business, Final]),
+        ],
+        new FeedbackPolicy(24, 48),
+        new RatificationRule(["M3", "VP", "KMP"], HrHead, "HR Head ratification", 2));
 
     public static EscalationMatrix Escalation { get; } = new(
     [

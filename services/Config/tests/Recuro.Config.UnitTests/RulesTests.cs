@@ -53,6 +53,39 @@ public class RulesTests
     }
 
     [Fact]
+    public void An_offer_matrix_stored_before_the_offer_policy_fields_reads_with_the_defaults()
+    {
+        var content = JsonDocument.Parse("""{"rules":[{"levels":["E"],"withinBand":{"label":"a","approverRole":"hrhead"},"deviation":{"label":"b","approverRole":"mdceo"}}]}""").RootElement;
+
+        Assert.True(MatrixJson.TryParse(MatrixType.Offer, content, out var parsed, out var error), error);
+        var offer = Assert.IsType<OfferMatrix>(parsed);
+        Assert.Null(offer.CtcRules);
+        Assert.Equal((5, 3, 7), (offer.ValidityWorkingDays, offer.FirstChaseAfterWorkingDays, offer.ChaseEveryDays));
+    }
+
+    [Fact]
+    public void CTC_rules_need_a_sensible_range()
+    {
+        var bad = DefaultRuleSets.Offer with { CtcRules = [new CtcRule("basic", "Basic", 60, 40)] };
+        var element = JsonSerializer.SerializeToElement(bad, MatrixJson.Options);
+
+        var result = new ProposeVersionCommandValidator().Validate(new ProposeVersionCommand(MatrixType.Offer, DateTimeOffset.UtcNow, element, null));
+
+        Assert.False(result.IsValid);
+    }
+
+    [Fact]
+    public void The_interview_seed_follows_the_FRD()
+    {
+        var interview = DefaultRuleSets.Interview;
+
+        Assert.Equal(["hr-screen", "functional", "business", "final"], interview.Templates.Single(t => t.Grade == "KMP").Rounds.Select(r => r.Type));
+        Assert.Equal(new FeedbackPolicy(24, 48), interview.Feedback);
+        Assert.Equal(["M3", "VP", "KMP"], interview.Ratification.Grades);
+        Assert.Equal("hrhead", interview.Ratification.Role);
+    }
+
+    [Fact]
     public void Every_seed_matrix_passes_its_own_validation()
     {
         foreach (var (type, matrix) in DefaultRuleSets.All)
