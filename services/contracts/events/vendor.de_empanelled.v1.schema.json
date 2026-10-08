@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/vendor.de_empanelled.v1.schema.json",
+  "title": "vendor.de_empanelled.v1",
+  "description": "Producer: Vendor. A vendor was switched off; Bgv queues its open cases for reassignment (RCU-VEN-004, RCU-VND-003).",
+  "type": "object",
+  "required": [
+    "vendorId",
+    "type",
+    "reason",
+    "reassignmentHint",
+    "at"
+  ],
+  "properties": {
+    "vendorId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "Consultant",
+        "BgvAgency"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "reassignmentHint": {
+      "const": "reassign-open-cases"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": true
+}

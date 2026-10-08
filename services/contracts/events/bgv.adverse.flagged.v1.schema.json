@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/bgv.adverse.flagged.v1.schema.json",
+  "title": "bgv.adverse.flagged.v1",
+  "description": "Producer: Bgv. An adverse finding put the case under review; Pipeline holds the application and Offer stays locked (RCU-BGV-006).",
+  "type": "object",
+  "required": [
+    "caseId",
+    "appId",
+    "reqId",
+    "vendorId",
+    "vendorRef",
+    "checkType",
+    "status",
+    "action"
+  ],
+  "properties": {
+    "caseId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "vendorId": {
+      "type": "string"
+    },
+    "vendorRef": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "checkType": {
+      "type": "string"
+    },
+    "status": {
+      "const": "Flagged"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "HoldAndEscalate",
+        "SeekClarification"
+      ]
+    }
+  },
+  "additionalProperties": true
+}
