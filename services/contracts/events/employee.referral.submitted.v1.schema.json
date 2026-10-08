@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/employee.referral.submitted.v1.schema.json",
+  "title": "employee.referral.submitted.v1",
+  "description": "Producer: Employee. A referral (with the COI declaration) became a Referral-sourced Pipeline application (RCU-EMP-003).",
+  "type": "object",
+  "required": [
+    "referralId",
+    "referrerId",
+    "reqId",
+    "appId",
+    "candidateId",
+    "relationship",
+    "bonusEligible",
+    "possibleDuplicate"
+  ],
+  "properties": {
+    "referralId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "referrerId": {
+      "type": "string",
+      "description": "User id of the referring employee; also the event's actor."
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "relationship": {
+      "type": "string",
+      "enum": [
+        "FormerColleague",
+        "Friend",
+        "Acquaintance",
+        "Relative",
+        "Other"
+      ]
+    },
+    "bonusEligible": {
+      "type": "boolean",
+      "description": "Tenant bonus policy applied; false for excluded relationships and for people already on file."
+    },
+    "possibleDuplicate": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": true
+}

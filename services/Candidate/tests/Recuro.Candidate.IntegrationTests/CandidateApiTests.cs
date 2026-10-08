@@ -122,6 +122,7 @@ public sealed class CandidateApiTests(CandidateApiFactory api) : IClassFixture<C
         var problem = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("duplicate_candidate", problem.GetProperty("code").GetString());
         Assert.Contains(first.GetProperty("id").GetString()!, problem.GetProperty("title").GetString(), StringComparison.Ordinal);
+        Assert.Equal(Id(first), problem.GetProperty("existingId").GetString());
     }
 
     [Fact]
@@ -253,6 +254,61 @@ public sealed class CandidateApiTests(CandidateApiFactory api) : IClassFixture<C
     {
         var response = await api.ClientFor(CandidateApiFactory.TenantA, RecuroRoles.HrTa)
             .PostAsJsonAsync("/api/v1/candidates/retention/purge", new { dryRun = true });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task A_service_tombstones_a_candidate_from_a_failed_intake_and_a_retry_is_harmless()
+    {
+        var tenant = Guid.NewGuid();
+        var created = await CreateAsync(tenant, NewCandidate());
+        var service = api.ClientFor(tenant, RecuroRoles.Service);
+
+        var first = await service.PostAsync($"/api/v1/candidates/{Id(created)}/tombstone", null);
+        var again = await service.PostAsync($"/api/v1/candidates/{Id(created)}/tombstone", null);
+
+        Assert.Equal(HttpStatusCode.NoContent, first.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, again.StatusCode);
+        var read = await api.ClientFor(tenant, RecuroRoles.HrHead).GetFromJsonAsync<JsonElement>($"/api/v1/candidates/{Id(created)}");
+        Assert.Equal(string.Empty, read.GetProperty("name").GetString());
+        Assert.Equal(string.Empty, read.GetProperty("email").GetString());
+
+        await using var scope = api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CandidateDbContext>();
+        Assert.Single(await db.OutboxMessages.Where(m => m.TenantId == tenant && m.Type == EventTypes.Candidate.Purged).ToListAsync());
+    }
+
+    [Fact]
+    public async Task Tombstone_refuses_a_candidate_on_legal_hold_or_in_an_application()
+    {
+        var tenant = Guid.NewGuid();
+        var held = await CreateAsync(tenant, NewCandidate());
+        var applied = await CreateAsync(tenant, NewCandidate());
+        await api.ClientFor(tenant, RecuroRoles.HrHead)
+            .PutAsJsonAsync($"/api/v1/candidates/{Id(held)}/legal-hold", new { onHold = true, reason = "Grievance G-12" });
+        await ProcessAsync(tenant, EventTypes.Pipeline.ApplicationCreated, new { appId = "APP-9", candidateId = Id(applied) });
+        var service = api.ClientFor(tenant, RecuroRoles.Service);
+
+        var onHold = await service.PostAsync($"/api/v1/candidates/{Id(held)}/tombstone", null);
+        var inUse = await service.PostAsync($"/api/v1/candidates/{Id(applied)}/tombstone", null);
+        var missing = await service.PostAsync($"/api/v1/candidates/{Guid.NewGuid()}/tombstone", null);
+
+        Assert.Equal(HttpStatusCode.Conflict, onHold.StatusCode);
+        Assert.Equal("legal_hold", (await onHold.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        Assert.Equal(HttpStatusCode.Conflict, inUse.StatusCode);
+        Assert.Equal("candidate_in_use", (await inUse.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(RecuroRoles.HrTa)]
+    [InlineData(RecuroRoles.HrHead)]
+    public async Task Only_services_tombstone_candidates(string role)
+    {
+        var created = await CreateAsync(CandidateApiFactory.TenantA, NewCandidate());
+
+        var response = await api.ClientFor(CandidateApiFactory.TenantA, role).PostAsync($"/api/v1/candidates/{Id(created)}/tombstone", null);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
