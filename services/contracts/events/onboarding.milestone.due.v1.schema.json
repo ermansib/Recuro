@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/onboarding.milestone.due.v1.schema.json",
+  "title": "onboarding.milestone.due.v1",
+  "description": "Producer: Onboarding. A pre-boarding touchpoint (T-21, T-7, IT provisioning) or probation milestone (Day 30/60/90, review, end) reached its due date (RCU-ONB-001/004). Notification reminds assigneeRoles and, for probation milestones, the reporting manager. Subject: OnboardingCase/<onbId>.",
+  "type": "object",
+  "properties": {
+    "onbId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "milestoneId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "milestone": {
+      "type": "string",
+      "description": "Kind, e.g. engagement-t21, it-provisioning, probation-check-in, probation-review, probation-end."
+    },
+    "label": {
+      "type": "string"
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "PreBoarding",
+        "Probation"
+      ]
+    },
+    "cycle": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "dueOn": {
+      "type": "string",
+      "format": "date",
+      "description": "YYYY-MM-DD."
+    },
+    "joiningDate": {
+      "type": "string",
+      "format": "date",
+      "description": "YYYY-MM-DD."
+    },
+    "assigneeRoles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "reportingManagerId": {
+      "type": "string",
+      "description": "Probation milestones only; optional."
+    }
+  },
+  "required": [
+    "onbId",
+    "appId",
+    "milestoneId",
+    "milestone",
+    "phase",
+    "dueOn",
+    "assigneeRoles"
+  ],
+  "additionalProperties": true
+}

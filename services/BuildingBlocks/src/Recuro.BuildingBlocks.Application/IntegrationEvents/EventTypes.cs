@@ -67,6 +67,7 @@ public static class EventTypes
         public const string Day1Ready = "onboarding.day1.ready.v1";
         public const string MilestoneDue = "onboarding.milestone.due.v1";
         public const string EmployeeConfirmed = "onboarding.employee.confirmed.v1";
+        public const string ProbationExtended = "onboarding.probation.extended.v1";
     }
 
     public static class Vendor
