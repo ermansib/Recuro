@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/onboarding.day1.ready.v1.schema.json",
+  "title": "onboarding.day1.ready.v1",
+  "description": "Producer: Onboarding. The pre-boarding checklist reached 100% (RCU-ONB-002); Finance and Payroll are notified. Raised once per case. Subject: OnboardingCase/<onbId>.",
+  "type": "object",
+  "properties": {
+    "onbId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "joiningDate": {
+      "type": "string",
+      "format": "date",
+      "description": "YYYY-MM-DD."
+    },
+    "readyAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "readyBy": {
+      "type": "string",
+      "description": "User id who completed the last item."
+    }
+  },
+  "required": [
+    "onbId",
+    "appId",
+    "joiningDate",
+    "readyAt"
+  ],
+  "additionalProperties": true
+}

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/onboarding.joining_instructions_sent.v1.schema.json",
+  "title": "onboarding.joining_instructions_sent.v1",
+  "description": "Producer: Onboarding. Pre-boarding started after offer.accepted.v1 (RCU-ONB-001); Notification emails the candidate the joining instructions and the documents to bring. Subject: OnboardingCase/<onbId>.",
+  "type": "object",
+  "properties": {
+    "onbId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "offerId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "joiningDate": {
+      "type": "string",
+      "format": "date",
+      "description": "YYYY-MM-DD."
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "mandatory": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "label",
+          "mandatory"
+        ]
+      }
+    }
+  },
+  "required": [
+    "onbId",
+    "appId",
+    "joiningDate",
+    "documents"
+  ],
+  "additionalProperties": true
+}
