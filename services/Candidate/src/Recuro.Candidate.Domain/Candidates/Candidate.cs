@@ -210,6 +210,38 @@ public sealed class Candidate : AggregateRoot, ITenantOwned
             return CandidateErrors.NotDueForPurge;
         }
 
+        Scrub(now);
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Saga compensation: an intake (Careers, Employee portal) created this candidate and then failed, so
+    /// the record is scrubbed now instead of at retention. Idempotent. Refused while an application is in
+    /// progress or a legal hold is on, since then the record is no longer the intake's alone.
+    /// </summary>
+    public Result Tombstone(DateTimeOffset now)
+    {
+        if (IsPurged)
+        {
+            return Result.Success();
+        }
+
+        if (LegalHold)
+        {
+            return CandidateErrors.OnLegalHold;
+        }
+
+        if (_applications.Any(a => a.Outcome == ApplicationOutcome.Active))
+        {
+            return CandidateErrors.InUse;
+        }
+
+        Scrub(now);
+        return Result.Success();
+    }
+
+    private void Scrub(DateTimeOffset now)
+    {
         var resumeKey = Resume?.StorageKey;
         Name = string.Empty;
         Email = string.Empty;
@@ -225,7 +257,6 @@ public sealed class Candidate : AggregateRoot, ITenantOwned
         _consents.Clear();
         PurgedAt = now;
         Raise(new CandidatePurgedDomainEvent(Id, resumeKey));
-        return Result.Success();
     }
 
     private void RecomputeRetention()

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/employee.ijp.applied.v1.schema.json",
+  "title": "employee.ijp.applied.v1",
+  "description": "Producer: Employee. An employee's internal application became an IJP-sourced Pipeline application (RCU-EMP-002).",
+  "type": "object",
+  "required": [
+    "employeeId",
+    "reqId",
+    "appId",
+    "candidateId"
+  ],
+  "properties": {
+    "employeeId": {
+      "type": "string",
+      "description": "User id (token subject) of the employee who applied; also the event's actor."
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

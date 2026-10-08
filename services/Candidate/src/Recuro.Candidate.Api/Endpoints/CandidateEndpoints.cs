@@ -5,6 +5,7 @@ using Recuro.Candidate.Application.Candidates;
 using Recuro.Candidate.Application.Candidates.Commands.CreateCandidate;
 using Recuro.Candidate.Application.Candidates.Commands.PurgeCandidates;
 using Recuro.Candidate.Application.Candidates.Commands.SetLegalHold;
+using Recuro.Candidate.Application.Candidates.Commands.TombstoneCandidate;
 using Recuro.Candidate.Application.Candidates.Commands.UploadResume;
 using Recuro.Candidate.Application.Candidates.Queries.GetCandidate;
 using Recuro.Candidate.Application.Candidates.Queries.GetCandidates;
@@ -24,7 +25,7 @@ internal static class CandidateEndpoints
 
         group.MapPost("/", CreateAsync)
             .RequireAuthorization(CandidatePolicies.Create)
-            .WithSummary("RCU-CND-001/005: create a candidate with consents and source attribution. 409 duplicate_candidate names the existing record.");
+            .WithSummary("RCU-CND-001/005: create a candidate with consents and source attribution. 409 duplicate_candidate carries the existing record's id as existingId.");
 
         group.MapGet("/{id:guid}", GetAsync)
             .RequireAuthorization(CandidatePolicies.Read)
@@ -37,6 +38,10 @@ internal static class CandidateEndpoints
         group.MapPut("/{id:guid}/legal-hold", SetLegalHoldAsync)
             .RequireAuthorization(CandidatePolicies.Govern)
             .WithSummary("RCU-CND-003: pin a candidate against retention purge, or release the pin.");
+
+        group.MapPost("/{id:guid}/tombstone", TombstoneAsync)
+            .RequireAuthorization(CandidatePolicies.Compensate)
+            .WithSummary("Saga compensation (service only): anonymise a candidate an intake created before it failed. Idempotent; 409 on legal hold or an application in progress.");
 
         group.MapPost("/retention/purge", PurgeAsync)
             .RequireAuthorization(CandidatePolicies.Govern)
@@ -106,6 +111,9 @@ internal static class CandidateEndpoints
         ICommandHandler<SetLegalHoldCommand> handler,
         CancellationToken ct) =>
         (await handler.Handle(new SetLegalHoldCommand(id, request.OnHold, request.Reason), ct)).ToHttpResult();
+
+    private static async Task<IResult> TombstoneAsync(Guid id, ICommandHandler<TombstoneCandidateCommand> handler, CancellationToken ct) =>
+        (await handler.Handle(new TombstoneCandidateCommand(id), ct)).ToHttpResult();
 
     private static async Task<IResult> PurgeAsync(
         PurgeRequest request,

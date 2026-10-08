@@ -17,13 +17,17 @@ internal static class CandidatePolicies
     /// <summary>Retention governance (legal hold, purge): HR Head as the DPO's delegate.</summary>
     public const string Govern = "candidate.govern";
 
+    /// <summary>Saga compensation (tombstone) by intake services only; people use retention governance.</summary>
+    public const string Compensate = "candidate.compensate";
+
     public static IServiceCollection AddCandidatePolicies(this IServiceCollection services)
     {
         services.AddAuthorizationBuilder()
             .AddRolePolicy(Create, RecuroRoles.HrTa, RecuroRoles.Service)
             .AddRolePolicy(Read, RecuroRoles.HrTa, RecuroRoles.HrHead, RecuroRoles.MdCeo, RecuroRoles.Service)
             .AddRolePolicy(ReadResume, RecuroRoles.HrTa, RecuroRoles.HrHead, RecuroRoles.Service)
-            .AddRolePolicy(Govern, RecuroRoles.HrHead);
+            .AddRolePolicy(Govern, RecuroRoles.HrHead)
+            .AddRolePolicy(Compensate, RecuroRoles.Service);
         return services;
     }
 }
