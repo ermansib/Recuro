@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/interview.feedback.submitted.v1.schema.json",
+  "title": "interview.feedback.submitted.v1",
+  "description": "Producer: Interview. An interviewer submitted or superseded an assessment (RCU-INT-003). avg is the mean of rated competencies; withinSla feeds the feedback-TAT KPI. Subject: Interview/<interviewId>.",
+  "type": "object",
+  "properties": {
+    "interviewId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "assessmentId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "round": {
+      "type": "string"
+    },
+    "interviewerId": {
+      "type": "string"
+    },
+    "avg": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "recommendation": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "StronglyRecommend",
+        "Recommend",
+        "Reservations",
+        "DoNotRecommend",
+        null
+      ]
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "withinSla": {
+      "type": "boolean"
+    },
+    "submittedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "roundComplete": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "interviewId",
+    "assessmentId",
+    "appId",
+    "reqId",
+    "round",
+    "interviewerId",
+    "revision",
+    "withinSla",
+    "submittedAt",
+    "roundComplete"
+  ],
+  "additionalProperties": true
+}

@@ -94,6 +94,17 @@
     <Project Path="Identity/tests/Recuro.Identity.IntegrationTests/Recuro.Identity.IntegrationTests.csproj" />
     <Project Path="Identity/tests/Recuro.Identity.UnitTests/Recuro.Identity.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/Interview/" />
+  <Folder Name="/Interview/src/">
+    <Project Path="Interview/src/Recuro.Interview.Api/Recuro.Interview.Api.csproj" />
+    <Project Path="Interview/src/Recuro.Interview.Application/Recuro.Interview.Application.csproj" />
+    <Project Path="Interview/src/Recuro.Interview.Domain/Recuro.Interview.Domain.csproj" />
+    <Project Path="Interview/src/Recuro.Interview.Infrastructure/Recuro.Interview.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Interview/tests/">
+    <Project Path="Interview/tests/Recuro.Interview.IntegrationTests/Recuro.Interview.IntegrationTests.csproj" />
+    <Project Path="Interview/tests/Recuro.Interview.UnitTests/Recuro.Interview.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/Notification/" />
   <Folder Name="/Notification/src/">
     <Project Path="Notification/src/Recuro.Notification.Api/Recuro.Notification.Api.csproj" />
@@ -104,6 +115,17 @@
   <Folder Name="/Notification/tests/">
     <Project Path="Notification/tests/Recuro.Notification.IntegrationTests/Recuro.Notification.IntegrationTests.csproj" />
     <Project Path="Notification/tests/Recuro.Notification.UnitTests/Recuro.Notification.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/Offer/" />
+  <Folder Name="/Offer/src/">
+    <Project Path="Offer/src/Recuro.Offer.Api/Recuro.Offer.Api.csproj" />
+    <Project Path="Offer/src/Recuro.Offer.Application/Recuro.Offer.Application.csproj" />
+    <Project Path="Offer/src/Recuro.Offer.Domain/Recuro.Offer.Domain.csproj" />
+    <Project Path="Offer/src/Recuro.Offer.Infrastructure/Recuro.Offer.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Offer/tests/">
+    <Project Path="Offer/tests/Recuro.Offer.IntegrationTests/Recuro.Offer.IntegrationTests.csproj" />
+    <Project Path="Offer/tests/Recuro.Offer.UnitTests/Recuro.Offer.UnitTests.csproj" />
   </Folder>
   <Folder Name="/Pipeline/" />
   <Folder Name="/Pipeline/src/">
