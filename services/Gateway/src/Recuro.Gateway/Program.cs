@@ -1,4 +1,5 @@
 using Recuro.BuildingBlocks.Web;
+using Recuro.BuildingBlocks.Web.Auth;
 using Recuro.Gateway;
 using Recuro.Gateway.Bff;
 using Yarp.ReverseProxy.Transforms;
@@ -17,6 +18,7 @@ builder.Services.AddReverseProxy()
         transforms.AddRequestHeaderRemove("X-User-Id");
         transforms.AddRequestHeaderRemove("X-User-Roles");
         transforms.AddRequestHeaderRemove("X-Tenant-Id");
+        transforms.AddRequestHeaderRemove(ServiceTenantHeader.Name);
     });
 
 var app = builder.Build();

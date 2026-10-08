@@ -23,6 +23,7 @@ public sealed class ScopeContextMiddleware(RequestDelegate next)
                 user.FindAll(RecuroClaims.Roles).Select(c => c.Value).ToArray());
         }
 
+        scope.MakeCurrent();
         using (LogContext.PushProperty("TenantId", scope.TenantId))
         {
             await next(context);

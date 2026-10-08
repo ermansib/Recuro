@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace Recuro.BuildingBlocks.Web.Auth;
 
@@ -50,6 +52,7 @@ public static class AuthSetup
                     jwt.TokenValidationParameters.ValidIssuer = options.Authority;
                     jwt.TokenValidationParameters.RoleClaimType = RecuroClaims.Roles;
                     jwt.TokenValidationParameters.NameClaimType = RecuroClaims.Name;
+                    jwt.Events = new JwtBearerEvents { OnTokenValidated = ServiceTenantHeader.ApplyAsync };
                 });
         }
 
@@ -63,6 +66,43 @@ public static class AuthSetup
             .SetFallbackPolicy(tenantMember);
 
         return services;
+    }
+
+    /// <summary>
+    /// RCU-AUT-005: this service's client-credentials token provider and <see cref="ServiceTokenHandler"/>,
+    /// which a service adds to the HttpClients its event handlers and jobs use.
+    /// </summary>
+    public static IServiceCollection AddRecuroServiceTokens(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment, string serviceName)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(environment);
+        services.AddOptions<RecuroAuthOptions>().BindConfiguration(RecuroAuthOptions.SectionName);
+        services.AddOptions<ServiceAuthOptions>()
+            .BindConfiguration(ServiceAuthOptions.SectionName)
+            .PostConfigure<IOptions<RecuroAuthOptions>>((options, auth) =>
+            {
+                options.ClientId ??= $"recuro-svc-{serviceName}";
+                if (environment.IsDevelopment())
+                {
+                    options.ClientSecret ??= $"{options.ClientId}-dev-secret";
+                }
+
+                options.TokenEndpoint ??= DefaultTokenEndpoint(auth.Value);
+            });
+        services.AddHttpClient(ServiceAuthOptions.HttpClientName);
+        services.TryAddSingleton(TimeProvider.System);
+        services.TryAddSingleton<IServiceTokenProvider, KeycloakServiceTokenProvider>();
+        services.TryAddTransient<ServiceTokenHandler>();
+        return services;
+    }
+
+    private static Uri? DefaultTokenEndpoint(RecuroAuthOptions auth)
+    {
+        const string Discovery = "/.well-known/openid-configuration";
+        var realm = !string.IsNullOrWhiteSpace(auth.MetadataAddress) && auth.MetadataAddress.EndsWith(Discovery, StringComparison.Ordinal)
+            ? auth.MetadataAddress[..^Discovery.Length]
+            : auth.Authority;
+        return string.IsNullOrWhiteSpace(realm) ? null : new Uri($"{realm.TrimEnd('/')}/protocol/openid-connect/token");
     }
 
     /// <summary>A policy: a tenant member holding one of <paramref name="roles"/>.</summary>

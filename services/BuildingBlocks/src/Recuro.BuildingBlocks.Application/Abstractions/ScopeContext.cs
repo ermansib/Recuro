@@ -6,6 +6,14 @@ namespace Recuro.BuildingBlocks.Application.Abstractions;
 /// </summary>
 public sealed class ScopeContext : ITenantContext, ICurrentUser, ICorrelationContext
 {
+    private static readonly AsyncLocal<ScopeContext?> CurrentScope = new();
+
+    /// <summary>
+    /// The scope of the request or event being handled on this async flow. For code that DI can't hand the
+    /// scoped context to, such as HttpClient message handlers, which run in their own DI scope.
+    /// </summary>
+    public static ScopeContext? Current => CurrentScope.Value;
+
     public Guid? TenantId { get; private set; }
 
     public string? UserId { get; private set; }
@@ -19,6 +27,9 @@ public sealed class ScopeContext : ITenantContext, ICurrentUser, ICorrelationCon
     public string? CorrelationId { get; private set; }
 
     public void SetTenant(Guid? tenantId) => TenantId = tenantId;
+
+    /// <summary>Makes this the <see cref="Current"/> scope for the rest of the calling async flow.</summary>
+    public void MakeCurrent() => CurrentScope.Value = this;
 
     public void SetUser(string? userId, string? name, IReadOnlyCollection<string> roles)
     {

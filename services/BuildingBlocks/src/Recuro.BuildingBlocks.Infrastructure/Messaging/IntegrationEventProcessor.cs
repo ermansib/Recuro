@@ -35,6 +35,7 @@ public sealed class IntegrationEventProcessor(IServiceScopeFactory scopes, Event
         context.SetTenant(cloudEvent.TenantId);
         context.SetUser(cloudEvent.ActorId, cloudEvent.ActorName, cloudEvent.ActorRole is null ? [] : [cloudEvent.ActorRole]);
         context.SetCorrelation(cloudEvent.Id.ToString(), cloudEvent.CorrelationId);
+        context.MakeCurrent();
 
         var db = scope.ServiceProvider.GetRequiredService<RecuroDbContext>();
         var strategy = db.Database.CreateExecutionStrategy();
