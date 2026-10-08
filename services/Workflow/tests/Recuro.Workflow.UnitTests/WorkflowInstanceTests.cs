@@ -163,7 +163,7 @@ public sealed class WorkflowInstanceTests
         var instance = TestData.Start(TestData.Leg("hrhead", 2, new LegEscalation("mdceo", "MD/CEO", 1)));
         var task = instance.Tasks.Single();
 
-        Assert.Equal(0, instance.FireDueEscalations(TestData.Now.AddDays(2)));
+        Assert.Equal(1, instance.FireDueEscalations(TestData.Now.AddDays(2))); // the 100% reminder
         Assert.Equal(1, instance.FireDueEscalations(TestData.Now.AddDays(3)));
         Assert.Equal(0, instance.FireDueEscalations(TestData.Now.AddDays(4)));
 
@@ -193,5 +193,36 @@ public sealed class WorkflowInstanceTests
         instance.Decide(instance.Tasks.Single().Id, TestData.HrHead, "approve", null, TaskSchedule.None, Later);
 
         Assert.Equal(ErrorType.Conflict, instance.Cancel("too late", Later).Error!.Type);
+    }
+
+    [Fact]
+    public void Reminders_fire_at_half_and_full_sla_once_each()
+    {
+        var schedule = new TaskSchedule(TestData.Now.AddDays(2), [], TestData.Now.AddDays(1));
+        var result = WorkflowInstance.Start(
+            "MRF", "Requisition", "REQ-1", "k", "v", [TestData.Leg("hrhead")], TestData.Presentation(), TestData.Initiator, schedule, TestData.Now);
+        var instance = result.Value;
+        var task = instance.Tasks.Single();
+
+        Assert.Equal(0, instance.FireDueEscalations(TestData.Now.AddHours(23)));
+        Assert.Equal(1, instance.FireDueEscalations(TestData.Now.AddDays(1)));
+        Assert.Equal(TestData.Now.AddDays(2), task.NextReminderAt);
+        Assert.Equal(1, instance.FireDueEscalations(TestData.Now.AddDays(2)));
+        Assert.Equal(0, instance.FireDueEscalations(TestData.Now.AddDays(5)));
+
+        Assert.Equal([50, 100], instance.DomainEvents.OfType<TaskReminderDue>().Select(e => e.Step.ThresholdPercent));
+        Assert.Null(task.NextReminderAt);
+    }
+
+    [Fact]
+    public void Deciding_cancels_pending_reminders()
+    {
+        var instance = TestData.Start();
+        var task = instance.Tasks.Single();
+
+        instance.Decide(task.Id, TestData.HrHead, "approve", null, TaskSchedule.None, TestData.Now.AddHours(1));
+
+        Assert.Null(task.NextReminderAt);
+        Assert.Equal(0, instance.FireDueEscalations(TestData.Now.AddDays(5)));
     }
 }

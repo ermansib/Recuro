@@ -221,7 +221,9 @@ public sealed class WorkflowApiTests(WorkflowApiFactory api) : IClassFixture<Wor
 
         var item = await InboxItemAsync(RecuroRoles.HrHead, "REQ-2026-1009");
         Assert.Equal("⚑ Escalated L1", item.GetProperty("chip").GetProperty("text").GetString());
-        Assert.Single(await OutboxTypesAsync("REQ-2026-1009"), t => t == "workflow.escalated.v1");
+        var types = await OutboxTypesAsync("REQ-2026-1009");
+        Assert.Single(types, t => t == "workflow.escalated.v1");
+        Assert.Equal(2, types.Count(t => t == "workflow.task.reminder_due.v1"));
 
         var count = await As(RecuroRoles.HrHead).GetFromJsonAsync<JsonElement>($"{Approvals}/count");
         Assert.True(count.GetProperty("escalated").GetInt32() >= 1);

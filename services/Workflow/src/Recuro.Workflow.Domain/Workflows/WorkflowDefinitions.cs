@@ -60,10 +60,14 @@ public sealed record InboxChip(string Text, string Tone);
 /// <summary>Deadlines for one task, computed on the tenant's business calendar before the task is created.</summary>
 /// <param name="DueAt">SLA deadline; null when the leg has no SLA.</param>
 /// <param name="EscalationsAt">When each escalation step of the leg fires, in order.</param>
-public sealed record TaskSchedule(DateTimeOffset? DueAt, IReadOnlyList<DateTimeOffset> EscalationsAt)
+/// <param name="HalfwayAt">The 50% reminder point of the SLA (RCU-WFL-003); null when the leg has no SLA.</param>
+public sealed record TaskSchedule(DateTimeOffset? DueAt, IReadOnlyList<DateTimeOffset> EscalationsAt, DateTimeOffset? HalfwayAt = null)
 {
     public static TaskSchedule None { get; } = new(null, []);
 }
+
+/// <summary>A reminder to the assignee at a share of the SLA (RCU-WFL-003: 50% and 100%), fired once.</summary>
+public sealed record ReminderStep(int ThresholdPercent, DateTimeOffset At, DateTimeOffset? FiredAt);
 
 /// <summary>An escalation step pinned on a task, with the time it fires and, once fired, when.</summary>
 public sealed record EscalationStep(int Level, string Role, string Label, DateTimeOffset At, DateTimeOffset? FiredAt);
