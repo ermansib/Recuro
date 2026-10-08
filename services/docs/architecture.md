@@ -48,8 +48,8 @@ the project files as `recuro/backenduserstories.html`). Decisions behind this ma
 | 12 | **Onboarding** | ONB-001..006 | onboarding cases, Day-1 checklist, documents, probation | `onboarding.*` | `offer.accepted`, `bgv.cleared/adverse.flagged` | Config (checklist) | 5112 |
 | 13 | **Vendor** (P1) | VND-001..005 | vendors, empanelment gates, agreements, SLA snapshots | `vendor.*` | `bgv.check.updated` | — | 5113 |
 | 14 | **Reporting** (P1) | RPT-001..005 | read-model projections, KPI snapshots | — | nearly all events | — | 5114 |
-| 15 | **Careers** (public API) | CAR-001..007 | postings, public applications, throttle state | `career.job.applied` | `recruitment.sourcing.unlocked`, `recruitment.mrf.cancelled`, `pipeline.application.final_rejected` | Candidate, Pipeline (intake saga), Requisition (gate) | 5115 |
-| 16 | **Employee** (portal API, P1) | EMP-001..005 | IJP applications, referrals | `employee.ijp.applied`, `employee.referral.submitted` | `recruitment.sourcing.unlocked`, `pipeline.stage.changed` | Candidate, Pipeline (intake saga) | 5116 |
+| 15 | **Careers** (public API) | CAR-001..007 | postings, public applications, throttle state | `career.job.applied` | `recruitment.sourcing.unlocked`, `recruitment.mrf.cancelled`, `pipeline.application.final_rejected`, `pipeline.stage.changed`, `notification.email.dispatched` (regret delivery, template `candidate.regret`) | Candidate, Pipeline (intake saga), Requisition (gate) | 5115 |
+| 16 | **Employee** (portal API, P1) | EMP-001..005 | IJP applications, referrals | `employee.ijp.applied`, `employee.referral.submitted` | `recruitment.sourcing.unlocked`, `recruitment.mrf.cancelled`, `pipeline.stage.changed`, `pipeline.application.final_rejected` | Candidate, Pipeline (intake saga) | 5116 |
 
 Notes:
 
@@ -260,6 +260,70 @@ back:
 - Each event's `data` is the bell item that `GET /notifications` returns.
 - The browser `EventSource` API can't send a bearer token, so the frontend uses a fetch-based SSE
   client that sends `Authorization` and reconnects with `Last-Event-ID`.
+
+### Careers and Employee portal APIs (owners: Careers 5115, Employee 5116; PR #22)
+
+**Public careers site** (CAR-001..007). These routes are anonymous. The gateway route
+`careers-public` applies the `public` rate limit, and the tenant comes from the URL, never from a
+token.
+
+| Method and path | Request | Response |
+|---|---|---|
+| `GET /api/v1/careers/public/{tenantId}/jobs` | `q`, `location`, `industry`, `cursor`, `limit` | `{ items: JobPosting[], nextCursor }`, using the frontend `JobPosting` shape |
+| `POST /api/v1/careers/public/{tenantId}/applications` | frontend `PublicApplicationInput` | `{ appId, position }` |
+| `GET /api/v1/careers/public/{tenantId}/applications/{appId}/status` | — | `{ appId, stage, status }` |
+
+A public applicant is never told that they match an existing candidate. `duplicateOf` is not returned,
+and the possible duplicate is flagged to HR through `career.job.applied.v1` instead.
+
+**Careers HR routes**, for HR staff:
+
+- `GET /api/v1/careers/postings` lists postings.
+- `PUT /api/v1/careers/postings/{reqId}` creates or updates a posting.
+- `POST /api/v1/careers/postings/{reqId}/publish` takes `{ openBeforeIjpWindowEnds, justification }`.
+  Publishing externally before the IJP window ends is HR Head only and needs a justification.
+- `POST /api/v1/careers/postings/{reqId}/unpublish` takes `{ reason }`.
+
+**Employee portal** (EMP-001..005):
+
+| Route | Who |
+|---|---|
+| `GET /api/v1/employee/ijp` | open IJP postings, for any employee |
+| `PUT /api/v1/employee/ijp/{reqId}` | HR-TA |
+| `POST /api/v1/employee/ijp/{reqId}/applications` | employee |
+| `POST /api/v1/employee/referrals` | employee; `coiAccepted` must be true |
+| `GET /api/v1/employee/me/applications`, `GET /api/v1/employee/me/referrals` | the signed-in employee |
+
+**IJP window.** Careers and Employee each compute the window as the time of the
+`recruitment.sourcing.unlocked` event plus 5 working days, using Config's `resolve/working-days`.
+There is no shared state, and both get the same answer from the same calendar. The 5 days are a
+service option until Config carries an IJP rule. When it does, both services read it from there.
+
+**Events** (schemas in `services/contracts/events`):
+
+| Type | Payload |
+|---|---|
+| `career.job.applied.v1` | `appId, jobId, reqId, candidateId, possibleDuplicate, consents { dataPrivacy, conflictOfInterest }` |
+| `employee.ijp.applied.v1` | `employeeId, reqId, appId, candidateId` |
+| `employee.referral.submitted.v1` | `referralId, referrerId, reqId, appId, candidateId, relationship, bonusEligible, possibleDuplicate` |
+
+**Intake calls** to Candidate and Pipeline run as the `service` role, using Keycloak clients
+`recuro-svc-careers` and `recuro-svc-employee`. Until the RCU-AUT-005 `ServiceTokenHandler` merges,
+each service uses a `ServiceCallerHandler` stand-in:
+
+- In Development mode, it sends the `X-Dev-*` service headers.
+- In OIDC mode, it returns 503 rather than call without a token.
+- It never bypasses masking.
+
+Replace the stand-in with `ServiceTokenHandler` once that merges.
+
+**Planned additions that other threads own** (not built yet):
+
+- Candidate: `POST /api/v1/candidates/{id}/tombstone` (role `service`). It is the compensation step
+  of the candidate-intake saga when the application can't be created.
+- Candidate: the 409 `duplicate_candidate` problem gains an `existingId` extension, so the intake
+  sagas can link to the existing candidate. The gateway's `/bff/candidates` keeps returning the 409
+  unchanged to HR-TA.
 
 ### Reminder and chase events (catalog additions)
 
