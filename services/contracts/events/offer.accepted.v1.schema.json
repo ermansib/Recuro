@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "events/offer.accepted.v1.schema.json",
   "title": "offer.accepted.v1",
-  "description": "Producer: Offer. The candidate accepted (RCU-OFR-006). Pipeline moves the application to Pre-boarding; Onboarding starts pre-boarding. joiningDate is the offer's joining date. Subject: Offer/<offerId>.",
+  "description": "Producer: Offer. The candidate accepted (RCU-OFR-006). Pipeline moves the application to Pre-boarding; Onboarding starts pre-boarding. joiningDate and probationMonths are the offer's joining date and probation period (Onboarding defaults to 6 months without it). Subject: Offer/<offerId>.",
   "type": "object",
   "properties": {
     "offerId": {
@@ -22,6 +22,12 @@
       "type": "string",
       "format": "date",
       "description": "YYYY-MM-DD; optional."
+    },
+    "probationMonths": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 24,
+      "description": "Probation period in months; optional."
     }
   },
   "required": [
