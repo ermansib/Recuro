@@ -43,6 +43,17 @@
     <Project Path="Candidate/tests/Recuro.Candidate.IntegrationTests/Recuro.Candidate.IntegrationTests.csproj" />
     <Project Path="Candidate/tests/Recuro.Candidate.UnitTests/Recuro.Candidate.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/Careers/" />
+  <Folder Name="/Careers/src/">
+    <Project Path="Careers/src/Recuro.Careers.Api/Recuro.Careers.Api.csproj" />
+    <Project Path="Careers/src/Recuro.Careers.Application/Recuro.Careers.Application.csproj" />
+    <Project Path="Careers/src/Recuro.Careers.Domain/Recuro.Careers.Domain.csproj" />
+    <Project Path="Careers/src/Recuro.Careers.Infrastructure/Recuro.Careers.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Careers/tests/">
+    <Project Path="Careers/tests/Recuro.Careers.IntegrationTests/Recuro.Careers.IntegrationTests.csproj" />
+    <Project Path="Careers/tests/Recuro.Careers.UnitTests/Recuro.Careers.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/Config/" />
   <Folder Name="/Config/src/">
     <Project Path="Config/src/Recuro.Config.Api/Recuro.Config.Api.csproj" />
@@ -53,6 +64,17 @@
   <Folder Name="/Config/tests/">
     <Project Path="Config/tests/Recuro.Config.IntegrationTests/Recuro.Config.IntegrationTests.csproj" />
     <Project Path="Config/tests/Recuro.Config.UnitTests/Recuro.Config.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/Employee/" />
+  <Folder Name="/Employee/src/">
+    <Project Path="Employee/src/Recuro.Employee.Api/Recuro.Employee.Api.csproj" />
+    <Project Path="Employee/src/Recuro.Employee.Application/Recuro.Employee.Application.csproj" />
+    <Project Path="Employee/src/Recuro.Employee.Domain/Recuro.Employee.Domain.csproj" />
+    <Project Path="Employee/src/Recuro.Employee.Infrastructure/Recuro.Employee.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Employee/tests/">
+    <Project Path="Employee/tests/Recuro.Employee.IntegrationTests/Recuro.Employee.IntegrationTests.csproj" />
+    <Project Path="Employee/tests/Recuro.Employee.UnitTests/Recuro.Employee.UnitTests.csproj" />
   </Folder>
   <Folder Name="/Gateway/" />
   <Folder Name="/Gateway/src/">
