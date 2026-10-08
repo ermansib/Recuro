@@ -47,7 +47,7 @@ the project files as `recuro/backenduserstories.html`). Decisions behind this ma
 | 11 | **Offer** | OFR-001..007 | offers, CTC breakup, letters, verbal log | `offer.*` | `pipeline.stage.changed`, `workflow.task.completed`, `bgv.case.initiated`, `bgv.cleared`, `bgv.adverse.flagged`, `bgv.resolved`, `candidate.purged` | Config (offer matrix, working days), Requisition, Identity (masking), Workflow; release gate fed by `bgv.*` events | 5111 |
 | 12 | **Onboarding** | ONB-001..006 | onboarding cases, Day-1 checklist, documents, probation | `onboarding.*` | `offer.accepted`, `offer.withdrawn`, `bgv.case.initiated/cleared/adverse.flagged/resolved` | Config (checklist, working days), Candidate (name for letters) | 5112 |
 | 13 | **Vendor** (P1) | VND-001..005 | vendors, empanelment gates, agreements, SLA snapshots | `vendor.*` | `bgv.check.updated` | — | 5113 |
-| 14 | **Reporting** (P1) | RPT-001..005 | read-model projections, KPI snapshots | — | nearly all events | — | 5114 |
+| 14 | **Reporting** (P1) | RPT-001..005 | per-tenant event log, read-model projections, KPI definitions, costs, snapshots, packs | `reporting.pack.ready` | requisition, pipeline, interview and offer events, `candidate.purged`, `notification.email.dispatched/failed` | Config (tat and doa matrices), Identity (masking) | 5114 |
 | 15 | **Careers** (public API) | CAR-001..007 | postings, public applications, throttle state | `career.job.applied` | `recruitment.sourcing.unlocked`, `recruitment.mrf.cancelled`, `pipeline.application.final_rejected`, `pipeline.stage.changed`, `notification.email.dispatched` (regret delivery, template `candidate.regret`) | Candidate, Pipeline (intake saga), Requisition (gate) | 5115 |
 | 16 | **Employee** (portal API, P1) | EMP-001..005 | IJP applications, referrals | `employee.ijp.applied`, `employee.referral.submitted` | `recruitment.sourcing.unlocked`, `recruitment.mrf.cancelled`, `pipeline.stage.changed`, `pipeline.application.final_rejected` | Candidate, Pipeline (intake saga) | 5116 |
 
@@ -317,7 +317,7 @@ out under the retention policy. The BFF forwards the caller's bearer token and c
 ### Gateway BFF: TA dashboard (owner: Gateway; each area owns its fragment)
 
 **`GET /bff/dashboard/ta`** returns the frontend `DashboardData` (`frontend/src/domain/types.ts`). The
-gateway calls these four services in parallel, forwarding the caller's token, and merges what comes
+gateway calls these services in parallel, forwarding the caller's token, and merges what comes
 back:
 
 | Order | Service | Fragment endpoint | Tiles it owns |
@@ -326,6 +326,7 @@ back:
 | 2 | Offer (5111) | `GET /api/v1/offers/dashboard/ta` | Offers Pending |
 | 3 | Bgv (5110) | `GET /api/v1/bgv/dashboard/ta` | BGV in Progress |
 | 4 | Pipeline (5108) | `GET /api/v1/pipeline/dashboard/ta` | Joining ≤ 30d, TAT Breaches |
+| 5 | Reporting (5114; PR #34) | `GET /api/v1/reports/dashboard/ta` | none: it returns `{ kpis: [KpiRow] }` for the KPI card |
 
 - Each fragment returns any subset of `{ stats[], tatBreaches[], pipeline[], kpis[], upcoming[] }`,
   using exactly the item shapes in `DashboardData`.
@@ -502,6 +503,55 @@ decides probation (standing in for the HOD until a HOD lookup exists).
   counts back over weekends only.
 - Offer: an optional `probationMonths` on `offer.accepted.v1`.
 - Identity: a HOD and reporting-manager lookup.
+
+### Reporting (owner: Reporting 5114; PR #34)
+
+Database `recuro_reporting`. The gateway routes `/api/v1/reports/{**rest}` to the `reporting`
+cluster. Reporting never reads another service's database. It keeps its own per-tenant event log and
+builds its read models from it, and that log can be replayed.
+
+Policies: `reports.view` is `hrta`, `hrhead` and `mdceo`. `reports.manage` is `hrhead` only.
+
+| Route (under `/api/v1/reports`) | Purpose |
+|---|---|
+| `GET /kpis?period=yyyy-MM\|yyyy-Qn` | the KPI register |
+| `GET /source-mix` | source mix with cost per hire |
+| `GET /funnel?from&to` or `?days=` | the recruitment funnel |
+| `GET /dashboard/ta` | `{ kpis: [KpiRow] }`, the BFF dashboard source `reporting` |
+| `GET /definitions`, `POST /definitions` (manage) | the versioned KPI definition registry |
+| `GET /costs`, `POST /costs` (both manage) | channel spend |
+| `GET /snapshots`, `POST /snapshots/{period}/recompute` (manage) | frozen snapshots with an audit hash |
+| `GET /packs`, `POST /packs`, `GET /packs/{id}/{pdf\|csv}` | KPI packs |
+| `GET /settings`, `PUT /settings` | the tenant's time zone and pack schedule |
+| `GET /projections`, `POST /projections/replay` (manage) | projection status, and replay with `{ fromSequence?, reset }` |
+
+**Consumes:**
+
+- Requisition: `recruitment.mrf.submitted`, `recruitment.mrf.approved`, `recruitment.mrf.rejected`,
+  `recruitment.mrf.cancelled` and `recruitment.sourcing.unlocked`.
+- Pipeline: `pipeline.application.created`, `pipeline.stage.changed` and
+  `pipeline.application.final_rejected`.
+- Interview: `interview.feedback.submitted` and `interview.feedback.overdue`.
+- Offer: `offer.sent`, `offer.accepted`, `offer.declined`, `offer.expired` and `offer.withdrawn`.
+- Candidate: `candidate.purged`.
+- Notification: `notification.email.dispatched` and `notification.email.failed`, for pack delivery
+  status.
+
+**Publishes** `reporting.pack.ready.v1` (`EventTypes.Reporting.PackReady`), with subject
+`ReportPack/{packId}`:
+`{ packId, period, periodLabel, cadence: Monthly | Quarterly, recipientRole: hrta | hrhead | mdceo, onTrack, pdfPath, csvPath, snapshotHash }`.
+
+**Reads from Config:**
+
+- `resolve/matrices/tat`: `stages[].maxWorkingDays` for `mrf-approval` and the `overall-*` stages.
+- `resolve/matrices/doa`: `routes[].overallTat.maxDays`.
+
+**Planned (requested of other threads):**
+
+- Identity: a `report` masking resource covering `costPerHire` and `sourceCost`.
+- Notification: a `report.pack` template, and an optional `sourceEventId` on
+  `notification.email.dispatched.v1` and `notification.email.failed.v1`, so Reporting can match
+  delivery to its pack.
 
 ### Reminder and chase events (catalog additions)
 
