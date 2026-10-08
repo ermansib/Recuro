@@ -220,7 +220,10 @@ public sealed class ReportPack : Entity, ITenantOwned
         Delivery = PackDelivery.Queued;
     }
 
-    /// <summary>Sent wins: a retry that later fails does not undo a delivered email.</summary>
+    /// <summary>
+    /// Notification reports once per recipient. Sent wins: the pack is Sent once any recipient got it, and
+    /// stays Failed only while every outcome so far has failed.
+    /// </summary>
     public void Delivered(bool sent, DateTimeOffset at)
     {
         if (Delivery == PackDelivery.Sent)
