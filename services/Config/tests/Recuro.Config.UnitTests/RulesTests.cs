@@ -18,6 +18,12 @@ public class RulesTests
     [InlineData("2026-09-30", 3, "2026-10-06")]
     // Starting on a Saturday: the next working day is Monday.
     [InlineData("2026-10-10", 1, "2026-10-12")]
+    // Backwards: Tue 6 Oct − 3 working days skips the weekend and the Fri 2 Oct holiday.
+    [InlineData("2026-10-06", -1, "2026-10-05")]
+    [InlineData("2026-10-06", -2, "2026-10-01")]
+    [InlineData("2026-10-06", -3, "2026-09-30")]
+    // Starting on a Sunday: the previous working day is Friday.
+    [InlineData("2026-10-11", -1, "2026-10-09")]
     public void Working_days_skip_weekends_and_holidays(string from, int days, string expected) =>
         Assert.Equal(DateOnly.Parse(expected, System.Globalization.CultureInfo.InvariantCulture), Calendar.AddWorkingDays(DateOnly.Parse(from, System.Globalization.CultureInfo.InvariantCulture), days));
 
@@ -72,6 +78,26 @@ public class RulesTests
         var result = new ProposeVersionCommandValidator().Validate(new ProposeVersionCommand(MatrixType.Offer, DateTimeOffset.UtcNow, element, null));
 
         Assert.False(result.IsValid);
+    }
+
+    [Fact]
+    public void The_onboarding_seed_follows_Annexure_E_and_is_valid()
+    {
+        var onboarding = DefaultRuleSets.Onboarding;
+
+        Assert.Equal(11, onboarding.Checklist.Count);
+        Assert.Equal(6, onboarding.Documents.Count(d => d.Mandatory));
+        Assert.Equal([21, 7], onboarding.EngagementDaysBefore);
+        Assert.Equal((5, 6, 30, 60, 90), (onboarding.ProvisioningWorkingDaysBefore, onboarding.ProbationMonths, onboarding.CheckInDay, onboarding.ReviewDay, onboarding.ReviewWindowEndDay));
+        Assert.True(MatrixValidators.Validate(MatrixType.Onboarding, onboarding).IsValid);
+    }
+
+    [Fact]
+    public void An_onboarding_review_before_the_check_in_is_refused()
+    {
+        var invalid = DefaultRuleSets.Onboarding with { CheckInDay = 60, ReviewDay = 30 };
+
+        Assert.False(MatrixValidators.Validate(MatrixType.Onboarding, invalid).IsValid);
     }
 
     [Fact]

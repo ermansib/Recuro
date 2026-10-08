@@ -69,6 +69,23 @@ public class MaskingAndUserTests
         Assert.Empty(map.For(PersonaRoles.HrHead, "offer")!);
     }
 
+    [Theory]
+    [InlineData(PersonaRoles.HrTa, "sourceCost")]
+    [InlineData(PersonaRoles.HrHead, null)]
+    [InlineData(PersonaRoles.MdCeo, null)]
+    [InlineData(PersonaRoles.Service, null)]
+    public void Reports_hide_channel_spend_from_HR_TA_only(string role, string? hidden)
+    {
+        var fields = DefaultMaskingMap.Create().For(role, "report")!;
+
+        Assert.Equal(hidden is null ? [] : [hidden], fields.Keys);
+    }
+
+    [Theory]
+    [InlineData(PersonaRoles.Employee)]
+    [InlineData(PersonaRoles.Candidate)]
+    public void Roles_not_listed_on_reports_have_no_map(string role) => Assert.Null(DefaultMaskingMap.Create().For(role, "report"));
+
     [Fact]
     public void Service_accounts_are_never_mirrored_as_users() => Assert.False(PersonaRoles.IsMirrored(PersonaRoles.Service));
 
