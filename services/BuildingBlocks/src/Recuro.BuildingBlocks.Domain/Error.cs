@@ -25,6 +25,15 @@ public sealed record Error(string Code, string Message, ErrorType Type)
     /// <summary>Per-field details for validation failures. Empty for other kinds.</summary>
     public IReadOnlyList<FieldError> Fields { get; init; } = [];
 
+    /// <summary>
+    /// Extra machine-readable members for the ProblemDetails body (camelCase keys), e.g. the id of the
+    /// record a duplicate clashed with, so callers never parse the message.
+    /// </summary>
+    public IReadOnlyDictionary<string, object?> Extensions { get; init; } = NoExtensions;
+
+    // One shared instance, so errors without extensions keep comparing equal by value.
+    private static readonly IReadOnlyDictionary<string, object?> NoExtensions = new Dictionary<string, object?>();
+
     public static Error Validation(string code, string message) => new(code, message, ErrorType.Validation);
 
     public static Error Validation(IReadOnlyList<FieldError> fields) =>

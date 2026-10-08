@@ -9,8 +9,15 @@ public static class CandidateErrors
     public static Error MissingConsent(IEnumerable<ConsentType> missing) =>
         Error.Validation([new FieldError("consents", "consent_required", $"Required consent missing: {string.Join(", ", missing)}.")]);
 
+    /// <summary>The title keeps the id for older callers; <c>existingId</c> is the member to read.</summary>
     public static Error Duplicate(Guid existingId) =>
-        Error.Conflict("duplicate_candidate", $"A candidate with the same email or phone already exists ({existingId}).");
+        Error.Conflict("duplicate_candidate", $"A candidate with the same email or phone already exists ({existingId}).") with
+        {
+            Extensions = new Dictionary<string, object?> { ["existingId"] = existingId.ToString() },
+        };
+
+    public static readonly Error InUse =
+        Error.Conflict("candidate_in_use", "The candidate has an application in progress and cannot be tombstoned.");
 
     public static readonly Error ConsultantNotActive =
         Error.Validation([new FieldError("consultantId", "vendor_not_active", "The consultant must be an active empanelled vendor.")]);

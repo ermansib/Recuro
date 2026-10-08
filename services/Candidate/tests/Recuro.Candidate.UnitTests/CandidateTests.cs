@@ -122,6 +122,43 @@ public class CandidateTests
     }
 
     [Fact]
+    public void Tombstone_scrubs_now_without_waiting_for_retention_and_is_idempotent()
+    {
+        var candidate = NewCandidate();
+        candidate.ClearDomainEvents();
+
+        Assert.True(candidate.Tombstone(Now).IsSuccess);
+        Assert.True(candidate.Tombstone(Now).IsSuccess);
+
+        Assert.True(candidate.IsPurged);
+        Assert.Equal(string.Empty, candidate.Name);
+        Assert.IsType<CandidatePurgedDomainEvent>(Assert.Single(candidate.DomainEvents));
+    }
+
+    [Fact]
+    public void Tombstone_is_refused_on_legal_hold_or_with_an_application_in_progress()
+    {
+        var held = NewCandidate();
+        held.PlaceLegalHold("Grievance G-12");
+        var applied = NewCandidate();
+        applied.TrackApplication("APP-1");
+
+        Assert.Equal(CandidateErrors.OnLegalHold, held.Tombstone(Now).Error);
+        Assert.Equal(CandidateErrors.InUse, applied.Tombstone(Now).Error);
+    }
+
+    [Fact]
+    public void A_duplicate_names_the_existing_candidate_in_an_extension()
+    {
+        var existing = Guid.NewGuid();
+
+        var error = CandidateErrors.Duplicate(existing);
+
+        Assert.Equal(existing.ToString(), error.Extensions["existingId"]);
+        Assert.Contains(existing.ToString(), error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void A_purged_candidate_ignores_later_application_events()
     {
         var candidate = NewCandidate();

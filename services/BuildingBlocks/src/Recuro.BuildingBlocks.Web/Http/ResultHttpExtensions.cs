@@ -41,7 +41,7 @@ public static class ResultHttpExtensions
             _ => StatusCodes.Status500InternalServerError,
         };
 
-        var extensions = new Dictionary<string, object?> { ["code"] = error.Code };
+        var extensions = new Dictionary<string, object?>(error.Extensions) { ["code"] = error.Code };
         if (error.Fields.Count > 0)
         {
             extensions["errors"] = error.Fields;
