@@ -44,6 +44,20 @@ public class MaskingAndUserTests
         Assert.Equal(MaskStrategy.Hide, fields["expectedCtc"]);
     }
 
+    [Theory]
+    [InlineData(PersonaRoles.MdCeo, true)]
+    [InlineData(PersonaRoles.Employee, true)]
+    [InlineData(PersonaRoles.Candidate, true)]
+    [InlineData(PersonaRoles.Service, true)]
+    [InlineData(PersonaRoles.HrTa, false)]
+    [InlineData(PersonaRoles.HrHead, false)]
+    public void Only_HR_sees_a_BGV_checks_sensitive_note(string role, bool hidden)
+    {
+        var fields = DefaultMaskingMap.Create().For(role, "bgvCheck")!;
+
+        Assert.Equal(hidden, fields.TryGetValue("sensitiveNote", out var strategy) && strategy == MaskStrategy.Hide);
+    }
+
     [Fact]
     public void Service_accounts_are_never_mirrored_as_users() => Assert.False(PersonaRoles.IsMirrored(PersonaRoles.Service));
 
