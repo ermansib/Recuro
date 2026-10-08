@@ -17,15 +17,14 @@ builder.Services
     .AddCareersPolicies()
     .AddExceptionHandler<DependencyExceptionHandler>()
     .AddTransient<ForwardCallerHandler>()
-    .AddTransient<ServiceCallerHandler>()
-    .AddOptions<RecuroAuthOptions>().BindConfiguration(RecuroAuthOptions.SectionName);
+    .AddRecuroServiceTokens(builder.Configuration, builder.Environment, "careers");
 
 // Intake calls are made as this service (the applicant has no token); calendar calls as the HR user.
 builder.Services.AddCandidateIntake()
-    .AddHttpMessageHandler<ServiceCallerHandler>()
+    .AddHttpMessageHandler<ServiceTokenHandler>()
     .AddHttpMessageHandler<CorrelationHeadersHandler>();
 builder.Services.AddPipelineIntake()
-    .AddHttpMessageHandler<ServiceCallerHandler>()
+    .AddHttpMessageHandler<ServiceTokenHandler>()
     .AddHttpMessageHandler<CorrelationHeadersHandler>();
 builder.Services.AddWorkingDayCalendar()
     .AddHttpMessageHandler<ForwardCallerHandler>()
