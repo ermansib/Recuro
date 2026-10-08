@@ -270,12 +270,31 @@ threshold, so a retry never sends a second reminder.
 
 | Type | Producer | When | Payload |
 |---|---|---|---|
-| `workflow.task.reminder_due.v1` | Workflow | An open task reaches 50% and then 100% of its SLA (WFL-003). Escalation stays `workflow.escalated.v1`. | `taskId, instanceId, leg, subjectType, subjectId, assigneeIds[], thresholdPercent, dueAt` |
+| `workflow.task.reminder_due.v1` | Workflow | An open task reaches 50% and then 100% of its SLA (WFL-003). Escalation stays `workflow.escalated.v1`. | `taskId, instanceId, leg, subjectType, subjectId, assigneeIds[], assigneeRole, thresholdPercent, dueAt` |
 | `interview.feedback.reminder_due.v1` | Interview | Feedback is still missing 24h after the interview (INT-004). `interview.feedback.overdue.v1` follows at 48h. | `interviewId, appId, reqId, round, pendingInterviewerIds[], endedAt, overdueAt` |
 | `offer.chase_due.v1` | Offer | A sent offer is unanswered after 3 working days, then weekly until it is accepted, declined, withdrawn or expires (OFR-006). | `offerId, appId, reqId, candidateId, sentAt, chaseNumber, expiresAt` |
 
+**Workflow assigns tasks to roles, not people.** In every `workflow.*` event, `assignee`,
+`assigneeRole` and `escalateTo` are role keys (`hrta`, `hrhead`, `mdceo`, ...), never user ids.
+Notification sends each one to that role's users in the tenant. `assigneeIds` on
+`workflow.task.reminder_due.v1` stays in the payload for person-level tasks later, but it is empty
+today. Adding `assigneeRole` was additive, so the event stays v1.
+
 Escalating `interview.feedback.overdue.v1` to the HOD needs a recipient lookup that Identity is adding
 to `GET /api/v1/identity/users`. Until then, Notification sends it to the panel and HR-TA.
+
+### Fields consumers already rely on, for events wave 2 will publish
+
+Offer adds `offer.accepted.v1.schema.json` when it first publishes the event, and that schema must
+carry at least these fields:
+
+| Event | Field | Type | Who reads it |
+|---|---|---|---|
+| `offer.accepted.v1` | `appId` | string, required | Pipeline moves the application from Offer to PreBoarding |
+| `offer.accepted.v1` | `joiningDate` | `YYYY-MM-DD`, optional | Pipeline's "Joining ≤ 30d" dashboard tile (PR #17) |
+
+Pipeline's fragment (`GET /api/v1/pipeline/dashboard/ta`) is live. If `joiningDate` is missing, the
+application still moves to PreBoarding, but it isn't counted in that tile.
 
 ### Integration event change: `pipeline.application.final_rejected` v1
 
