@@ -90,6 +90,7 @@ public static class ServiceDefaults
         }
 
         services.AddRecuroAuth(builder.Configuration, builder.Environment);
+        services.AddRecuroServiceTokens(builder.Configuration, builder.Environment, serviceName);
         return builder;
     }
 
