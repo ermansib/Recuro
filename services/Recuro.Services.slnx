@@ -138,6 +138,17 @@
     <Project Path="Pipeline/tests/Recuro.Pipeline.IntegrationTests/Recuro.Pipeline.IntegrationTests.csproj" />
     <Project Path="Pipeline/tests/Recuro.Pipeline.UnitTests/Recuro.Pipeline.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/Reporting/" />
+  <Folder Name="/Reporting/src/">
+    <Project Path="Reporting/src/Recuro.Reporting.Api/Recuro.Reporting.Api.csproj" />
+    <Project Path="Reporting/src/Recuro.Reporting.Application/Recuro.Reporting.Application.csproj" />
+    <Project Path="Reporting/src/Recuro.Reporting.Domain/Recuro.Reporting.Domain.csproj" />
+    <Project Path="Reporting/src/Recuro.Reporting.Infrastructure/Recuro.Reporting.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Reporting/tests/">
+    <Project Path="Reporting/tests/Recuro.Reporting.IntegrationTests/Recuro.Reporting.IntegrationTests.csproj" />
+    <Project Path="Reporting/tests/Recuro.Reporting.UnitTests/Recuro.Reporting.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/Requisition/" />
   <Folder Name="/Requisition/src/">
     <Project Path="Requisition/src/Recuro.Requisition.Api/Recuro.Requisition.Api.csproj" />
