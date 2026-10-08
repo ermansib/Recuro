@@ -135,7 +135,9 @@ Built in PR #21 (`ServiceTokenHandler` in `Recuro.BuildingBlocks.Web.Auth`).
 
 This adds `n` working days to `from` using the business calendar for `location` (the tenant default
 when it is omitted). It returns `{ "date": "YYYY-MM-DD", "configVersionId": "guid" }`. This is the
-only working-day calculation in the backend; services never count holidays themselves.
+only working-day calculation in the backend; services never count holidays themselves. `days` runs
+from -1000 to 1000. A negative `days` counts backwards (PR #36), skipping weekends and holidays the
+same way, and the start day never counts.
 
 Pipeline (PR #12) reads working days, holidays and the TAT matrix from Config. If Config can't be
 reached, it counts weekends only and uses the FRD deadlines, so a stage clock never stops.
@@ -148,7 +150,8 @@ All Identity endpoints accept a tenant member's token or a service token.
 `/api/v1/identity/masking/mdceo/candidate`
 
 - Returns `{ "resource": "candidate", "role": "mdceo", "version": "string", "fields": { "currentCtc": "hide", "email": "partial", ... } }`.
-- Resources today are `candidate`, `approval`, `bgvCheck` (PR #26) and `offer` (PR #30).
+- Resources today are `candidate`, `approval`, `bgvCheck` (PR #26), `offer` (PR #30) and `report`
+  (PR #36).
 - The strategies are:
   - `hide`: the field isn't returned.
   - `partial`: only the last 4 characters are kept.
@@ -158,11 +161,14 @@ All Identity endpoints accept a tenant member's token or a service token.
   every sensitive field", so a missing map fails closed.
 - Callers cache the map per tenant, role and version for up to 5 minutes, and apply it when they
   serialize a response.
-- The current map version is `masking-2026.10.2` (adds `bgvCheck`). PR #30 makes it
-  `masking-2026.10.3` (adds `offer`).
+- Map versions: `masking-2026.10.2` adds `bgvCheck`, `masking-2026.10.3` adds `offer` (PR #30) and
+  `masking-2026.10.4` adds `report` (PR #36).
 - `bgvCheck`: `sensitiveNote` is hidden for `mdceo`, `employee`, `candidate` and `service`.
 - `offer`: `mdceo` and `service` don't see `components` or `band`. `employee` and `candidate` also
   don't see `candidateName`. `hrta` and `hrhead` see every field.
+- `report`: `hrta` doesn't see `sourceCost`. `hrhead`, `mdceo` and `service` see every field, and
+  `costPerHire` is never masked for them. The map lists only those roles, so any other role
+  (`employee`, `candidate`, ...) gets 404 `masking_map_not_found` and fails closed.
 - The role `service`, used by client-credentials tokens, has its own map, and
   `GET /api/v1/identity/masking/service/{resource}` returns 200:
   - On `candidate`, a service account sees `name` and `email`. `phone`, `summary`, `currentCtc` and
@@ -193,13 +199,13 @@ Workflow and Notification find assignees and recipients.
 
 The `resolve/doa` and `resolve/working-days` endpoints are defined above. Config also exposes:
 
-- **`GET /api/v1/resolve/matrices/{doa|tat|offer|escalation|bgv|calendar|interview}?at=<ISO>[&versionId=<guid>]`**
+- **`GET /api/v1/resolve/matrices/{doa|tat|offer|escalation|bgv|calendar|interview|onboarding}?at=<ISO>[&versionId=<guid>]`**
   returns `{ configVersionId, matrixType, number, effectiveFrom, content }`. `interview` comes with
-  PR #30.
+  PR #30 and `onboarding` with PR #36.
 - **`GET /api/v1/config/rules`** returns the frontend `RuleConfig`.
 - **`/api/v1/config/{type}/versions`** is version admin: propose, revise, approve and reject, with dual
   approval. Activation publishes `config.version.activated`, whose `matrixType` can be any of the
-  types above, including `interview`.
+  types above, including `interview` and `onboarding`.
 
 Matrix content that other services read:
 
@@ -218,6 +224,12 @@ Matrix content that other services read:
   - `validityWorkingDays: 5`.
   - `firstChaseAfterWorkingDays: 3`.
   - `chaseEveryDays: 7`.
+- **`onboarding`** (PR #36, read by Onboarding). Config always returns every field, but consumers may
+  treat each one as optional. The seed matches Onboarding's built-in FRD Annexure E table:
+  - `checklist[{ key, label }]`: the 11 Annexure E items, with the same keys Onboarding uses.
+  - `documents[{ type, label, mandatory }]`: the 9 §13 documents, 6 of them mandatory.
+  - `engagementDaysBefore: [21, 7]` and `provisioningWorkingDaysBefore: 5`.
+  - `probationMonths: 6`, `checkInDay: 30`, `reviewDay: 60` and `reviewWindowEndDay: 90`.
 
 Keys that other services use:
 
@@ -496,13 +508,21 @@ decides probation (standing in for the HOD until a HOD lookup exists).
 | `onboarding.employee.confirmed.v1` | `onbId, appId, reqId, candidateId, joiningDate, confirmedAt, cycle, decidedBy` |
 | `onboarding.probation.extended.v1` (new) | `onbId, appId, reqId, candidateId, cycle, extendedByMonths, newProbationEnd, reason, decidedBy` |
 
+**Who Notification tells** (PR #35):
+
+- `onboarding.joining_instructions_sent.v1`: an email to the candidate (`candidateId`).
+- `onboarding.day1.ready.v1`: `hrta`. There is no Finance or Payroll role yet.
+- `onboarding.milestone.due.v1`: the `assigneeRoles`, plus the reporting manager by user id
+  (`reportingManagerId`) for probation milestones.
+- `onboarding.employee.confirmed.v1` and `onboarding.probation.extended.v1`: `hrta`.
+
 **Planned (requested of other threads):**
 
-- Config: an `onboarding` matrix (the checklist template), and working-day counts that can go
-  backwards (negative days). Until then, Onboarding uses the built-in FRD Annexure E template and
-  counts back over weekends only.
+- Config: the `onboarding` matrix and backward working-day counts come with PR #36 (see the Config
+  sections). Until Onboarding reads them, it uses the built-in FRD Annexure E template and counts
+  back over weekends only.
 - Offer: an optional `probationMonths` on `offer.accepted.v1`.
-- Identity: a HOD and reporting-manager lookup.
+- Identity: a HOD and reporting-manager lookup (still pending).
 
 ### Reporting (owner: Reporting 5114; PR #34)
 
@@ -546,12 +566,13 @@ Policies: `reports.view` is `hrta`, `hrhead` and `mdceo`. `reports.manage` is `h
 - `resolve/matrices/tat`: `stages[].maxWorkingDays` for `mrf-approval` and the `overall-*` stages.
 - `resolve/matrices/doa`: `routes[].overallTat.maxDays`.
 
-**Planned (requested of other threads):**
+**Pack delivery** (Notification, PR #35): Notification emails every user in `recipientRole` with
+absolute PDF and CSV links, built from its `Email:DownloadBaseUrl` setting and the pack's `pdfPath`
+and `csvPath`. It publishes one `notification.email.dispatched.v1` or
+`notification.email.failed.v1` per recipient. Both events already require `sourceEventId`, which
+Reporting uses to match each outcome to its pack.
 
-- Identity: a `report` masking resource covering `costPerHire` and `sourceCost`.
-- Notification: a `report.pack` template, and an optional `sourceEventId` on
-  `notification.email.dispatched.v1` and `notification.email.failed.v1`, so Reporting can match
-  delivery to its pack.
+**Identity masking:** the `report` resource comes with PR #36 (see the Identity section).
 
 ### Reminder and chase events (catalog additions)
 
