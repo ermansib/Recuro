@@ -127,6 +127,17 @@
     <Project Path="Offer/tests/Recuro.Offer.IntegrationTests/Recuro.Offer.IntegrationTests.csproj" />
     <Project Path="Offer/tests/Recuro.Offer.UnitTests/Recuro.Offer.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/Onboarding/" />
+  <Folder Name="/Onboarding/src/">
+    <Project Path="Onboarding/src/Recuro.Onboarding.Api/Recuro.Onboarding.Api.csproj" />
+    <Project Path="Onboarding/src/Recuro.Onboarding.Application/Recuro.Onboarding.Application.csproj" />
+    <Project Path="Onboarding/src/Recuro.Onboarding.Domain/Recuro.Onboarding.Domain.csproj" />
+    <Project Path="Onboarding/src/Recuro.Onboarding.Infrastructure/Recuro.Onboarding.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Onboarding/tests/">
+    <Project Path="Onboarding/tests/Recuro.Onboarding.IntegrationTests/Recuro.Onboarding.IntegrationTests.csproj" />
+    <Project Path="Onboarding/tests/Recuro.Onboarding.UnitTests/Recuro.Onboarding.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/Pipeline/" />
   <Folder Name="/Pipeline/src/">
     <Project Path="Pipeline/src/Recuro.Pipeline.Api/Recuro.Pipeline.Api.csproj" />
