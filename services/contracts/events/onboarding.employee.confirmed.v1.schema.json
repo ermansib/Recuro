@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/onboarding.employee.confirmed.v1.schema.json",
+  "title": "onboarding.employee.confirmed.v1",
+  "description": "Producer: Onboarding. Probation ended with a Confirm decision (RCU-ONB-005); Pipeline moves the application to Confirmed. Subject: OnboardingCase/<onbId>.",
+  "type": "object",
+  "properties": {
+    "onbId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "joiningDate": {
+      "type": "string",
+      "format": "date",
+      "description": "YYYY-MM-DD."
+    },
+    "confirmedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cycle": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "decidedBy": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "onbId",
+    "appId",
+    "confirmedAt"
+  ],
+  "additionalProperties": true
+}

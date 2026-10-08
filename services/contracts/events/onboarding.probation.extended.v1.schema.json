@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/onboarding.probation.extended.v1.schema.json",
+  "title": "onboarding.probation.extended.v1",
+  "description": "Producer: Onboarding. Probation was extended with a reason (RCU-ONB-005); a new review and end milestone are planned. Subject: OnboardingCase/<onbId>.",
+  "type": "object",
+  "properties": {
+    "onbId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appId": {
+      "type": "string"
+    },
+    "reqId": {
+      "type": "string"
+    },
+    "candidateId": {
+      "type": "string"
+    },
+    "cycle": {
+      "type": "integer",
+      "minimum": 2,
+      "description": "The new probation cycle."
+    },
+    "extendedByMonths": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 6
+    },
+    "newProbationEnd": {
+      "type": "string",
+      "format": "date",
+      "description": "YYYY-MM-DD."
+    },
+    "reason": {
+      "type": "string"
+    },
+    "decidedBy": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "onbId",
+    "appId",
+    "cycle",
+    "extendedByMonths",
+    "newProbationEnd",
+    "reason"
+  ],
+  "additionalProperties": true
+}
