@@ -67,7 +67,7 @@ public sealed record MatrixRule(string EventType, string TemplateKey, Channels C
 /// </summary>
 public static class NotificationMatrix
 {
-    public const string Version = "ntf-matrix-2026.10.1";
+    public const string Version = "ntf-matrix-2026.10.2";
 
     // Role keys: the same strings as the frontend Role type and the Keycloak realm roles.
     private const string HrTa = "hrta";
@@ -95,13 +95,18 @@ public static class NotificationMatrix
         // §5.6 #1: the approving leg hears about its task (Workflow names the assignee).
         new("workflow.task.created.v1", "approval.task.assigned", Both, Critical: true, [RecipientRule.ForPayloadUser("assignee", HrHead, fallbackToRole: true)]),
 
+        // RCU-WFL-003: reminders at 50% and 100% of the task's SLA go to its assignees (named users, or the role
+        // Workflow assigned it to in assigneeRole); escalation stays workflow.escalated.
+        new("workflow.task.reminder_due.v1", "approval.task.reminder", Both, Critical: false,
+            [RecipientRule.ForPayloadUsers("assigneeIds", HrHead), RecipientRule.ForPayloadUser("assigneeRole", HrHead)]),
+
         // §5.6 #2: the initiator hears the outcome; the reason is quoted on reject.
         new("recruitment.mrf.approved.v1", "mrf.approved", Both, Critical: true, [RecipientRule.ForSubjectOwner(HrTa)]),
         new("recruitment.mrf.rejected.v1", "mrf.rejected", Both, Critical: true, [RecipientRule.ForSubjectOwner(HrTa)]),
         new("recruitment.mrf.cancelled.v1", "mrf.cancelled", Channels.InApp, Critical: false, [RecipientRule.ForRole(HrTa)]),
 
         // §5.6 #3 and §16: escalations go to whoever Workflow escalated to, else HR Head.
-        new("workflow.escalated.v1", "workflow.escalated", Both, Critical: true, [RecipientRule.ForPayloadUser("assignee", HrHead, fallbackToRole: true)]),
+        new("workflow.escalated.v1", "workflow.escalated", Both, Critical: true, [RecipientRule.ForPayloadUser("escalateTo", HrHead, fallbackToRole: true)]),
         new("pipeline.tat.breached.v1", "tat.breached", Both, Critical: true, [RecipientRule.ForRole(HrTa)]),
 
         // §5.6 #9 / RCU-CAR-006: the regret email goes out on the date Pipeline set (≤ 3 working days).
@@ -113,6 +118,8 @@ public static class NotificationMatrix
 
         // §5.6 #5–#8: interviews.
         new("interview.scheduled.v1", "interview.scheduled", Both, Critical: false, [RecipientRule.ForPayloadUsers("panel", HrTa)]),
+        // RCU-INT-004: a 24h nudge to interviewers who haven't submitted, then the 48h overdue escalation.
+        new("interview.feedback.reminder_due.v1", "interview.feedback.reminder", Both, Critical: false, [RecipientRule.ForPayloadUsers("pendingInterviewerIds", HrTa)]),
         new("interview.feedback.overdue.v1", "interview.feedback.overdue", Both, Critical: true, [RecipientRule.ForPayloadUsers("panel", HrTa), RecipientRule.ForRole(HrTa)]),
         new("interview.selection.ratified.v1", "interview.selection.ratified", Channels.InApp, Critical: false, [RecipientRule.ForRole(HrTa)]),
 
@@ -124,6 +131,10 @@ public static class NotificationMatrix
         new("offer.approved.v1", "offer.approved", Both, Critical: true, [RecipientRule.ForRole(HrTa)]),
         new("offer.accepted.v1", "offer.accepted", Channels.InApp, Critical: false, [RecipientRule.ForRole(HrTa)]),
         new("offer.declined.v1", "offer.declined", Channels.InApp, Critical: false, [RecipientRule.ForRole(HrHead)]),
+
+        // RCU-OFR-006: an unanswered offer chases the candidate by email and tells HR-TA in the bell.
+        new("offer.chase_due.v1", "offer.chase.candidate", Channels.Email, Critical: false, [RecipientRule.ForPayloadCandidate("candidateId")]),
+        new("offer.chase_due.v1", "offer.chase", Channels.InApp, Critical: false, [RecipientRule.ForRole(HrTa)]),
 
         // §5.6 #16: internal mobility and referrals: HR-TA gets the lead, the employee a confirmation.
         new("employee.ijp.applied.v1", "ijp.applied", Both, Critical: false, [RecipientRule.ForRole(HrTa)]),
