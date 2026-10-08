@@ -28,7 +28,7 @@ internal sealed record OfferSentPayload(Guid OfferId, string AppId, string ReqId
 internal sealed record OfferChaseDuePayload(Guid OfferId, string AppId, string ReqId, string CandidateId, DateTimeOffset SentAt, int ChaseNumber, DateTimeOffset ExpiresAt);
 
 /// <summary><c>offer.accepted.v1</c>: Pipeline moves the application to PreBoarding; <c>joiningDate</c> feeds its "Joining ≤ 30d" tile.</summary>
-internal sealed record OfferAcceptedPayload(Guid OfferId, string AppId, string ReqId, string CandidateId, string JoiningDate);
+internal sealed record OfferAcceptedPayload(Guid OfferId, string AppId, string ReqId, string CandidateId, string JoiningDate, int ProbationMonths);
 
 internal sealed record OfferDeclinedPayload(Guid OfferId, string AppId, string ReqId, string CandidateId);
 
@@ -79,7 +79,7 @@ internal sealed class OfferEventPublishers(IIntegrationEventPublisher publisher)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
         var o = domainEvent.Offer;
-        return Publish(EventTypes.Offer.Accepted, o, new OfferAcceptedPayload(o.Id, o.AppId, o.ReqId, o.CandidateId, o.JoiningDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)));
+        return Publish(EventTypes.Offer.Accepted, o, new OfferAcceptedPayload(o.Id, o.AppId, o.ReqId, o.CandidateId, o.JoiningDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), o.ProbationMonths));
     }
 
     public Task Handle(OfferDeclined domainEvent, CancellationToken ct)
