@@ -107,6 +107,16 @@ public sealed record CandidateContact(string? Name, string Email);
 public interface IStaffDirectory
 {
     Task<IReadOnlyList<StaffContact>?> UsersInRoleAsync(string role, CancellationToken ct);
+
+    /// <summary>The head(s) of a department (Identity <c>role=hod&amp;department=</c>); null when Identity can't answer.</summary>
+    Task<IReadOnlyList<StaffContact>?> DepartmentHeadsAsync(string department, CancellationToken ct);
+}
+
+/// <summary>Requisition's view of a requisition, as far as notifications need it.</summary>
+public interface IRequisitionLookup
+{
+    /// <summary>The requisition's department as Requisition shows it (e.g. "Credit &amp; Risk"); null when unknown.</summary>
+    Task<string?> DepartmentOfAsync(string reqId, CancellationToken ct);
 }
 
 public sealed record StaffContact(string UserId, string? Name, string? Email);

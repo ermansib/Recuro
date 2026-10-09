@@ -29,6 +29,9 @@ public enum RecipientKind
 
     /// <summary>A candidate record named in a payload field (not a portal user); the address comes from Candidate.</summary>
     PayloadCandidate,
+
+    /// <summary>The head of the department that owns the requisition in a payload field (Identity role <c>hod</c>).</summary>
+    DepartmentHead,
 }
 
 /// <summary>
@@ -50,6 +53,8 @@ public sealed record RecipientRule(RecipientKind Kind, string Role, string? Fiel
     public static RecipientRule ForSubjectOwner(string role) => new(RecipientKind.SubjectOwner, role);
 
     public static RecipientRule ForPayloadCandidate(string field) => new(RecipientKind.PayloadCandidate, "candidate", field);
+
+    public static RecipientRule ForDepartmentHead(string requisitionField) => new(RecipientKind.DepartmentHead, "hod", requisitionField);
 }
 
 /// <summary>
@@ -67,7 +72,7 @@ public sealed record MatrixRule(string EventType, string TemplateKey, Channels C
 /// </summary>
 public static class NotificationMatrix
 {
-    public const string Version = "ntf-matrix-2026.10.5";
+    public const string Version = "ntf-matrix-2026.10.6";
 
     // Role keys: the same strings as the frontend Role type and the Keycloak realm roles.
     private const string HrTa = "hrta";
@@ -75,6 +80,7 @@ public static class NotificationMatrix
     private const string MdCeo = "mdceo";
     private const string Employee = "employee";
     private const string Candidate = "candidate";
+    private const string Hod = "hod";
 
     private const Channels Both = Channels.InApp | Channels.Email;
 
@@ -82,7 +88,7 @@ public static class NotificationMatrix
     public static readonly IReadOnlySet<string> BroadcastRoles = new HashSet<string>(StringComparer.Ordinal) { HrTa, HrHead, MdCeo };
 
     /// <summary>Every role a notification can be addressed in.</summary>
-    public static readonly IReadOnlySet<string> KnownRoles = new HashSet<string>(StringComparer.Ordinal) { HrTa, HrHead, MdCeo, Employee, Candidate };
+    public static readonly IReadOnlySet<string> KnownRoles = new HashSet<string>(StringComparer.Ordinal) { HrTa, HrHead, MdCeo, Employee, Candidate, Hod };
 
     /// <summary>Events whose actor becomes the subject's owner (for <see cref="RecipientKind.SubjectOwner"/>), e.g. the MRF initiator.</summary>
     public static readonly IReadOnlySet<string> OwnerEvents = new HashSet<string>(StringComparer.Ordinal)
@@ -120,7 +126,10 @@ public static class NotificationMatrix
         new("interview.scheduled.v1", "interview.scheduled", Both, Critical: false, [RecipientRule.ForPayloadUsers("panel", HrTa)]),
         // RCU-INT-004: a 24h nudge to interviewers who haven't submitted, then the 48h overdue escalation.
         new("interview.feedback.reminder_due.v1", "interview.feedback.reminder", Both, Critical: false, [RecipientRule.ForPayloadUsers("pendingInterviewerIds", HrTa)]),
-        new("interview.feedback.overdue.v1", "interview.feedback.overdue", Both, Critical: true, [RecipientRule.ForPayloadUsers("panel", HrTa), RecipientRule.ForRole(HrTa)]),
+        // RCU-INT-004: overdue feedback escalates to the requisition's department head; HR-TA always hears too, so
+        // a department without a head on record still reaches someone.
+        new("interview.feedback.overdue.v1", "interview.feedback.overdue", Both, Critical: true,
+            [RecipientRule.ForPayloadUsers("panel", HrTa), RecipientRule.ForRole(HrTa), RecipientRule.ForDepartmentHead("reqId")]),
         new("interview.selection.ratified.v1", "interview.selection.ratified", Channels.InApp, Critical: false, [RecipientRule.ForRole(HrTa)]),
 
         // §5.6 #11–#12: BGV.
