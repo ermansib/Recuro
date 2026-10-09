@@ -34,6 +34,29 @@ public sealed partial class Tenant : Entity
 
     public DateTimeOffset CreatedAt { get; private set; }
 
+    /// <summary>What kind of organisation signed up. Only picks the starting settings below.</summary>
+    public OrgType OrgType { get; private set; }
+
+    /// <summary>Company email domain, taken from the owner's address at sign-up.</summary>
+    public string? EmailDomain { get; private set; }
+
+    public string CareersTagline { get; private set; } = string.Empty;
+
+    /// <summary>Enterprise sign-in options shown on the login page (RCU-PLT-001), as frontend keys.</summary>
+    public IReadOnlyList<string> SsoProviders { get; private set; } = [];
+
+    /// <summary>Role keys that must pass a second factor at sign-in (RCU-PLT-001).</summary>
+    public IReadOnlyList<string> MfaRoles { get; private set; } = [];
+
+    public string Locale { get; private set; } = WorkspaceDefaults.Locale;
+
+    public string Currency { get; private set; } = WorkspaceDefaults.Currency;
+
+    /// <summary>Idle minutes before a session ends (NFR-01).</summary>
+    public int SessionIdleMinutes { get; private set; } = WorkspaceDefaults.SessionIdleMinutes;
+
+    public const int EmailDomainMaxLength = 253;
+
     [GeneratedRegex("^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")]
     private static partial Regex SlugPattern();
 
@@ -53,7 +76,7 @@ public sealed partial class Tenant : Entity
             return TenantErrors.InvalidSlug;
         }
 
-        return new Tenant
+        var tenant = new Tenant
         {
             Id = id ?? Guid.NewGuid(),
             Name = trimmedName,
@@ -64,6 +87,40 @@ public sealed partial class Tenant : Entity
             ThemeMode = ThemeMode.System,
             CreatedAt = now,
         };
+        tenant.ApplyOrgTypeDefaults(kind == TenantKind.Agency ? OrgType.Agency : OrgType.SmallBusiness);
+        return tenant;
+    }
+
+    /// <summary>
+    /// A workspace an organisation creates for itself on the sign-up page (RCU-PLT-001). It starts on the
+    /// Starter plan with the org type's default settings; the platform console can change any of it later.
+    /// </summary>
+    public static Result<Tenant> SignUp(
+        string name, string slug, OrgType orgType, string? emailDomain, string locale, string currency, DateTimeOffset now)
+    {
+        var kind = orgType == OrgType.Agency ? TenantKind.Agency : TenantKind.InHouse;
+        var created = Create(name, slug, kind, TenantPlan.Starter, now);
+        if (created.IsFailure)
+        {
+            return created;
+        }
+
+        var tenant = created.Value;
+        tenant.ApplyOrgTypeDefaults(orgType);
+        var domain = emailDomain?.Trim().ToLowerInvariant();
+        tenant.EmailDomain = string.IsNullOrEmpty(domain) || domain.Length > EmailDomainMaxLength ? null : domain;
+        tenant.Locale = string.IsNullOrWhiteSpace(locale) ? WorkspaceDefaults.Locale : locale.Trim();
+        tenant.Currency = string.IsNullOrWhiteSpace(currency) ? WorkspaceDefaults.Currency : currency.Trim().ToUpperInvariant();
+        return tenant;
+    }
+
+    private void ApplyOrgTypeDefaults(OrgType orgType)
+    {
+        var defaults = OrgTypeDefaults.For(orgType);
+        OrgType = orgType;
+        CareersTagline = defaults.CareersTagline;
+        SsoProviders = defaults.SsoProviders;
+        MfaRoles = defaults.MfaRoles;
     }
 
     public Result Rename(string name)

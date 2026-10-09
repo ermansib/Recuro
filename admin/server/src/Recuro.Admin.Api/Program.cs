@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Recuro.Admin.Api.Auth;
 using Recuro.Admin.Api.Endpoints;
+using Recuro.Admin.Api.Http;
 using Recuro.Admin.Application;
 using Recuro.Admin.Application.Abstractions;
 using Recuro.Admin.Infrastructure;
@@ -20,6 +21,7 @@ builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddAdminAuth(builder.Configuration, builder.Environment);
+builder.Services.AddWorkspaceSignUp(builder.Configuration);
 
 var app = builder.Build();
 
@@ -37,10 +39,12 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapPlatformEndpoints();
 app.MapTenantEndpoints();
 app.MapRuntimeEndpoints();
+app.MapWorkspaceEndpoints();
 app.MapAuthEndpoints();
 if (string.Equals(app.Configuration["Auth:Mode"], "Development", StringComparison.OrdinalIgnoreCase))
 {

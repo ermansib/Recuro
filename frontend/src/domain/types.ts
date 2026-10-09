@@ -91,6 +91,16 @@ export interface RegisterOrganisationInput {
   acceptTerms: boolean
 }
 
+/** What the server saved for a new workspace (admin API `POST /api/v1/workspaces`). */
+export interface RegisteredWorkspace {
+  workspace: Pick<
+    TenantConfig,
+    'id' | 'slug' | 'name' | 'orgType' | 'careersTagline' | 'emailDomain' | 'locale' | 'currency' | 'ssoProviders' | 'mfaRoles' | 'sessionIdleMinutes'
+  >
+  /** The owner's account; `id` is the Keycloak subject. */
+  owner: { id: string; name: string; email: string; role: Role }
+}
+
 export interface RegisterCandidateInput {
   workspace: string
   name: string

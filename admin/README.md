@@ -77,6 +77,23 @@ without them.
 Tenant admins of a suspended tenant are refused. To add a tenant admin, create the user in Keycloak,
 give them the `tenant-admin` role, and set `tenant_id` to the tenant's id from the platform console.
 
+## Workspace sign-up
+
+The main portal's "Create workspace" page calls `POST /api/v1/workspaces` (anonymous, rate limited per IP,
+`SignUp:*` settings). The API validates the form, then:
+
+1. creates the owner's account in Keycloak (admin REST API, as the `recuro-admin-provisioner` service
+   account with only `manage-users` and `view-realm`): persona role (`hrta`/`hrhead`/`mdceo`) plus
+   `tenant-admin`, and the `tenant_id` attribute. Keycloak keeps the password;
+2. saves the workspace in the **`tenants`** table of `recuro_admin` (Starter plan, org-type defaults for SSO,
+   MFA roles, careers tagline, locale, currency). If saving fails, the Keycloak account is removed again.
+
+`GET /api/v1/workspaces/{slug}` returns an active workspace's sign-in settings. Configure Keycloak with
+`AccountDirectory:BaseUrl` and `AccountDirectory:ClientSecret` (user secrets or environment variables outside
+local dev); `AccountDirectory:Mode=Disabled` skips account creation for runs without Keycloak. An existing
+Keycloak needs the new client added by a partial import of `keycloak/recuro-realm.json` (the realm import
+only runs on first start).
+
 `Auth:Mode=Development` swaps Keycloak for a persona picker (sent as an `X-Recuro-Persona` header).
 The API refuses to start in that mode outside the Development and Testing environments.
 
