@@ -25,7 +25,7 @@ import type {
   Role,
 } from '../../domain/types'
 import { addWorkingDays, toIsoDate } from '../../utils/workingDays'
-import { ApiError, type Actor, type ApiClient } from '../contract'
+import { ApiError, type Actor, type ApiClient, type WorkspaceApi } from '../contract'
 import { createIdentityMock } from './identity'
 import { DEMO_PASSWORD, loadSeed, type MockDb } from './seed'
 
@@ -33,7 +33,11 @@ const LATENCY_MS = import.meta.env.MODE === 'test' ? 0 : 120
 
 const SOURCING_OPEN: RequisitionState[] = ['Approved', 'Sourcing', 'Interviewing', 'Selection', 'BGV', 'Offer']
 
-export function createMockClient(seed: () => MockDb = loadSeed): ApiClient {
+/**
+ * `workspaces` is the server that saves new workspaces. Without it (tests, offline demos) sign-up only
+ * creates the workspace in this browser.
+ */
+export function createMockClient(seed: () => MockDb = loadSeed, workspaces?: WorkspaceApi): ApiClient {
   const db = seed()
   let seq = 1000
 
@@ -134,6 +138,7 @@ export function createMockClient(seed: () => MockDb = loadSeed): ApiClient {
 
   const identity = createIdentityMock({
     db,
+    workspaces,
     demoPassword: DEMO_PASSWORD,
     audit,
     run: runAsync,

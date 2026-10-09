@@ -5,6 +5,9 @@ import { DEMO_PASSWORD } from '../../api/mock/seed'
 import { renderWithProviders } from '../../test/render'
 
 describe('sign-in and sign-out (RCU-PLT-001)', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+
   it('sends signed-out visitors to a tenant-branded sign-in and lands HR-TA on the dashboard', async () => {
     const user = userEvent.setup()
     renderWithProviders(<App />, { signedIn: false, route: '/?' })
@@ -41,6 +44,31 @@ describe('sign-in and sign-out (RCU-PLT-001)', () => {
   })
 
   it('creates a workspace for a recruitment agency and lands the owner in it', async () => {
+    // The admin API saves the workspace (PostgreSQL) and creates the owner in Keycloak; here it answers like the real one.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            workspace: {
+              id: 'a3a0f6a4-3f43-4a8b-9a54-1b0c7c4c0001',
+              slug: 'northwind-talent',
+              name: 'Northwind Talent',
+              orgType: 'agency',
+              careersTagline: 'Find your next role through us',
+              emailDomain: 'northwind.example',
+              locale: 'en-IN',
+              currency: 'INR',
+              ssoProviders: ['google', 'microsoft'],
+              mfaRoles: ['hrhead', 'mdceo'],
+              sessionIdleMinutes: 30,
+            },
+            owner: { id: 'kc-1', name: 'J. Doe', email: 'j.doe@northwind.example', role: 'hrhead' },
+          }),
+          { status: 201, headers: { 'Content-Type': 'application/json' } },
+        ),
+      ),
+    )
     const user = userEvent.setup()
     renderWithProviders(<App />, { signedIn: false, route: '/signup' })
     await user.click(await screen.findByRole('radio', { name: /Recruitment agency/ }))

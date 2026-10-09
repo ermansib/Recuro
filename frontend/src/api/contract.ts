@@ -27,6 +27,7 @@ import type {
   PublicApplicationResult,
   RegisterCandidateInput,
   RegisterOrganisationInput,
+  RegisteredWorkspace,
   Requisition,
   RequisitionInput,
   Role,
@@ -154,6 +155,14 @@ export interface ApiClient extends AuthApi {
  * when the admin portal is unreachable or doesn't know the tenant, so the portal falls back to its
  * built-in theme instead of failing.
  */
+/**
+ * Workspaces (tenants) saved by the admin portal's database. `registerWorkspace` is the one write that
+ * must reach the server: it stores the tenant in PostgreSQL and creates the owner's account in Keycloak.
+ */
+export interface WorkspaceApi {
+  registerWorkspace(input: RegisterOrganisationInput): Promise<RegisteredWorkspace>
+}
+
 export interface AppearanceApi {
   getTenantAppearance(slug: string): Promise<TenantAppearance | null>
 }

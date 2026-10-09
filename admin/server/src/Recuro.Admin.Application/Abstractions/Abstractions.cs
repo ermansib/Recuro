@@ -1,3 +1,4 @@
+using Recuro.Admin.Domain.Common;
 using Recuro.Admin.Domain.Screens;
 using Recuro.Admin.Domain.Tenants;
 using Recuro.Admin.Domain.Theming;
@@ -61,3 +62,22 @@ public interface IScreenConfigurationRepository
 
     void Add(TenantScreenConfiguration configuration);
 }
+
+/// <summary>A workspace owner to create in the account directory (Keycloak), signed in with email and password.</summary>
+public sealed record NewWorkspaceOwner(Guid TenantId, string Name, string Email, string Role, string Password);
+
+/// <summary>
+/// The people directory that signs users in (Keycloak). Accounts live there, never in the admin database,
+/// so passwords stay with the identity provider.
+/// </summary>
+public interface IAccountDirectory
+{
+    /// <summary>Creates the account with its persona role and tenant-admin rights; returns the account id (Keycloak subject).</summary>
+    Task<Result<string>> CreateWorkspaceOwnerAsync(NewWorkspaceOwner owner, CancellationToken ct);
+
+    /// <summary>Removes an account created by a sign-up that could not be completed.</summary>
+    Task DeleteAccountAsync(string accountId, CancellationToken ct);
+}
+
+/// <summary>Locale and currency a self-service workspace starts with, set in configuration ("SignUp" section).</summary>
+public sealed record SignUpDefaults(string Locale, string Currency);

@@ -834,6 +834,20 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "recuro-admin-provisioner",
+      "name": "Recuro workspace sign-up",
+      "description": "Lets the admin API create a workspace owner's account at sign-up. Least privilege: manage-users and view-realm only. Local dev secret only; every other environment sets its own.",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "recuro-admin-provisioner-dev-secret",
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "protocol": "openid-connect"
     }
   ],
   "users": [
@@ -1055,6 +1069,17 @@
       "realmRoles": [
         "service"
       ]
+    },
+    {
+      "username": "service-account-recuro-admin-provisioner",
+      "enabled": true,
+      "serviceAccountClientId": "recuro-admin-provisioner",
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-realm"
+        ]
+      }
     }
   ],
   "components": {

@@ -7,6 +7,9 @@ public enum ErrorType
     NotFound,
     Conflict,
     Forbidden,
+
+    /// <summary>A service this one depends on did not answer; the caller can retry.</summary>
+    Unavailable,
 }
 
 /// <summary>An expected failure: a broken rule, a missing record or an invalid input.</summary>
@@ -19,4 +22,6 @@ public sealed record Error(string Code, string Message, ErrorType Type)
     public static Error Conflict(string code, string message) => new(code, message, ErrorType.Conflict);
 
     public static Error Forbidden(string code, string message) => new(code, message, ErrorType.Forbidden);
+
+    public static Error Unavailable(string code, string message) => new(code, message, ErrorType.Unavailable);
 }
