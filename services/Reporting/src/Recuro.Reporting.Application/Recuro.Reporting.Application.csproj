@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Recuro.Reporting.Domain\Recuro.Reporting.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\src\Recuro.BuildingBlocks.Application\Recuro.BuildingBlocks.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Recuro.Reporting.UnitTests" />
+    <InternalsVisibleTo Include="Recuro.Reporting.IntegrationTests" />
+  </ItemGroup>
+</Project>

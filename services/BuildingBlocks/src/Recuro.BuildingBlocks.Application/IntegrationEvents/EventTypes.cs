@@ -116,6 +116,12 @@ public static class EventTypes
         public const string EmailFailed = "notification.email.failed.v1";
     }
 
+    public static class Reporting
+    {
+        /// <summary>A KPI pack is archived and should be emailed to a role (RCU-RPT-003).</summary>
+        public const string PackReady = "reporting.pack.ready.v1";
+    }
+
     /// <summary>Subscribes a consumer to every event type (the audit mirror).</summary>
     public const string All = "#";
 }

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events/reporting.pack.ready.v1.schema.json",
+  "title": "reporting.pack.ready.v1",
+  "description": "Producer: Reporting. A KPI pack was archived and should be emailed to every user holding recipientRole (RCU-RPT-003). Notification reports the outcome with notification.email.dispatched/failed.v1 carrying sourceEventId = this event's id. Subject: ReportPack/<packId>.",
+  "type": "object",
+  "required": [
+    "packId",
+    "period",
+    "periodLabel",
+    "cadence",
+    "recipientRole",
+    "onTrack",
+    "pdfPath",
+    "csvPath",
+    "snapshotHash"
+  ],
+  "properties": {
+    "packId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "period": {
+      "type": "string",
+      "description": "yyyy-MM (monthly) or yyyy-Qn (quarterly)"
+    },
+    "periodLabel": {
+      "type": "string",
+      "description": "Aug 2026, Q3 2026"
+    },
+    "cadence": {
+      "type": "string",
+      "enum": [
+        "Monthly",
+        "Quarterly"
+      ]
+    },
+    "recipientRole": {
+      "type": "string",
+      "enum": [
+        "hrta",
+        "hrhead",
+        "mdceo"
+      ]
+    },
+    "onTrack": {
+      "type": "string",
+      "description": "Metrics on track out of those with a target, e.g. 5 / 7"
+    },
+    "pdfPath": {
+      "type": "string",
+      "description": "Gateway-relative download path, e.g. /api/v1/reports/packs/<packId>/pdf (sign-in required)"
+    },
+    "csvPath": {
+      "type": "string"
+    },
+    "snapshotHash": {
+      "type": "string",
+      "description": "SHA-256 of the frozen register the pack was built from (RCU-RPT-005)"
+    }
+  },
+  "additionalProperties": true
+}
