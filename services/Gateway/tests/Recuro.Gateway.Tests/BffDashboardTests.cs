@@ -11,7 +11,7 @@ using Recuro.BuildingBlocks.Web.Auth;
 
 namespace Recuro.Gateway.Tests;
 
-/// <summary>The gateway with fake dashboard sources: requisition answers, offer fails, bgv hangs, pipeline has no URL.</summary>
+/// <summary>The gateway with fake dashboard sources: requisition and reporting answer, offer fails, bgv hangs, pipeline has no URL.</summary>
 public sealed class BffGatewayFactory : WebApplicationFactory<Program>
 {
     public FakeSources Sources { get; } = new();
@@ -25,6 +25,7 @@ public sealed class BffGatewayFactory : WebApplicationFactory<Program>
         builder.UseSetting("Bff:Dashboard:Sources:offer:Url", "http://offer.test/fragment");
         builder.UseSetting("Bff:Dashboard:Sources:bgv:Url", "http://bgv.test/fragment");
         builder.UseSetting("Bff:Dashboard:Sources:pipeline:Url", string.Empty);
+        builder.UseSetting("Bff:Dashboard:Sources:reporting:Url", "http://reporting.test/fragment");
         builder.UseSetting("ReverseProxy:Clusters:notification:Destinations:primary:Address", "http://127.0.0.1:1/");
         builder.ConfigureTestServices(services =>
             services.Configure<HttpClientFactoryOptions>("bff", o => o.HttpMessageHandlerBuilderActions.Add(b => b.PrimaryHandler = Sources)));
@@ -61,6 +62,12 @@ public sealed class FakeSources : HttpMessageHandler
                     tatBreaches = new[] { new { reqId = "REQ-1", position = "Sr Manager", stage = "Sourcing 8d / 7d TAT", stageTone = "amber", escalation = "TA-Head", link = "/approvals" } },
                 };
                 return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(JsonSerializer.Serialize(fragment), Encoding.UTF8, "application/json") };
+            case "reporting.test":
+                var kpis = new
+                {
+                    kpis = new[] { new { name = "Offer-to-Join Ratio", target = "Target ≥ 85%", value = "87%", status = "✓", tone = "green", trend = new[] { 80.0, 87.0 } } },
+                };
+                return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(JsonSerializer.Serialize(kpis), Encoding.UTF8, "application/json") };
             case "bgv.test":
                 await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
                 return new HttpResponseMessage(HttpStatusCode.OK);
@@ -88,6 +95,7 @@ public sealed class BffDashboardTests(BffGatewayFactory gateway) : IClassFixture
             [("Open MRFs", "14"), ("Offers Pending", "—"), ("BGV in Progress", "—"), ("Joining ≤ 30d", "—"), ("TAT Breaches", "—")],
             tiles);
         Assert.Equal("REQ-1", body.GetProperty("tatBreaches")[0].GetProperty("reqId").GetString());
+        Assert.Equal("Offer-to-Join Ratio", body.GetProperty("kpis")[0].GetProperty("name").GetString());
         Assert.Equal("offer,bgv,pipeline", response.Headers.GetValues("X-Recuro-Degraded").Single());
     }
 
