@@ -164,6 +164,19 @@ public sealed class IdentityApiTests(IdentityApiFactory api) : IClassFixture<Ide
     }
 
     [Fact]
+    public async Task Reports_fail_closed_for_roles_outside_the_map()
+    {
+        var client = api.ClientFor(IdentityApiFactory.TenantA, RecuroRoles.Service);
+
+        var hrta = await client.GetFromJsonAsync<JsonElement>("/api/v1/identity/masking/hrta/report");
+        var employee = await client.GetAsync("/api/v1/identity/masking/employee/report");
+
+        Assert.Equal("hide", hrta.GetProperty("fields").GetProperty("sourceCost").GetString());
+        Assert.False(hrta.GetProperty("fields").TryGetProperty("costPerHire", out _));
+        Assert.Equal(HttpStatusCode.NotFound, employee.StatusCode);
+    }
+
+    [Fact]
     public async Task An_unknown_masking_resource_is_a_404()
     {
         var response = await api.ClientFor(IdentityApiFactory.TenantA, RecuroRoles.Service).GetAsync("/api/v1/identity/masking/hrta/payslip");

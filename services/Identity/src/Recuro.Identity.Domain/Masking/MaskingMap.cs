@@ -15,13 +15,18 @@ public enum MaskStrategy
 
 /// <summary>
 /// Field → strategy per resource and role, versioned as configuration (RCU-AUT-004, RCU-PLT-003).
-/// A field that is not listed is returned as is.
+/// A field that is not listed is returned as is. On a resource in <c>listedRolesOnly</c> a role that is
+/// not listed has no map at all (fail closed), instead of seeing everything.
 /// </summary>
 public sealed class MaskingMap
 {
     private readonly Dictionary<string, Dictionary<string, IReadOnlyDictionary<string, MaskStrategy>>> _byResource;
+    private readonly HashSet<string> _listedRolesOnly;
 
-    public MaskingMap(string version, IReadOnlyDictionary<string, IReadOnlyDictionary<string, IReadOnlyDictionary<string, MaskStrategy>>> byResource)
+    public MaskingMap(
+        string version,
+        IReadOnlyDictionary<string, IReadOnlyDictionary<string, IReadOnlyDictionary<string, MaskStrategy>>> byResource,
+        IEnumerable<string>? listedRolesOnly = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
         ArgumentNullException.ThrowIfNull(byResource);
@@ -30,6 +35,7 @@ public sealed class MaskingMap
             r => r.Key,
             r => r.Value.ToDictionary(role => role.Key, role => role.Value, StringComparer.Ordinal),
             StringComparer.Ordinal);
+        _listedRolesOnly = new HashSet<string>(listedRolesOnly ?? [], StringComparer.Ordinal);
     }
 
     public string Version { get; }
@@ -47,6 +53,11 @@ public sealed class MaskingMap
             return null;
         }
 
-        return roles.TryGetValue(role, out var fields) ? fields : new Dictionary<string, MaskStrategy>();
+        if (roles.TryGetValue(role, out var fields))
+        {
+            return fields;
+        }
+
+        return _listedRolesOnly.Contains(resource) ? null : new Dictionary<string, MaskStrategy>();
     }
 }

@@ -27,6 +27,7 @@ public static class DefaultRuleSets
         (MatrixType.Bgv, Bgv),
         (MatrixType.Calendar, Calendar),
         (MatrixType.Interview, Interview),
+        (MatrixType.Onboarding, Onboarding),
     ];
 
     // §5.6 row 3: MRF SLA breach → HR Head, then MD/CEO 48 h (2 wd) later.
@@ -94,6 +95,43 @@ public static class DefaultRuleSets
         ],
         new FeedbackPolicy(24, 48),
         new RatificationRule(["M3", "VP", "KMP"], HrHead, "HR Head ratification", 2));
+
+    /// <summary>
+    /// Annexure E (11 Day-1 items), the §13 joining documents, engagement calls at T-21 and T-7, the
+    /// IT/Admin ticket at T-5 working days (RCU-ONB-001), a 6-month probation with a Day-30 check-in and
+    /// a Day 60–90 review (§9.10). Matches the Onboarding service's built-in table.
+    /// </summary>
+    public static OnboardingMatrix Onboarding { get; } = new(
+        [
+            new("offer-acceptance", "Offer letter & signed acceptance on file"),
+            new("bgv-report", "BGV report received & cleared"),
+            new("identity-verified", "Identity, address & education verified"),
+            new("statutory-registration", "PF / ESI registration completed"),
+            new("bank-details", "Bank details captured for payroll"),
+            new("id-card", "ID card issued"),
+            new("system-access", "System / email access provisioned"),
+            new("workstation", "Workstation / asset issued"),
+            new("policies-signed", "CoC, POSH & Confidentiality signed"),
+            new("induction-schedule", "Induction schedule shared"),
+            new("manager-buddy", "Reporting manager & buddy assigned"),
+        ],
+        [
+            new("identity-proof", "Identity proof", true),
+            new("address-proof", "Address proof", true),
+            new("education-certificates", "Educational certificates", true),
+            new("photographs", "Passport-size photographs", true),
+            new("bank-details", "Bank details (cancelled cheque)", true),
+            new("signed-declarations", "Signed Code of Conduct, POSH & confidentiality declarations", true),
+            new("relieving-letter", "Relieving letter from last employer", false),
+            new("salary-slips", "Last 3 salary slips", false),
+            new("tax-statement", "Previous employer tax statement (Form 16)", false),
+        ],
+        [21, 7],
+        ProvisioningWorkingDaysBefore: 5,
+        ProbationMonths: 6,
+        CheckInDay: 30,
+        ReviewDay: 60,
+        ReviewWindowEndDay: 90);
 
     public static EscalationMatrix Escalation { get; } = new(
     [

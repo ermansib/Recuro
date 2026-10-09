@@ -69,6 +69,27 @@ public sealed class ConfigApiTests(ConfigApiFactory api) : IClassFixture<ConfigA
     }
 
     [Fact]
+    public async Task Negative_working_days_count_backwards()
+    {
+        var result = await Service().GetFromJsonAsync<JsonElement>("/api/v1/resolve/working-days?from=2026-10-06&days=-3");
+
+        Assert.Equal("2026-09-30", result.GetProperty("date").GetString());
+    }
+
+    [Fact]
+    public async Task The_onboarding_matrix_resolves_with_the_seed()
+    {
+        var result = await Service().GetFromJsonAsync<JsonElement>("/api/v1/resolve/matrices/onboarding");
+
+        Assert.Equal("onboarding", result.GetProperty("matrixType").GetString());
+        var content = result.GetProperty("content");
+        Assert.Equal(11, content.GetProperty("checklist").GetArrayLength());
+        Assert.Equal("bgv-report", content.GetProperty("checklist")[1].GetProperty("key").GetString());
+        Assert.True(content.GetProperty("documents")[0].GetProperty("mandatory").GetBoolean());
+        Assert.Equal(5, content.GetProperty("provisioningWorkingDaysBefore").GetInt32());
+    }
+
+    [Fact]
     public async Task An_unknown_location_is_a_404()
     {
         var response = await Service().GetAsync("/api/v1/resolve/working-days?from=2026-09-30&days=3&location=mars");

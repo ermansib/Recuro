@@ -27,7 +27,7 @@ public sealed record ResolvedDoaDto(
     TatRange OverallTat,
     IReadOnlyList<ApprovalLeg> Legs);
 
-/// <summary><c>GET /api/v1/resolve/working-days?from=…&amp;days=…[&amp;location=…][&amp;versionId=…]</c>.</summary>
+/// <summary><c>GET /api/v1/resolve/working-days?from=…&amp;days=…[&amp;location=…][&amp;versionId=…]</c>; negative days count backwards.</summary>
 public sealed record ResolveWorkingDaysQuery(DateOnly? From, int? Days, string? Location, Guid? VersionId) : IQuery<WorkingDaysDto>;
 
 public sealed record WorkingDaysDto(DateOnly Date, Guid ConfigVersionId);
@@ -53,7 +53,7 @@ internal sealed class ResolveWorkingDaysQueryValidator : AbstractValidator<Resol
     public ResolveWorkingDaysQueryValidator()
     {
         RuleFor(q => q.From).NotNull();
-        RuleFor(q => q.Days).NotNull().InclusiveBetween(0, ConfigLimits.MaxWorkingDays);
+        RuleFor(q => q.Days).NotNull().InclusiveBetween(-ConfigLimits.MaxWorkingDays, ConfigLimits.MaxWorkingDays);
         RuleFor(q => q.Location).MaximumLength(100);
     }
 }

@@ -136,6 +136,9 @@ public sealed class EmailOptions
 
     /// <summary>Base of the retry backoff: attempts wait 1×, 2×, 4× this.</summary>
     public TimeSpan RetryBackoff { get; set; } = TimeSpan.FromMinutes(1);
+
+    /// <summary>The gateway's public address, so a download path in an event (e.g. a report pack's PDF) becomes a link in the email.</summary>
+    public Uri DownloadBaseUrl { get; set; } = new("http://localhost:5100/");
 }
 
 /// <summary>The person reading their bell or email centre.</summary>

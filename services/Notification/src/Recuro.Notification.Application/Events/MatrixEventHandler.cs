@@ -33,7 +33,7 @@ public sealed partial class MatrixEventHandler(
 
         await RecordOwnerAsync(metadata, now, ct);
 
-        var values = EventPayload.TemplateValues(metadata, data);
+        var values = EventPayload.TemplateValues(metadata, data, emailOptions.DownloadBaseUrl);
         var bellItems = 0;
         foreach (var rule in NotificationMatrix.RulesFor(metadata.Type))
         {
