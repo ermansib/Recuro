@@ -23,6 +23,12 @@ public static class RecuroClaims
     public const string PreferredUsername = "preferred_username";
     public const string Tenant = "tenant_id";
     public const string Roles = "roles";
+
+    /// <summary>The person's department key (Keycloak user attribute <c>department</c>), e.g. <c>operations</c>.</summary>
+    public const string Department = "department";
+
+    /// <summary>The reporting manager's user id (Keycloak user attribute <c>manager_id</c>).</summary>
+    public const string Manager = "manager_id";
 }
 
 /// <summary>Bound from the <c>Auth</c> configuration section.</summary>

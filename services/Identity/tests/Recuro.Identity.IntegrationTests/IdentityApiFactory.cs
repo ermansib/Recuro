@@ -28,9 +28,19 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
         await _postgres.DisposeAsync();
     }
 
-    public HttpClient ClientFor(Guid tenant, string role, string user = "u-1", string name = "A. Sharma")
+    public HttpClient ClientFor(Guid tenant, string role, string user = "u-1", string name = "A. Sharma", string? department = null, string? manager = null)
     {
         var client = CreateClient();
+        if (department is not null)
+        {
+            client.DefaultRequestHeaders.Add(DevelopmentAuthenticationHandler.DepartmentHeader, department);
+        }
+
+        if (manager is not null)
+        {
+            client.DefaultRequestHeaders.Add(DevelopmentAuthenticationHandler.ManagerHeader, manager);
+        }
+
         client.DefaultRequestHeaders.Add(DevelopmentAuthenticationHandler.UserHeader, user);
         client.DefaultRequestHeaders.Add(DevelopmentAuthenticationHandler.NameHeader, name);
         client.DefaultRequestHeaders.Add(DevelopmentAuthenticationHandler.RolesHeader, role);

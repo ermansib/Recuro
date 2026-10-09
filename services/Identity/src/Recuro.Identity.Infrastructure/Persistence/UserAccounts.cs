@@ -12,12 +12,17 @@ internal sealed class UserAccounts(IdentityDbContext db) : IUserAccounts
     public Task<UserAccount?> FindBySubjectAsync(string subject, CancellationToken ct) =>
         db.Users.FirstOrDefaultAsync(u => u.Subject == subject, ct);
 
-    public async Task<IReadOnlyList<UserAccount>> ListAsync(string? role, CancellationToken ct)
+    public async Task<IReadOnlyList<UserAccount>> ListAsync(string? role, string? department, CancellationToken ct)
     {
         var query = db.Users.AsNoTracking();
         if (role is not null)
         {
             query = query.Where(u => EF.Property<List<string>>(u, UserAccountConfiguration.RolesField).Contains(role));
+        }
+
+        if (department is not null)
+        {
+            query = query.Where(u => u.Department == department);
         }
 
         return await query.OrderBy(u => u.Name).ToListAsync(ct);

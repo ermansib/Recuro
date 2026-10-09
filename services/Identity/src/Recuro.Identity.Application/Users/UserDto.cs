@@ -6,7 +6,8 @@ namespace Recuro.Identity.Application.Users;
 /// <summary>
 /// The frontend's <c>User</c> (frontend/src/domain/types.ts), field for field. <see cref="Id"/> is the
 /// Keycloak subject, the id every service records for a person. Title and summary are not in the
-/// token yet, so they are empty.
+/// token yet, so they are empty. <see cref="Department"/> and <see cref="ManagerId"/> are additions for
+/// services (HOD and reporting-manager lookups); empty when unknown.
 /// </summary>
 public sealed record UserDto(
     string Id,
@@ -16,7 +17,9 @@ public sealed record UserDto(
     string Role,
     string Title,
     string Email,
-    string Summary)
+    string Summary,
+    string Department,
+    string ManagerId)
 {
     public static UserDto From(UserAccount user)
     {
@@ -29,7 +32,9 @@ public sealed record UserDto(
             PersonaRoles.Primary(user.Roles) ?? string.Empty,
             string.Empty,
             user.Email,
-            string.Empty);
+            string.Empty,
+            user.Department,
+            user.ManagerId);
     }
 
     internal static string InitialsOf(string name) =>
