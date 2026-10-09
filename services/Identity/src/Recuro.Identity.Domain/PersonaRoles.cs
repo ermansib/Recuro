@@ -15,6 +15,12 @@ public static class PersonaRoles
     /// <summary>Tenant administrator in the admin portal. Not a persona, but mirrored like one.</summary>
     public const string TenantAdmin = "tenant-admin";
 
+    /// <summary>
+    /// Head of department: held next to a persona role, for the department in the person's
+    /// <c>department</c> attribute. Not a persona, but mirrored so services can find a department's head.
+    /// </summary>
+    public const string Hod = "hod";
+
     /// <summary>Service accounts (client credentials, RCU-AUT-005). Never mirrored as a user.</summary>
     public const string Service = "service";
 
@@ -24,7 +30,7 @@ public static class PersonaRoles
     public static bool IsPersona(string role) => All.Contains(role, StringComparer.Ordinal);
 
     /// <summary>Roles the user mirror keeps. Keycloak's own defaults (offline_access, default-roles-*) are dropped.</summary>
-    public static bool IsMirrored(string role) => IsPersona(role) || role == TenantAdmin;
+    public static bool IsMirrored(string role) => IsPersona(role) || role is TenantAdmin or Hod;
 
     /// <summary>Roles the masking map answers for: every persona plus service accounts.</summary>
     public static bool HasMaskingMap(string role) => IsPersona(role) || role == Service;

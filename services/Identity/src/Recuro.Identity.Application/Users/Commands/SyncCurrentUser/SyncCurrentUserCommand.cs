@@ -11,7 +11,13 @@ namespace Recuro.Identity.Application.Users.Commands.SyncCurrentUser;
 /// RCU-AUT-001: provisions the signed-in person just in time, or refreshes their mirror from the
 /// token, and returns them. The values come from the validated token, never from the request body.
 /// </summary>
-public sealed record SyncCurrentUserCommand(string Subject, string? Name, string? Email, IReadOnlyList<string> Roles) : ICommand<UserDto>;
+public sealed record SyncCurrentUserCommand(
+    string Subject,
+    string? Name,
+    string? Email,
+    IReadOnlyList<string> Roles,
+    string? Department = null,
+    string? ManagerId = null) : ICommand<UserDto>;
 
 internal sealed class SyncCurrentUserCommandValidator : AbstractValidator<SyncCurrentUserCommand>
 {
@@ -32,10 +38,11 @@ internal sealed class SyncCurrentUserCommandHandler(
     public async Task<Result<UserDto>> Handle(SyncCurrentUserCommand command, CancellationToken ct)
     {
         var now = clock.GetUtcNow();
+        var placement = UserPlacement.From(command.Department, command.ManagerId);
         var existing = await users.FindBySubjectAsync(command.Subject, ct);
         if (existing is null)
         {
-            var created = UserAccount.Provision(tenant.RequiredTenantId, command.Subject, command.Name ?? string.Empty, command.Email ?? string.Empty, command.Roles, now);
+            var created = UserAccount.Provision(tenant.RequiredTenantId, command.Subject, command.Name ?? string.Empty, command.Email ?? string.Empty, command.Roles, now, placement);
             if (await users.TryAddAsync(created, ct))
             {
                 return UserDto.From(created);
@@ -46,7 +53,7 @@ internal sealed class SyncCurrentUserCommandHandler(
                 ?? throw new InvalidOperationException("The user was provisioned concurrently but cannot be read.");
         }
 
-        existing.SyncFromToken(command.Name ?? string.Empty, command.Email ?? string.Empty, command.Roles, now);
+        existing.SyncFromToken(command.Name ?? string.Empty, command.Email ?? string.Empty, command.Roles, now, placement);
         await unitOfWork.SaveChangesAsync(ct);
         return UserDto.From(existing);
     }

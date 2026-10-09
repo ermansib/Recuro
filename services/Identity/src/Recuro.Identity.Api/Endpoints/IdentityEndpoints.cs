@@ -6,6 +6,7 @@ using Recuro.Identity.Application.Access.Queries.Decide;
 using Recuro.Identity.Application.Masking.Queries.GetMaskingMap;
 using Recuro.Identity.Application.Users;
 using Recuro.Identity.Application.Users.Commands.SyncCurrentUser;
+using Recuro.Identity.Application.Users.Queries.GetUser;
 using Recuro.Identity.Application.Users.Queries.ListUsers;
 
 namespace Recuro.Identity.Api.Endpoints;
@@ -27,7 +28,11 @@ internal static class IdentityEndpoints
 
         group.MapGet("/users", ListUsersAsync)
             .RequireAuthorization(IdentityPolicies.ReadUsers)
-            .WithSummary("The tenant's people (frontend listTeam); filter by role to find recipients.");
+            .WithSummary("The tenant's people (frontend listTeam); filter by role to find recipients, and by department for a department's head (role=hod&department=…).");
+
+        group.MapGet("/users/{id}", GetUserAsync)
+            .RequireAuthorization(IdentityPolicies.ReadUsers)
+            .WithSummary("One person of the tenant by user id, e.g. a reporting manager; 404 when unknown.");
 
         group.MapPost("/decide", DecideAsync)
             .WithSummary("RCU-AUT-003: policy decision point. Allow/deny with reasons; default deny; cacheable for ttlSeconds.");
@@ -47,15 +52,24 @@ internal static class IdentityEndpoints
             user.FindFirst(RecuroClaims.Subject)?.Value ?? string.Empty,
             user.FindFirst(RecuroClaims.Name)?.Value ?? user.FindFirst(RecuroClaims.PreferredUsername)?.Value,
             user.FindFirst(EmailClaim)?.Value,
-            user.FindAll(RecuroClaims.Roles).Select(c => c.Value).ToList());
+            user.FindAll(RecuroClaims.Roles).Select(c => c.Value).ToList(),
+            user.FindFirst(RecuroClaims.Department)?.Value,
+            user.FindFirst(RecuroClaims.Manager)?.Value);
         return (await handler.Handle(command, ct)).ToHttpResult();
     }
 
     private static async Task<IResult> ListUsersAsync(
         string? role,
+        string? department,
         IQueryHandler<ListUsersQuery, IReadOnlyList<UserDto>> handler,
         CancellationToken ct) =>
-        (await handler.Handle(new ListUsersQuery(role), ct)).ToHttpResult();
+        (await handler.Handle(new ListUsersQuery(role, department), ct)).ToHttpResult();
+
+    private static async Task<IResult> GetUserAsync(
+        string id,
+        IQueryHandler<GetUserQuery, UserDto> handler,
+        CancellationToken ct) =>
+        (await handler.Handle(new GetUserQuery(id), ct)).ToHttpResult();
 
     private static async Task<IResult> DecideAsync(
         DecideRequest request,

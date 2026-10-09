@@ -18,6 +18,10 @@ export interface User {
   email: string
   /** One-line description shown in the persona switcher. */
   summary: string
+  /** Department key from the identity service (tenant hierarchy); empty when unknown. */
+  department?: string
+  /** User id of the reporting manager; empty when unknown. */
+  managerId?: string
 }
 
 /** Kind of organisation running the workspace. It only seeds defaults; every type gets every feature. */
