@@ -60,7 +60,7 @@ public class RecipientResolverTests
     [Fact]
     public async Task A_role_with_nobody_in_the_directory_gets_one_role_wide_item_and_one_unaddressed_email()
     {
-        var resolver = new RecipientResolver(new FakeStore(), FakeContacts.None, FakeStaff.None, TimeProvider.System);
+        var resolver = new RecipientResolver(new FakeStore(), FakeContacts.None, FakeStaff.None, FakeRequisitions.None, TimeProvider.System);
 
         var result = await resolver.ResolveAsync(RecipientRule.ForRole("hrhead"), Metadata, default, CancellationToken.None);
 
@@ -76,7 +76,7 @@ public class RecipientResolverTests
         store.AddUser("u-2", "S. Rao", "s.rao@example.test", "hrhead");
         store.AddUser("u-3", "T. Das", "t.das@example.test", "hrta");
 
-        var result = await new RecipientResolver(store, FakeContacts.None, FakeStaff.None, TimeProvider.System).ResolveAsync(RecipientRule.ForRole("hrhead"), Metadata, default, CancellationToken.None);
+        var result = await new RecipientResolver(store, FakeContacts.None, FakeStaff.None, FakeRequisitions.None, TimeProvider.System).ResolveAsync(RecipientRule.ForRole("hrhead"), Metadata, default, CancellationToken.None);
 
         Assert.True(Assert.Single(result.InApp).IsRoleWide);
         Assert.Equal(["r.iyer@example.test", "s.rao@example.test"], result.Email.Select(r => r.Email));
@@ -89,7 +89,7 @@ public class RecipientResolverTests
         store.AddUser("u-1", "Old Name", "old@example.test", "hrhead");
         var staff = new FakeStaff([new StaffContact("u-1", "R. Iyer", "r.iyer@example.test"), new StaffContact("u-9", "N. Shah", "n.shah@example.test")]);
 
-        var result = await new RecipientResolver(store, FakeContacts.None, staff, TimeProvider.System).ResolveAsync(RecipientRule.ForRole("hrhead"), Metadata, default, CancellationToken.None);
+        var result = await new RecipientResolver(store, FakeContacts.None, staff, FakeRequisitions.None, TimeProvider.System).ResolveAsync(RecipientRule.ForRole("hrhead"), Metadata, default, CancellationToken.None);
 
         Assert.Equal(["r.iyer@example.test", "n.shah@example.test"], result.Email.Select(r => r.Email));
         Assert.Equal("n.shah@example.test", (await store.FindUserAsync("u-9", CancellationToken.None))?.Email);
@@ -99,7 +99,7 @@ public class RecipientResolverTests
     [Fact]
     public async Task The_actor_is_addressed_by_id_and_keeps_their_name()
     {
-        var result = await new RecipientResolver(new FakeStore(), FakeContacts.None, FakeStaff.None, TimeProvider.System).ResolveAsync(RecipientRule.ForActor("candidate"), Metadata, default, CancellationToken.None);
+        var result = await new RecipientResolver(new FakeStore(), FakeContacts.None, FakeStaff.None, FakeRequisitions.None, TimeProvider.System).ResolveAsync(RecipientRule.ForActor("candidate"), Metadata, default, CancellationToken.None);
 
         var recipient = Assert.Single(result.InApp);
         Assert.Equal("cand-7", recipient.UserId);
@@ -111,7 +111,7 @@ public class RecipientResolverTests
     public async Task A_missing_payload_user_falls_back_to_the_role_when_the_rule_says_so()
     {
         var data = JsonSerializer.SerializeToElement(new { taskId = "T-1" });
-        var resolver = new RecipientResolver(new FakeStore(), FakeContacts.None, FakeStaff.None, TimeProvider.System);
+        var resolver = new RecipientResolver(new FakeStore(), FakeContacts.None, FakeStaff.None, FakeRequisitions.None, TimeProvider.System);
 
         var withFallback = await resolver.ResolveAsync(RecipientRule.ForPayloadUser("assignee", "hrhead", fallbackToRole: true), Metadata, data, CancellationToken.None);
         var without = await resolver.ResolveAsync(RecipientRule.ForPayloadUser("assignee", "hrhead"), Metadata, data, CancellationToken.None);
@@ -124,7 +124,7 @@ public class RecipientResolverTests
     public async Task A_payload_value_naming_a_staff_role_reaches_that_role()
     {
         // Workflow assigns tasks to roles: { "assignee": "mdceo" } and { "assigneeIds": ["hrhead", "u-7"] }.
-        var resolver = new RecipientResolver(new FakeStore(), FakeContacts.None, FakeStaff.None, TimeProvider.System);
+        var resolver = new RecipientResolver(new FakeStore(), FakeContacts.None, FakeStaff.None, FakeRequisitions.None, TimeProvider.System);
 
         var single = await resolver.ResolveAsync(RecipientRule.ForPayloadUser("assignee", "hrhead", fallbackToRole: true), Metadata,
             JsonSerializer.SerializeToElement(new { assignee = "mdceo" }), CancellationToken.None);
@@ -142,7 +142,7 @@ public class RecipientResolverTests
     {
         var data = JsonSerializer.SerializeToElement(new { panel = new[] { "u-1", "u-1", "u-2" } });
 
-        var result = await new RecipientResolver(new FakeStore(), FakeContacts.None, FakeStaff.None, TimeProvider.System).ResolveAsync(RecipientRule.ForPayloadUsers("panel", "hrta"), Metadata, data, CancellationToken.None);
+        var result = await new RecipientResolver(new FakeStore(), FakeContacts.None, FakeStaff.None, FakeRequisitions.None, TimeProvider.System).ResolveAsync(RecipientRule.ForPayloadUsers("panel", "hrta"), Metadata, data, CancellationToken.None);
 
         Assert.Equal(["u-1", "u-2"], result.InApp.Select(r => r.UserId));
     }
@@ -153,12 +153,43 @@ public class RecipientResolverTests
         var data = JsonSerializer.SerializeToElement(new { candidateId = "CND-1" });
         var contacts = new FakeContacts(new Recuro.Notification.Application.Abstractions.CandidateContact("P. Nair", "p.nair@example.test"));
 
-        var result = await new RecipientResolver(new FakeStore(), contacts, FakeStaff.None, TimeProvider.System).ResolveAsync(RecipientRule.ForPayloadCandidate("candidateId"), Metadata, data, CancellationToken.None);
+        var result = await new RecipientResolver(new FakeStore(), contacts, FakeStaff.None, FakeRequisitions.None, TimeProvider.System).ResolveAsync(RecipientRule.ForPayloadCandidate("candidateId"), Metadata, data, CancellationToken.None);
 
         Assert.Empty(result.InApp);
         var recipient = Assert.Single(result.Email);
         Assert.Equal("candidate:CND-1", recipient.UserId);
         Assert.Equal("p.nair@example.test", recipient.Email);
+    }
+
+    [Theory]
+    [InlineData("Credit & Risk", "credit-risk")]
+    [InlineData("  Operations ", "operations")]
+    [InlineData("credit-ops", "credit-ops")]
+    [InlineData("IT / Digital", "it-digital")]
+    [InlineData("&&", null)]
+    [InlineData("", null)]
+    public void Departments_read_as_Identitys_keys(string department, string? expected) =>
+        Assert.Equal(expected, DepartmentKey.From(department));
+
+    [Fact]
+    public async Task Overdue_feedback_reaches_the_requisitions_department_head_by_name()
+    {
+        var staff = new FakeStaff(null, new Dictionary<string, StaffContact[]>
+        {
+            ["credit-risk"] = [new StaffContact("hod-1", "M. Kapoor", "m.kapoor@example.test")],
+        });
+        var requisitions = new FakeRequisitions(new Dictionary<string, string> { ["REQ-1"] = "Credit & Risk", ["REQ-2"] = "Treasury" });
+        var resolver = new RecipientResolver(new FakeStore(), FakeContacts.None, staff, requisitions, TimeProvider.System);
+
+        var found = await resolver.ResolveAsync(RecipientRule.ForDepartmentHead("reqId"), Metadata, JsonSerializer.SerializeToElement(new { reqId = "REQ-1" }), CancellationToken.None);
+        var headless = await resolver.ResolveAsync(RecipientRule.ForDepartmentHead("reqId"), Metadata, JsonSerializer.SerializeToElement(new { reqId = "REQ-2" }), CancellationToken.None);
+        var unknown = await resolver.ResolveAsync(RecipientRule.ForDepartmentHead("reqId"), Metadata, JsonSerializer.SerializeToElement(new { reqId = "REQ-9" }), CancellationToken.None);
+
+        var head = Assert.Single(found.InApp);
+        Assert.Equal(("hod", "hod-1", "M. Kapoor"), (head.Role, head.UserId, head.Name));
+        Assert.Equal("m.kapoor@example.test", Assert.Single(found.Email).Email);
+        Assert.Empty(headless.InApp);
+        Assert.Empty(unknown.Email);
     }
 
     [Fact]
