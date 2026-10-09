@@ -58,6 +58,12 @@ public sealed class OnboardingCase : AggregateRoot, ITenantOwned
 
     public string? Buddy { get; private set; }
 
+    /// <summary>
+    /// The joiner's department key (tenant data, e.g. <c>operations</c>). Its head decides probation
+    /// (RCU-ONB-005). Unset means the reporting manager's department applies.
+    /// </summary>
+    public string? Department { get; private set; }
+
     public DateTimeOffset? Day1ReadyAt { get; private set; }
 
     public DateTimeOffset? FileCompletedAt { get; private set; }
@@ -158,8 +164,11 @@ public sealed class OnboardingCase : AggregateRoot, ITenantOwned
         return Result.Success();
     }
 
-    /// <summary>The reporting manager and buddy (Annexure E's last item); milestone reminders go to the manager.</summary>
-    public Result Assign(string? reportingManagerId, string? reportingManager, string? buddy)
+    /// <summary>
+    /// The reporting manager, buddy (Annexure E's last item) and department; milestone reminders go to
+    /// the manager and the probation decision to the department's head.
+    /// </summary>
+    public Result Assign(string? reportingManagerId, string? reportingManager, string? buddy, string? department = null)
     {
         if (IsClosed)
         {
@@ -169,6 +178,7 @@ public sealed class OnboardingCase : AggregateRoot, ITenantOwned
         ReportingManagerId = Clean(reportingManagerId);
         ReportingManager = Clean(reportingManager);
         Buddy = Clean(buddy);
+        Department = Clean(department)?.ToLowerInvariant();
         return Result.Success();
     }
 

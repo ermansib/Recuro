@@ -1,6 +1,9 @@
 using System.Globalization;
+using Microsoft.Extensions.Logging;
 using Recuro.BuildingBlocks.Application.IntegrationEvents;
 using Recuro.BuildingBlocks.Application.Messaging;
+using Recuro.Onboarding.Application.Abstractions;
+using Recuro.Onboarding.Application.Cases;
 using Recuro.Onboarding.Domain.Cases;
 
 namespace Recuro.Onboarding.Application.Events;
@@ -28,6 +31,8 @@ public sealed record Day1ReadyPayload(string OnbId, string AppId, string ReqId, 
 /// <summary>
 /// <c>onboarding.milestone.due.v1</c>: a touchpoint or probation milestone reached its date. Notification
 /// reminds <c>assigneeRoles</c> and, for probation milestones, the reporting manager (RCU-ONB-001/004).
+/// On the review and end milestones <c>departmentHeadId</c> names who decides (RCU-ONB-005); with no
+/// head on record, <c>hrhead</c> joins <c>assigneeRoles</c> instead.
 /// </summary>
 public sealed record MilestoneDuePayload(
     string OnbId,
@@ -42,7 +47,8 @@ public sealed record MilestoneDuePayload(
     string DueOn,
     string JoiningDate,
     IReadOnlyList<string> AssigneeRoles,
-    string? ReportingManagerId);
+    string? ReportingManagerId,
+    string? DepartmentHeadId = null);
 
 /// <summary><c>onboarding.employee.confirmed.v1</c> (RCU-ONB-005).</summary>
 public sealed record EmployeeConfirmedPayload(string OnbId, string AppId, string ReqId, string CandidateId, string JoiningDate, DateTimeOffset ConfirmedAt, int Cycle, string DecidedBy);
@@ -60,7 +66,10 @@ public sealed record ProbationExtendedPayload(
     string DecidedBy);
 
 /// <summary>Turns domain events into integration events through the outbox, in the same transaction as the change.</summary>
-internal sealed class OnboardingEventPublishers(IIntegrationEventPublisher publisher)
+internal sealed partial class OnboardingEventPublishers(
+    IIntegrationEventPublisher publisher,
+    ProbationDecider decider,
+    ILogger<OnboardingEventPublishers> logger)
     : IDomainEventHandler<PreBoardingStartedDomainEvent>,
       IDomainEventHandler<Day1ReadyDomainEvent>,
       IDomainEventHandler<MilestoneDueDomainEvent>,
@@ -69,6 +78,9 @@ internal sealed class OnboardingEventPublishers(IIntegrationEventPublisher publi
 {
     /// <summary>Who is reminded of every milestone; the reporting manager is added by id when known.</summary>
     public static readonly IReadOnlyList<string> MilestoneAssignees = ["hrta"];
+
+    /// <summary>The decision milestones also go to the decider: the department head, or HR Head without one.</summary>
+    public static readonly IReadOnlyList<string> DecisionAssigneesWithoutHead = ["hrta", ProbationRoute.HrHeadRole];
 
     public Task Handle(PreBoardingStartedDomainEvent domainEvent, CancellationToken ct)
     {
@@ -99,11 +111,19 @@ internal sealed class OnboardingEventPublishers(IIntegrationEventPublisher publi
         return Task.CompletedTask;
     }
 
-    public Task Handle(MilestoneDueDomainEvent domainEvent, CancellationToken ct)
+    public async Task Handle(MilestoneDueDomainEvent domainEvent, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
         var c = domainEvent.Case;
         var m = domainEvent.Milestone;
+        var assignees = MilestoneAssignees;
+        string? headId = null;
+        if (m.Kind is MilestoneKinds.Review or MilestoneKinds.ProbationEnd)
+        {
+            headId = await DepartmentHeadIdAsync(c, ct);
+            assignees = headId is null ? DecisionAssigneesWithoutHead : MilestoneAssignees;
+        }
+
         publisher.Publish(
             EventTypes.Onboarding.MilestoneDue,
             Subject(c),
@@ -119,10 +139,27 @@ internal sealed class OnboardingEventPublishers(IIntegrationEventPublisher publi
                 m.Cycle,
                 Date(m.DueOn),
                 Date(c.JoiningDate),
-                MilestoneAssignees,
-                m.Phase == MilestonePhase.Probation ? c.ReportingManagerId : null));
-        return Task.CompletedTask;
+                assignees,
+                m.Phase == MilestonePhase.Probation ? c.ReportingManagerId : null,
+                headId));
     }
+
+    /// <summary>Best effort: a reminder still goes out (to HR Head) when Identity can't say who the head is.</summary>
+    private async Task<string?> DepartmentHeadIdAsync(OnboardingCase c, CancellationToken ct)
+    {
+        try
+        {
+            return (await decider.RouteAsync(c, ct)).Head?.Id;
+        }
+        catch (DependencyUnavailableException ex)
+        {
+            HeadUnknown(logger, ex, c.Id);
+            return null;
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Identity didn't answer; the decision reminder for case {CaseId} goes to HR Head")]
+    private static partial void HeadUnknown(ILogger logger, Exception ex, Guid caseId);
 
     public Task Handle(EmployeeConfirmedDomainEvent domainEvent, CancellationToken ct)
     {

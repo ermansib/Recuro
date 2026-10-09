@@ -12,17 +12,20 @@ internal static class OnboardingPolicies
     public const string Operate = "onboarding.operate";
 
     /// <summary>
-    /// RCU-ONB-005: the probation decision. The FRD gives it to the HOD; Recuro has no HOD role yet
-    /// (Identity's HOD lookup is pending), so HR Head records it.
+    /// RCU-ONB-005: the probation decision. Department heads (<c>hod</c>) and HR Head reach the endpoint;
+    /// the handler then allows only the joiner's own department head, or HR Head when there is none.
     /// </summary>
     public const string Decide = "onboarding.decide";
+
+    /// <summary>The department head role (Identity, Keycloak realm role <c>hod</c>).</summary>
+    public const string Hod = "hod";
 
     public static IServiceCollection AddOnboardingPolicies(this IServiceCollection services)
     {
         services.AddAuthorizationBuilder()
             .AddRolePolicy(Read, RecuroRoles.HrTa, RecuroRoles.HrHead, RecuroRoles.Service)
             .AddRolePolicy(Operate, RecuroRoles.HrTa, RecuroRoles.HrHead)
-            .AddRolePolicy(Decide, RecuroRoles.HrHead);
+            .AddRolePolicy(Decide, Hod, RecuroRoles.HrHead);
         return services;
     }
 }

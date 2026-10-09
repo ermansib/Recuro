@@ -31,7 +31,7 @@ internal static class OnboardingEndpoints
 
         group.MapPut("/cases/{caseRef}/assignments", AssignAsync)
             .RequireAuthorization(OnboardingPolicies.Operate)
-            .WithSummary("The reporting manager (probation reminders) and the buddy.");
+            .WithSummary("The reporting manager (probation reminders), the buddy and the joiner's department (its head decides probation).");
 
         group.MapPut("/cases/{caseRef}/documents/{documentType}", UploadDocumentAsync)
             .RequireAuthorization(OnboardingPolicies.Operate)
@@ -60,7 +60,7 @@ internal static class OnboardingEndpoints
 
         group.MapPost("/cases/{caseRef}/probation/decision", DecideAsync)
             .RequireAuthorization(OnboardingPolicies.Decide)
-            .WithSummary("RCU-ONB-005: confirm (needs a complete file and cleared BGV) or extend (reason, 1–6 months) at the end of probation.");
+            .WithSummary("RCU-ONB-005: the joiner's department head (HR Head when there is none) confirms (needs a complete file and cleared BGV) or extends (reason, 1–6 months) at the end of probation.");
 
         group.MapGet("/cases/{caseRef}/confirmation-letter", ConfirmationLetterAsync)
             .RequireAuthorization(OnboardingPolicies.Operate)
@@ -84,7 +84,7 @@ internal static class OnboardingEndpoints
         (await handler.Handle(new SetChecklistItemCommand(caseRef, itemKey, request.Done, request.Remarks), ct)).ToHttpResult();
 
     private static async Task<IResult> AssignAsync(string caseRef, AssignmentsRequest request, ICommandHandler<AssignPeopleCommand, OnboardingCaseDto> handler, CancellationToken ct) =>
-        (await handler.Handle(new AssignPeopleCommand(caseRef, request.ReportingManagerId, request.ReportingManager, request.Buddy), ct)).ToHttpResult();
+        (await handler.Handle(new AssignPeopleCommand(caseRef, request.ReportingManagerId, request.ReportingManager, request.Buddy, request.Department), ct)).ToHttpResult();
 
     private static async Task<IResult> UploadDocumentAsync(
         string caseRef,
@@ -142,7 +142,7 @@ internal static class OnboardingEndpoints
 internal sealed record ChecklistItemRequest(bool Done, string? Remarks);
 
 /// <summary>Body of <c>PUT /api/v1/onboarding/cases/{caseRef}/assignments</c>.</summary>
-internal sealed record AssignmentsRequest(string? ReportingManagerId, string? ReportingManager, string? Buddy);
+internal sealed record AssignmentsRequest(string? ReportingManagerId, string? ReportingManager, string? Buddy, string? Department);
 
 /// <summary>Body of <c>POST /api/v1/onboarding/cases/{caseRef}/documents/{documentType}/review</c>.</summary>
 internal sealed record DocumentReviewRequest(bool Verified, string? Note);

@@ -9,6 +9,7 @@ public static class DependencyInjection
     public static IServiceCollection AddOnboardingApplication(this IServiceCollection services)
     {
         services.AddScoped<CaseViews>();
+        services.AddScoped<ProbationDecider>();
         return services.AddRecuroApplication(typeof(DependencyInjection).Assembly);
     }
 }

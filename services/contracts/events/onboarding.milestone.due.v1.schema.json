@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "events/onboarding.milestone.due.v1.schema.json",
   "title": "onboarding.milestone.due.v1",
-  "description": "Producer: Onboarding. A pre-boarding touchpoint (T-21, T-7, IT provisioning) or probation milestone (Day 30/60/90, review, end) reached its due date (RCU-ONB-001/004). Notification reminds assigneeRoles and, for probation milestones, the reporting manager. Subject: OnboardingCase/<onbId>.",
+  "description": "Producer: Onboarding. A pre-boarding touchpoint (T-21, T-7, IT provisioning) or probation milestone (Day 30/60/90, review, end) reached its due date (RCU-ONB-001/004). Notification reminds assigneeRoles and, for probation milestones, the reporting manager. On probation-review and probation-end, departmentHeadId is the joiner's department head, who decides (RCU-ONB-005); with no head on record it is absent and hrhead is in assigneeRoles. Subject: OnboardingCase/<onbId>.",
   "type": "object",
   "properties": {
     "onbId": {
@@ -59,6 +59,13 @@
     "reportingManagerId": {
       "type": "string",
       "description": "Probation milestones only; optional."
+    },
+    "departmentHeadId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "probation-review and probation-end only: user id of the department head who decides; optional."
     }
   },
   "required": [

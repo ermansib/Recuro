@@ -8,7 +8,8 @@ using Recuro.Onboarding.Domain.Cases;
 namespace Recuro.Onboarding.Application.Cases.Commands;
 
 /// <summary>
-/// RCU-ONB-005: confirm or extend at the end of probation. Confirm issues the letter and publishes
+/// RCU-ONB-005: confirm or extend at the end of probation, by the joiner's department head (HR Head
+/// when the department has no head). Confirm issues the letter and publishes
 /// <c>onboarding.employee.confirmed</c>; Extend needs a reason and 1–6 months and starts a new cycle.
 /// </summary>
 public sealed record DecideProbationCommand(string CaseRef, string Decision, string? Reason, int? ExtendByMonths) : ICommand<OnboardingCaseDto>;
@@ -28,6 +29,7 @@ internal sealed class DecideProbationCommandValidator : AbstractValidator<Decide
 internal sealed class DecideProbationCommandHandler(
     IOnboardingCaseRepository cases,
     CaseViews views,
+    ProbationDecider decider,
     ICurrentUser caller,
     IUnitOfWork unitOfWork,
     TimeProvider clock) : ICommandHandler<DecideProbationCommand, OnboardingCaseDto>
@@ -40,13 +42,20 @@ internal sealed class DecideProbationCommandHandler(
             return OnboardingErrors.NotFound(command.CaseRef);
         }
 
+        // The joiner's department head decides; HR Head only when the department has none (RCU-ONB-005).
+        var actor = ProbationDecider.Authorize(await decider.RouteAsync(onboardingCase, ct), caller);
+        if (actor.IsFailure)
+        {
+            return actor.Error!;
+        }
+
         var now = clock.GetUtcNow();
         var decided = onboardingCase.DecideProbation(
             Enum.Parse<ProbationOutcome>(command.Decision, ignoreCase: true),
             command.Reason,
             command.ExtendByMonths,
             await views.BgvStatusAsync(onboardingCase.AppId, ct),
-            Actors.From(caller),
+            actor.Value,
             DateOnly.FromDateTime(now.UtcDateTime),
             now);
         if (decided.IsFailure)

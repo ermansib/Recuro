@@ -60,6 +60,7 @@ public sealed class OnboardingApiFactory : WebApplicationFactory<Program>, IAsyn
         builder.UseSetting("MilestoneScheduler:Enabled", "false");
         builder.UseSetting("Services:Config", "http://config.invalid/");
         builder.UseSetting("Services:Candidate", "http://candidate.invalid/");
+        builder.UseSetting("Services:Identity", "http://identity.invalid/");
         builder.UseSetting("Services:CacheFor", "00:00:00.001");
         builder.UseSetting("DocumentStorage:RootPath", DocumentRoot);
         builder.UseSetting("DocumentStorage:ActiveKeyId", "test1");

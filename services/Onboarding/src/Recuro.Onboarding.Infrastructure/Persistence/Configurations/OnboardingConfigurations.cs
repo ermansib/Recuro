@@ -20,6 +20,7 @@ internal sealed class OnboardingCaseConfiguration : IEntityTypeConfiguration<Onb
         builder.Property(c => c.RulesVersionId).HasMaxLength(OnboardingLimits.VersionIdLength);
         builder.Property(c => c.ReportingManagerId).HasMaxLength(OnboardingLimits.PersonIdLength);
         builder.Property(c => c.ReportingManager).HasMaxLength(OnboardingLimits.ActorLength);
+        builder.Property(c => c.Department).HasMaxLength(OnboardingLimits.DepartmentLength);
         builder.Property(c => c.Buddy).HasMaxLength(OnboardingLimits.ActorLength);
         builder.Property(c => c.FileCompletedBy).HasMaxLength(OnboardingLimits.ActorLength);
         builder.Property(c => c.CancelReason).HasMaxLength(OnboardingLimits.ReasonLength);
