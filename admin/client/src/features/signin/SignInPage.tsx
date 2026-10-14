@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { usePersonas } from '../../api/hooks'
 import { useSession } from '../../auth/sessionContext'
+import { SignInIncompleteError } from '../../auth/strategies'
 import { ErrorMessage } from '../../components/ui'
 
 /** Sends people to Keycloak, or lets them pick a persona when the API runs in development sign-in mode. */
@@ -12,7 +13,13 @@ export function SignInPage() {
     <main className="signin">
       <div className="card">
         <h1>{t('signin.title')}</h1>
-        <ErrorMessage error={error} />
+        {error instanceof SignInIncompleteError ? (
+          <p className="error" role="alert">
+            {t('signin.incomplete')}
+          </p>
+        ) : (
+          <ErrorMessage error={error} />
+        )}
         {mode === 'oidc' ? (
           <>
             <p className="muted">{t('signin.oidcHint')}</p>

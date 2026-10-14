@@ -16,6 +16,23 @@ export interface AuthStrategy {
 
 export const CALLBACK_PATH = '/auth/callback'
 const PERSONA_KEY = 'recuro-admin.persona'
+/** Set while a sign-in restarted after a stale callback, so a broken setup can't loop through Keycloak. */
+const RETRY_KEY = 'recuro-admin.signin-retry'
+
+/**
+ * The sign-in that brought us back to the callback can't be finished, for example because the page was
+ * reloaded or reopened from history after the one-time sign-in state was used. Signing in again fixes it.
+ */
+export class SignInIncompleteError extends Error {
+  constructor() {
+    super('The sign-in could not be completed.')
+    this.name = 'SignInIncompleteError'
+  }
+}
+
+function isMissingState(reason: unknown): boolean {
+  return reason instanceof Error && /no matching state/i.test(reason.message)
+}
 
 function safeSession<T>(action: () => T, fallback: T): T {
   try {
@@ -61,12 +78,42 @@ export function oidcStrategy(config: AuthConfig, location: Location = window.loc
     userStore: new WebStorageStateStore({ store: window.sessionStorage }),
   })
 
+  /** The callback URL being finished, shared so React StrictMode's second effect run doesn't redeem the code twice. */
+  let callback: { url: string; done: Promise<void> } | null = null
+
+  const finishCallback = async (url: string): Promise<void> => {
+    try {
+      await manager.signinRedirectCallback(url)
+      safeSession(() => sessionStorage.removeItem(RETRY_KEY), undefined)
+    } catch (reason) {
+      const user = await manager.getUser()
+      if (user && !user.expired) return
+      await manager.clearStaleState()
+      if (!isMissingState(reason)) throw reason
+      // Stale or replayed callback: start a fresh sign-in once (Keycloak's own session usually makes it
+      // instant). If that comes back stale too, stop and let the person sign in again by hand.
+      if (safeSession(() => sessionStorage.getItem(RETRY_KEY), null) === null) {
+        safeSession(() => sessionStorage.setItem(RETRY_KEY, '1'), undefined)
+        await manager.signinRedirect()
+        return new Promise<void>(() => {})
+      }
+      safeSession(() => sessionStorage.removeItem(RETRY_KEY), undefined)
+      throw new SignInIncompleteError()
+    }
+  }
+
   return {
     mode: 'oidc',
     restore: async () => {
       if (location.pathname === CALLBACK_PATH) {
-        await manager.signinRedirectCallback()
-        window.history.replaceState(null, '', '/')
+        const url = location.href
+        if (callback?.url !== url) callback = { url, done: finishCallback(url) }
+        try {
+          await callback.done
+        } finally {
+          // Never leave the one-time code in the address bar: a reload would replay it.
+          window.history.replaceState(null, '', '/')
+        }
       }
       const user = await manager.getUser()
       return user !== null && !user.expired
@@ -75,7 +122,10 @@ export function oidcStrategy(config: AuthConfig, location: Location = window.loc
       const user = await manager.getUser()
       return user && !user.expired ? { Authorization: `Bearer ${user.access_token}` } : {}
     },
-    signIn: () => manager.signinRedirect(),
+    signIn: async () => {
+      await manager.clearStaleState()
+      await manager.signinRedirect()
+    },
     signOut: async () => {
       const user = await manager.getUser()
       await manager.removeUser()

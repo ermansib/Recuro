@@ -7,5 +7,6 @@
   "tenantHint": "Configure {{tenant}}'s portal",
   "unavailable": "The admin API isn't reachable. Start it with dotnet run, then reload.",
   "oidcHint": "You'll continue to the Recuro sign-in page, then come back here.",
-  "oidcButton": "Sign in"
+  "oidcButton": "Sign in",
+  "incomplete": "Your last sign-in didn't finish. Select Sign in to try again."
 }
