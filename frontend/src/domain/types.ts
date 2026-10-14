@@ -49,24 +49,40 @@ export interface TenantConfig {
 
 // ---------- identity & sessions (RCU-PLT-001) ----------
 
+/**
+ * How a workspace's people sign in: `password` on the portal's own form (the in-browser demo identity), or
+ * `redirect` to the identity provider (Keycloak), which asks for the password on its own page.
+ */
+export type SignInFlow = 'password' | 'redirect'
+
 /** What the sign-in page needs to render a tenant's branding before anyone is signed in. */
 export type WorkspaceBranding = Pick<
   TenantConfig,
   'slug' | 'name' | 'orgType' | 'careersTagline' | 'theme' | 'ssoProviders' | 'sessionIdleMinutes'
->
+> & { signInFlow: SignInFlow }
 
 export interface AuthSession {
-  /** Opaque bearer token. The .NET identity service will issue a JWT here. */
+  /** Opaque session handle. For identity-provider sessions the provider's tokens stay in its own store. */
   token: string
   user: User
   tenant: TenantConfig
   issuedAt: string
+  /** True when the identity provider (Keycloak) signed the person in, rather than the demo identity. */
+  viaIdentityProvider?: boolean
 }
 
 export interface SignInInput {
   workspace: string
   email: string
   password: string
+  /** Page to open after a redirect sign-in comes back. */
+  returnTo?: string
+}
+
+/** A redirect sign-in that has come back from the identity provider. */
+export interface CompletedSignIn {
+  session: AuthSession
+  returnTo: string | null
 }
 
 export type SignInResult =
@@ -79,6 +95,8 @@ export type SignInResult =
       /** Only the mock fills this, so the demo can be used without a mailbox. */
       demoCode?: string
     }
+  /** The browser is on its way to the identity provider's sign-in page. */
+  | { status: 'redirecting' }
 
 export interface RegisterOrganisationInput {
   orgName: string
@@ -91,12 +109,15 @@ export interface RegisterOrganisationInput {
   acceptTerms: boolean
 }
 
+/** A workspace as the admin API stores it (`GET /api/v1/workspaces/{slug}`). */
+export type Workspace = Pick<
+  TenantConfig,
+  'id' | 'slug' | 'name' | 'orgType' | 'careersTagline' | 'emailDomain' | 'locale' | 'currency' | 'ssoProviders' | 'mfaRoles' | 'sessionIdleMinutes'
+>
+
 /** What the server saved for a new workspace (admin API `POST /api/v1/workspaces`). */
 export interface RegisteredWorkspace {
-  workspace: Pick<
-    TenantConfig,
-    'id' | 'slug' | 'name' | 'orgType' | 'careersTagline' | 'emailDomain' | 'locale' | 'currency' | 'ssoProviders' | 'mfaRoles' | 'sessionIdleMinutes'
-  >
+  workspace: Workspace
   /** The owner's account; `id` is the Keycloak subject. */
   owner: { id: string; name: string; email: string; role: Role }
 }

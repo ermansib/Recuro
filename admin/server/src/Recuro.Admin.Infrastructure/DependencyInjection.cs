@@ -42,6 +42,8 @@ public static class DependencyInjection
         services.AddScoped<IThemePresetRepository, ThemePresetRepository>();
         services.AddScoped<IScreenCatalog, ScreenCatalog>();
         services.AddScoped<IScreenConfigurationRepository, ScreenConfigurationRepository>();
+        services.AddScoped<IWorkspaceRoleRepository, WorkspaceRoleRepository>();
+        services.AddScoped<IWorkspaceMemberRepository, WorkspaceMemberRepository>();
         services.AddScoped<DatabaseSeeder>();
         services.AddSingleton<IClock, SystemClock>();
         services.AddAccountDirectory(configuration);

@@ -43,6 +43,18 @@ export function normaliseEmail(email: string): string {
 }
 
 /** `Aurora Housing Finance` → `aurora-housing-finance`. */
+/** Up to two initials for an avatar, e.g. `Asha Rao` → `AR`. */
+export function initialsOf(name: string): string {
+  return (
+    name
+      .split(/[\s.]+/)
+      .filter(Boolean)
+      .map((p) => p[0]?.toUpperCase() ?? '')
+      .join('')
+      .slice(0, 2) || '?'
+  )
+}
+
 export function slugify(name: string): string {
   return name
     .normalize('NFKD')

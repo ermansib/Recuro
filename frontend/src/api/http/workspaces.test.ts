@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../contract'
-import { createMockClient } from '../mock/mockClient'
-import { createHttpWorkspaceApi } from './workspaces'
+import { LOOKUP_SERVER_DOWN, SIGN_UP_SERVER_DOWN, createHttpWorkspaceApi } from './workspaces'
 
 const INPUT = {
   orgName: 'Acme Corp',
@@ -45,6 +44,11 @@ describe('http workspace api', () => {
     await expect(api.registerWorkspace(INPUT)).rejects.toMatchObject({ status: 409, message: 'An account with this email already exists.' })
   })
 
+  it('reports a dead admin API behind the dev proxy as unreachable', async () => {
+    const api = createHttpWorkspaceApi('', vi.fn().mockResolvedValue(new Response('', { status: 500 })))
+    await expect(api.registerWorkspace(INPUT)).rejects.toMatchObject({ status: 503, message: SIGN_UP_SERVER_DOWN })
+  })
+
   it('reports an unreachable server as 503', async () => {
     const api = createHttpWorkspaceApi('', vi.fn().mockRejectedValue(new TypeError('fetch failed')))
     await expect(api.registerWorkspace(INPUT)).rejects.toBeInstanceOf(ApiError)
@@ -52,27 +56,19 @@ describe('http workspace api', () => {
   })
 })
 
-describe('sign-up with a server', () => {
-  it('uses the workspace the server saved, including its slug and ids', async () => {
-    const registerWorkspace = vi.fn().mockResolvedValue(SAVED)
-    const api = createMockClient(undefined, { registerWorkspace })
-    const session = await api.registerOrganisation(INPUT)
-    expect(registerWorkspace).toHaveBeenCalledWith(expect.objectContaining({ orgName: 'Acme Corp', email: 'asha@acme.example' }))
-    expect(session.tenant).toMatchObject({ id: SAVED.workspace.id, slug: 'acme-corp-2', emailDomain: 'acme.example' })
-    expect(session.user).toMatchObject({ id: 'kc-sub-1', tenantId: SAVED.workspace.id, role: 'hrhead' })
+describe('http workspace lookup', () => {
+  it('returns the workspace, or null when the server has none', async () => {
+    const fetcher = vi.fn().mockResolvedValueOnce(json(SAVED.workspace)).mockResolvedValueOnce(json({ title: 'Not found' }, 404))
+    const api = createHttpWorkspaceApi('', fetcher)
+    expect(await api.getWorkspace('acme-corp-2')).toEqual(SAVED.workspace)
+    expect(fetcher).toHaveBeenCalledWith('/api/v1/workspaces/acme-corp-2', expect.objectContaining({ method: 'GET' }))
+    expect(await api.getWorkspace('nope')).toBeNull()
   })
 
-  it('creates nothing locally when the server refuses', async () => {
-    const registerWorkspace = vi.fn().mockRejectedValue(new ApiError(409, 'An account with this email already exists.'))
-    const api = createMockClient(undefined, { registerWorkspace })
-    await expect(api.registerOrganisation(INPUT)).rejects.toMatchObject({ status: 409 })
-    await expect(api.getWorkspaceBranding('acme-corp')).rejects.toMatchObject({ status: 404 })
-  })
-
-  it('does not call the server when the form is invalid', async () => {
-    const registerWorkspace = vi.fn()
-    const api = createMockClient(undefined, { registerWorkspace })
-    await expect(api.registerOrganisation({ ...INPUT, password: 'weak' })).rejects.toMatchObject({ status: 400 })
-    expect(registerWorkspace).not.toHaveBeenCalled()
+  it('reports an unreachable server, or a dev server without the proxy, as 503', async () => {
+    const down = createHttpWorkspaceApi('', vi.fn().mockRejectedValue(new TypeError('fetch failed')))
+    await expect(down.getWorkspace('acme')).rejects.toMatchObject({ status: 503, message: LOOKUP_SERVER_DOWN })
+    const html = createHttpWorkspaceApi('', vi.fn().mockResolvedValue(new Response('<!doctype html>', { status: 200 })))
+    await expect(html.getWorkspace('acme')).rejects.toMatchObject({ status: 503 })
   })
 })

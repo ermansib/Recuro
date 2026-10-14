@@ -3,13 +3,20 @@ import type {
   AuthConfig,
   Branding,
   CurrentAdmin,
+  CreateRoleRequest,
   CreateTenantRequest,
   EffectiveScreen,
   Persona,
+  RoleCatalog,
+  RoleScope,
   Tenant,
   ThemePreset,
+  UpdateMemberRequest,
+  UpdateRoleRequest,
   UpdateScreenRequest,
   UpdateTenantRequest,
+  WorkspaceMember,
+  WorkspaceRole,
 } from './types'
 
 /** The one seam between the admin client and the admin API. Components use it through hooks.ts. */
@@ -34,6 +41,15 @@ export interface AdminApi {
   listScreens(): Promise<EffectiveScreen[]>
   getScreen(key: string): Promise<EffectiveScreen>
   updateScreen(key: string, request: UpdateScreenRequest): Promise<EffectiveScreen>
+
+  // workspace roles and members: tenant admins (scope undefined) and platform admins (scope = tenant id)
+  getRoleCatalog(scope: RoleScope): Promise<RoleCatalog>
+  listRoles(scope: RoleScope): Promise<WorkspaceRole[]>
+  createRole(scope: RoleScope, request: CreateRoleRequest): Promise<WorkspaceRole>
+  updateRole(scope: RoleScope, key: string, request: UpdateRoleRequest): Promise<WorkspaceRole>
+  setRoleActive(scope: RoleScope, key: string, isActive: boolean): Promise<WorkspaceRole>
+  listMembers(scope: RoleScope): Promise<WorkspaceMember[]>
+  updateMember(scope: RoleScope, accountId: string, request: UpdateMemberRequest): Promise<WorkspaceMember>
 }
 
 /** An RFC 7807 problem returned by the API, with the domain error code (for example "screen.lockedField"). */

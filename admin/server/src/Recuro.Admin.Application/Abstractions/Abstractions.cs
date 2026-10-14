@@ -1,4 +1,5 @@
 using Recuro.Admin.Domain.Common;
+using Recuro.Admin.Domain.Roles;
 using Recuro.Admin.Domain.Screens;
 using Recuro.Admin.Domain.Tenants;
 using Recuro.Admin.Domain.Theming;
@@ -77,6 +78,44 @@ public interface IAccountDirectory
 
     /// <summary>Removes an account created by a sign-up that could not be completed.</summary>
     Task DeleteAccountAsync(string accountId, CancellationToken ct);
+
+    /// <summary>
+    /// People whose account belongs to the tenant. Realm roles are read only for accounts not in
+    /// <paramref name="knownAccountIds"/>, so a listing stays cheap once everyone has been imported.
+    /// </summary>
+    Task<Result<IReadOnlyList<DirectoryAccount>>> ListTenantAccountsAsync(
+        Guid tenantId, IReadOnlySet<string> knownAccountIds, CancellationToken ct);
+
+    /// <summary>
+    /// Mirrors a person's workspace roles onto their account, so the next token carries them: the
+    /// <c>workspace_roles</c> attribute always, and the realm role of the same name where one exists.
+    /// Realm roles in <paramref name="workspaceRoleKeys"/> that the person no longer holds are removed.
+    /// </summary>
+    Task<Result> SyncWorkspaceRolesAsync(
+        string accountId, IReadOnlyList<string> roleKeys, IReadOnlyCollection<string> workspaceRoleKeys, CancellationToken ct);
+}
+
+/// <summary>An account in the identity provider. <see cref="RealmRoles"/> is empty when it wasn't read.</summary>
+public sealed record DirectoryAccount(string Id, string Name, string Email, IReadOnlyList<string> RealmRoles);
+
+/// <summary>Roles of each workspace. Every method takes the tenant explicitly, so platform admins can use it too.</summary>
+public interface IWorkspaceRoleRepository
+{
+    Task<IReadOnlyList<WorkspaceRole>> ListAsync(Guid tenantId, CancellationToken ct);
+
+    Task<bool> AnyAsync(Guid tenantId, CancellationToken ct);
+
+    void AddRange(IEnumerable<WorkspaceRole> roles);
+}
+
+/// <summary>People of each workspace and their roles. Every method takes the tenant explicitly.</summary>
+public interface IWorkspaceMemberRepository
+{
+    Task<IReadOnlyList<WorkspaceMember>> ListAsync(Guid tenantId, CancellationToken ct);
+
+    Task<WorkspaceMember?> GetAsync(Guid tenantId, string accountId, CancellationToken ct);
+
+    void Add(WorkspaceMember member);
 }
 
 /// <summary>Locale and currency a self-service workspace starts with, set in configuration ("SignUp" section).</summary>

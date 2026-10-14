@@ -33,6 +33,7 @@ export function createHttpClient(
   }
 
   const key = encodeURIComponent
+  const workspace = (scope: string | undefined) => (scope ? `/platform/workspaces/${key(scope)}` : '/workspace')
 
   return {
     getAuthConfig: () => request('GET', '/auth/config'),
@@ -51,5 +52,12 @@ export function createHttpClient(
     listScreens: () => request('GET', '/workspace/screens'),
     getScreen: (screenKey) => request('GET', `/workspace/screens/${key(screenKey)}`),
     updateScreen: (screenKey, body) => request('PUT', `/workspace/screens/${key(screenKey)}`, body),
+    getRoleCatalog: (scope) => request('GET', scope ? '/platform/role-catalog' : '/workspace/roles/catalog'),
+    listRoles: (scope) => request('GET', `${workspace(scope)}/roles`),
+    createRole: (scope, body) => request('POST', `${workspace(scope)}/roles`, body),
+    updateRole: (scope, roleKey, body) => request('PUT', `${workspace(scope)}/roles/${key(roleKey)}`, body),
+    setRoleActive: (scope, roleKey, isActive) => request('PUT', `${workspace(scope)}/roles/${key(roleKey)}/status`, { isActive }),
+    listMembers: (scope) => request('GET', `${workspace(scope)}/members`),
+    updateMember: (scope, accountId, body) => request('PUT', `${workspace(scope)}/members/${key(accountId)}`, body),
   }
 }

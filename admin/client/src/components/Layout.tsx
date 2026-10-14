@@ -13,10 +13,12 @@ const NAV: Record<AdminLevel, NavItem[]> = {
     { to: '/platform/workspaces', labelKey: 'common.nav.tenants' },
     { to: '/platform/workspace-themes', labelKey: 'common.nav.tenantThemes' },
     { to: '/platform/themes', labelKey: 'common.nav.themes' },
+    { to: '/platform/roles', labelKey: 'common.nav.workspaceRoles' },
   ],
   tenant: [
     { to: '/workspace/branding', labelKey: 'common.nav.branding' },
     { to: '/workspace/screens', labelKey: 'common.nav.screens' },
+    { to: '/workspace/roles', labelKey: 'common.nav.roles' },
   ],
 }
 

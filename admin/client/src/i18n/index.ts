@@ -3,6 +3,7 @@ import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import branding from './en/branding.json'
 import common from './en/common.json'
+import roles from './en/roles.json'
 import screens from './en/screens.json'
 import signin from './en/signin.json'
 import tenantThemes from './en/tenantThemes.json'
@@ -10,7 +11,7 @@ import tenants from './en/tenants.json'
 import themes from './en/themes.json'
 
 export const resources = {
-  en: { translation: { common, signin, tenants, tenantThemes, themes, branding, screens } },
+  en: { translation: { common, signin, tenants, tenantThemes, themes, branding, screens, roles } },
 } as const
 
 void i18n.use(initReactI18next).init({

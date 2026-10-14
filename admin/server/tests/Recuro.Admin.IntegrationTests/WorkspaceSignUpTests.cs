@@ -115,5 +115,13 @@ public sealed class WorkspaceSignUpTests : IDisposable
             Task.FromResult(Result.Failure<string>(error));
 
         public Task DeleteAccountAsync(string accountId, CancellationToken ct) => Task.CompletedTask;
+
+        public Task<Result<IReadOnlyList<DirectoryAccount>>> ListTenantAccountsAsync(
+            Guid tenantId, IReadOnlySet<string> knownAccountIds, CancellationToken ct) =>
+            Task.FromResult(Result.Failure<IReadOnlyList<DirectoryAccount>>(error));
+
+        public Task<Result> SyncWorkspaceRolesAsync(
+            string accountId, IReadOnlyList<string> roleKeys, IReadOnlyCollection<string> workspaceRoleKeys, CancellationToken ct) =>
+            Task.FromResult(Result.Failure(error));
     }
 }

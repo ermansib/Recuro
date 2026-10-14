@@ -137,6 +137,13 @@ public sealed partial class Tenant : Entity
 
     public void ChangePlan(TenantPlan plan) => Plan = plan;
 
+    /// <summary>Keeps the sign-in MFA list in step with the workspace's roles that require a second factor.</summary>
+    public void SetMfaRoles(IEnumerable<string> roleKeys)
+    {
+        ArgumentNullException.ThrowIfNull(roleKeys);
+        MfaRoles = [.. roleKeys.Distinct(StringComparer.Ordinal)];
+    }
+
     public Result SetCustomDomain(string? domain)
     {
         var trimmed = string.IsNullOrWhiteSpace(domain) ? null : domain.Trim().ToLowerInvariant();

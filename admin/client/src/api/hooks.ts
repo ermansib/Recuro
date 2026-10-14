@@ -1,6 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useApi } from './client'
-import type { AssignTenantThemeRequest, CreateTenantRequest, UpdateScreenRequest, UpdateTenantRequest } from './types'
+import type {
+  AssignTenantThemeRequest,
+  CreateRoleRequest,
+  CreateTenantRequest,
+  RoleScope,
+  UpdateMemberRequest,
+  UpdateRoleRequest,
+  UpdateScreenRequest,
+  UpdateTenantRequest,
+} from './types'
 
 export const queryKeys = {
   personas: ['personas'] as const,
@@ -9,6 +18,9 @@ export const queryKeys = {
   branding: ['tenant', 'branding'] as const,
   screens: ['tenant', 'screens'] as const,
   screen: (key: string) => ['tenant', 'screens', key] as const,
+  roleCatalog: ['roles', 'catalog'] as const,
+  roles: (scope: RoleScope) => ['roles', scope ?? 'own', 'list'] as const,
+  members: (scope: RoleScope) => ['roles', scope ?? 'own', 'members'] as const,
 }
 
 export function usePersonas() {
@@ -76,7 +88,6 @@ export function useBranding() {
   return useQuery({ queryKey: queryKeys.branding, queryFn: () => api.getBranding() })
 }
 
-
 export function useScreens() {
   const api = useApi()
   return useQuery({ queryKey: queryKeys.screens, queryFn: () => api.listScreens() })
@@ -97,4 +108,54 @@ export function useUpdateScreen(key: string) {
       return queryClient.invalidateQueries({ queryKey: queryKeys.screens, exact: true })
     },
   })
+}
+
+export function useRoleCatalog(scope: RoleScope) {
+  const api = useApi()
+  return useQuery({ queryKey: queryKeys.roleCatalog, queryFn: () => api.getRoleCatalog(scope) })
+}
+
+export function useRoles(scope: RoleScope) {
+  const api = useApi()
+  return useQuery({ queryKey: queryKeys.roles(scope), queryFn: () => api.listRoles(scope) })
+}
+
+export function useMembers(scope: RoleScope) {
+  const api = useApi()
+  return useQuery({ queryKey: queryKeys.members(scope), queryFn: () => api.listMembers(scope) })
+}
+
+/** Role changes can change member counts and the reporting tree, so they refresh the whole workspace. */
+function useRolesMutation<TVariables, TResult>(scope: RoleScope, mutationFn: (variables: TVariables) => Promise<TResult>) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn,
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.roles(scope) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.members(scope) }),
+      ]),
+  })
+}
+
+export function useCreateRole(scope: RoleScope) {
+  const api = useApi()
+  return useRolesMutation(scope, (request: CreateRoleRequest) => api.createRole(scope, request))
+}
+
+export function useUpdateRole(scope: RoleScope) {
+  const api = useApi()
+  return useRolesMutation(scope, ({ key, request }: { key: string; request: UpdateRoleRequest }) => api.updateRole(scope, key, request))
+}
+
+export function useSetRoleActive(scope: RoleScope) {
+  const api = useApi()
+  return useRolesMutation(scope, ({ key, isActive }: { key: string; isActive: boolean }) => api.setRoleActive(scope, key, isActive))
+}
+
+export function useUpdateMember(scope: RoleScope) {
+  const api = useApi()
+  return useRolesMutation(scope, ({ accountId, request }: { accountId: string; request: UpdateMemberRequest }) =>
+    api.updateMember(scope, accountId, request),
+  )
 }

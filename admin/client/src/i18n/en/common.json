@@ -20,6 +20,8 @@
     "themes": "Theme library",
     "branding": "Branding & theme",
     "screens": "Screens & fields",
+    "roles": "Roles & people",
+    "workspaceRoles": "Workspace roles",
     "tenantThemes": "Workspace themes"
   },
   "mode": {
