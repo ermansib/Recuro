@@ -5,7 +5,7 @@ const b64url = (value: unknown) => btoa(JSON.stringify(value)).replaceAll('+', '
 const jwt = (claims: unknown) => `${b64url({ alg: 'RS256' })}.${b64url(claims)}.signature`
 
 describe('Keycloak tokens', () => {
-  it('reads tenant and roles from the access token and the name from the ID token', () => {
+  it('reads the workspace id and roles from the access token and the name from the ID token', () => {
     const account = accountOf(
       {
         access_token: jwt({ sub: 'kc-1', tenant_id: 'tnt-1', roles: ['tenant-admin', 'hrhead', 7] }),

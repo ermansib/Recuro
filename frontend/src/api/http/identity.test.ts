@@ -85,7 +85,7 @@ describe('sign-in for workspaces saved on the server', () => {
     expect(provider.startSignIn).toHaveBeenCalledWith({ workspace: 'mb-consulting', email: 'owner@mbconsulting.example', returnTo: '/approvals' })
   })
 
-  it('reopens MB Consulting from a fresh browser: the session carries the tenant and the account’s role', async () => {
+  it('reopens MB Consulting from a fresh browser: the session carries the workspace and the account’s role', async () => {
     const { api } = setup()
     const { session, returnTo } = await api.completeSignIn()
     expect(returnTo).toBe('/approvals')
@@ -99,7 +99,7 @@ describe('sign-in for workspaces saved on the server', () => {
     expect((await api.listTeam(session.token)).map((u) => u.id)).toEqual(['kc-sub-mb'])
   })
 
-  it('refuses an account from another tenant and forgets its tokens', async () => {
+  it('refuses an account from another workspace and forgets its tokens', async () => {
     const { api, provider } = setup({ account: { ...OWNER, tenantId: 'some-other-tenant' } })
     await expect(api.completeSignIn()).rejects.toMatchObject({ status: 403, message: expect.stringContaining('different workspace') })
     expect(provider.forget).toHaveBeenCalled()
