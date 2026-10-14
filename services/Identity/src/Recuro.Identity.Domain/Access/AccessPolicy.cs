@@ -8,8 +8,20 @@ namespace Recuro.Identity.Domain.Access;
 public sealed class AccessPolicy
 {
     private readonly Dictionary<string, AccessRule> _rules;
+    private readonly IReadOnlyDictionary<string, IReadOnlyList<string>> _assignedRoles;
 
-    public AccessPolicy(string version, IEnumerable<string> elevatedRoles, IEnumerable<AccessRule> rules)
+    /// <param name="version">Policy version, returned with every decision.</param>
+    /// <param name="elevatedRoles">Roles that must pass MFA before a step-up action.</param>
+    /// <param name="rules">The matrix rows.</param>
+    /// <param name="assignedRoles">
+    /// Roles the workspace gave each person (subject id → role keys). They count alongside the roles the
+    /// caller sends, so a role assigned in the admin portal works before the person's token carries it.
+    /// </param>
+    public AccessPolicy(
+        string version,
+        IEnumerable<string> elevatedRoles,
+        IEnumerable<AccessRule> rules,
+        IReadOnlyDictionary<string, IReadOnlyList<string>>? assignedRoles = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
         ArgumentNullException.ThrowIfNull(elevatedRoles);
@@ -17,6 +29,7 @@ public sealed class AccessPolicy
         Version = version;
         ElevatedRoles = elevatedRoles.ToHashSet(StringComparer.Ordinal);
         _rules = rules.ToDictionary(r => r.Action, StringComparer.Ordinal);
+        _assignedRoles = assignedRoles ?? new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
     }
 
     public string Version { get; }
@@ -34,7 +47,8 @@ public sealed class AccessPolicy
             return AccessDecision.Deny(DecisionReasons.UnknownAction);
         }
 
-        var heldRole = rule.Roles.FirstOrDefault(r => request.ActorRoles.Contains(r, StringComparer.Ordinal));
+        var actorRoles = ActorRolesOf(request);
+        var heldRole = rule.Roles.FirstOrDefault(r => actorRoles.Contains(r));
         var roleOk = rule.Roles.Count == 0 || heldRole is not null;
         var assigned = !string.IsNullOrEmpty(request.ActorId) && request.AssigneeIds.Contains(request.ActorId, StringComparer.Ordinal);
 
@@ -60,7 +74,7 @@ public sealed class AccessPolicy
             reasons.Add(DecisionReasons.Assigned);
         }
 
-        if (rule.StepUp && request.ActorRoles.Any(ElevatedRoles.Contains))
+        if (rule.StepUp && actorRoles.Any(ElevatedRoles.Contains))
         {
             if (!request.MfaVerified)
             {
@@ -71,5 +85,16 @@ public sealed class AccessPolicy
         }
 
         return new AccessDecision(true, reasons);
+    }
+
+    private HashSet<string> ActorRolesOf(AccessRequest request)
+    {
+        var roles = request.ActorRoles.ToHashSet(StringComparer.Ordinal);
+        if (!string.IsNullOrEmpty(request.ActorId) && _assignedRoles.TryGetValue(request.ActorId, out var assigned))
+        {
+            roles.UnionWith(assigned);
+        }
+
+        return roles;
     }
 }

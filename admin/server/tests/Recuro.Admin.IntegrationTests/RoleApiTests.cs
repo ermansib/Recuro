@@ -146,4 +146,24 @@ public sealed class RoleApiTests : IDisposable
         Assert.Contains(catalog!.Permissions, p => p.Key == "offer.approve");
         Assert.Contains(catalog.Pages, p => p.Key == "pipeline" && p.Code == "S-06");
     }
+
+    [Fact]
+    public async Task Services_read_a_workspace_roles_and_members_and_people_cannot()
+    {
+        var service = _factory.CreateClient();
+        service.DefaultRequestHeaders.Add("X-Dev-Roles", "service");
+        var path = $"/api/v1/internal/workspaces/{DatabaseSeeder.AuroraTenantId}/access";
+
+        var before = await service.GetFromJsonAsync<WorkspaceAccessDto>(path, Json);
+        Assert.Contains(before!.Roles, r => r.Key == "hrta" && r.Permissions.Contains("mrf.raise"));
+
+        await _factory.ClientAs(AdminApiFactory.Aurora).PostAsJsonAsync("/api/v1/tenant/roles", Recruiter(), Json);
+        var after = await service.GetFromJsonAsync<WorkspaceAccessDto>(path, Json);
+        Assert.Contains(after!.Roles, r => r.Key == "recruiter");
+        Assert.NotEqual(before.Version, after.Version);
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await _factory.ClientAs(AdminApiFactory.Aurora).GetAsync(new Uri(path, UriKind.Relative))).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await _factory.ClientAs("platform").GetAsync(new Uri(path, UriKind.Relative))).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await service.GetAsync(new Uri($"/api/v1/internal/workspaces/{Guid.NewGuid()}/access", UriKind.Relative))).StatusCode);
+    }
 }
