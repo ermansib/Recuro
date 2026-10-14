@@ -115,6 +115,26 @@ public class MaskingAndUserTests
     }
 
     [Fact]
+    public void Heads_of_department_are_mirrored_and_the_placement_follows_the_token()
+    {
+        var user = UserAccount.Provision(Tenant, "sub-1", "Ravi Menon", "r@x", ["employee", "hod"], Now, UserPlacement.From(" Operations ", "sub-ceo"));
+
+        Assert.Equal(["employee", "hod"], user.Roles);
+        Assert.Equal(("operations", "sub-ceo"), (user.Department, user.ManagerId));
+
+        user.SyncFromToken("Ravi Menon", "r@x", ["employee", "hod"], Now.AddHours(1), UserPlacement.From(null, null));
+        Assert.Equal((string.Empty, string.Empty), (user.Department, user.ManagerId));
+    }
+
+    [Theory]
+    [InlineData("credit-ops", "credit-ops")]
+    [InlineData("Credit-Ops", "credit-ops")]
+    [InlineData("credit ops", "")]
+    [InlineData("1st-floor", "")]
+    public void Department_keys_are_lowercase_keys_or_dropped(string raw, string expected) =>
+        Assert.Equal(expected, UserPlacement.From(raw, null).Department);
+
+    [Fact]
     public void The_user_DTO_uses_the_most_senior_persona_and_initials()
     {
         var dto = UserDto.From(UserAccount.Provision(Tenant, "sub-9", "kavya  iyer rao", "k@x", ["hrta", "mdceo"], Now));

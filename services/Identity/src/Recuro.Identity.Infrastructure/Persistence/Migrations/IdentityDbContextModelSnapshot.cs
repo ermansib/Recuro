@@ -114,6 +114,14 @@ namespace Recuro.Identity.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("")
+                        .HasColumnName("department");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(320)
@@ -127,6 +135,14 @@ namespace Recuro.Identity.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("LastSeenAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_seen_at");
+
+                    b.Property<string>("ManagerId")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("")
+                        .HasColumnName("manager_id");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -154,6 +170,9 @@ namespace Recuro.Identity.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TenantId")
                         .HasDatabaseName("ix_users_tenant_id");
+
+                    b.HasIndex("TenantId", "Department")
+                        .HasDatabaseName("ix_users_tenant_id_department");
 
                     b.HasIndex("TenantId", "Subject")
                         .IsUnique()

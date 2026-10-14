@@ -155,6 +155,7 @@ public sealed class OfferApiTests(OfferApiFactory api) : IClassFixture<OfferApiF
         var acceptedEvent = (await db.OutboxMessages.AsNoTracking().ToListAsync()).Single(m => m.Type == "offer.accepted.v1" && m.Envelope.Contains(id, StringComparison.Ordinal));
         using var envelope = JsonDocument.Parse(acceptedEvent.Envelope);
         Assert.Equal("2026-11-02", envelope.RootElement.GetProperty("data").GetProperty("joiningDate").GetString());
+        Assert.Equal(6, envelope.RootElement.GetProperty("data").GetProperty("probationMonths").GetInt32());
     }
 
     [Fact]

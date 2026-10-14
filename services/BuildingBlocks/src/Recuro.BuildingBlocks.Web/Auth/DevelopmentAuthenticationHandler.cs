@@ -20,6 +20,8 @@ public sealed class DevelopmentAuthenticationHandler(
     public const string NameHeader = "X-Dev-Name";
     public const string RolesHeader = "X-Dev-Roles";
     public const string TenantHeader = "X-Dev-Tenant";
+    public const string DepartmentHeader = "X-Dev-Department";
+    public const string ManagerHeader = "X-Dev-Manager";
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
@@ -38,6 +40,15 @@ public sealed class DevelopmentAuthenticationHandler(
         if (!string.IsNullOrWhiteSpace(tenant))
         {
             claims.Add(new Claim(RecuroClaims.Tenant, tenant));
+        }
+
+        foreach (var (header, claim) in new[] { (DepartmentHeader, RecuroClaims.Department), (ManagerHeader, RecuroClaims.Manager) })
+        {
+            var value = Request.Headers[header].ToString();
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                claims.Add(new Claim(claim, value));
+            }
         }
 
         claims.AddRange(Request.Headers[RolesHeader].ToString()
