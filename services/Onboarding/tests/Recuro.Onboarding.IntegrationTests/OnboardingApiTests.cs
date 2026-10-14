@@ -77,6 +77,9 @@ public sealed class OnboardingApiTests(OnboardingApiFactory api) : IClassFixture
     private Task<HttpResponseMessage> DecideAsync(Guid tenant, string appId, object body, string role = RecuroRoles.HrHead) =>
         api.ClientFor(tenant, role).PostAsJsonAsync($"/api/v1/onboarding/cases/{appId}/probation/decision", body);
 
+    private Task<HttpResponseMessage> DecideAsHodAsync(Guid tenant, string appId, string userId, string name, object body) =>
+        api.ClientFor(tenant, "employee,hod", userId, name).PostAsJsonAsync($"/api/v1/onboarding/cases/{appId}/probation/decision", body);
+
     [Fact]
     public async Task An_accepted_offer_opens_the_case_and_sends_the_joining_instructions_once()
     {
@@ -88,7 +91,7 @@ public sealed class OnboardingApiTests(OnboardingApiFactory api) : IClassFixture
 
         Assert.Equal(
             ["acceptedAt", "appId", "bgvStatus", "buddy", "cancelledAt", "candidateId", "checklist", "checklistPercent", "confirmedAt", "day1ReadyAt", "daysToJoining",
-             "decisions", "documents", "fileComplete", "fileCompletedAt", "id", "joiningDate", "milestones", "missingDocuments", "offerId", "probationCycle",
+             "decisions", "department", "documents", "fileComplete", "fileCompletedAt", "id", "joiningDate", "milestones", "missingDocuments", "offerId", "probationCycle",
              "probationEndsOn", "probationMonths", "reportingManager", "reportingManagerId", "reqId", "rulesVersionId", "status"],
             onboardingCase.EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal));
         Assert.Equal("PreBoarding", onboardingCase.GetProperty("status").GetString());
@@ -305,6 +308,75 @@ public sealed class OnboardingApiTests(OnboardingApiFactory api) : IClassFixture
     }
 
     [Fact]
+    public async Task The_department_head_of_the_joiners_manager_decides_probation_and_gets_the_reminder()
+    {
+        var b = OnboardingApiFactory.TenantB;
+        api.Stubs.AddPerson(A, "mgr-ops", "R. Iyer", "operations");
+        api.Stubs.AddPerson(A, "hod-ops", "S. Menon", "operations", hod: true);
+        api.Stubs.AddPerson(A, "hod-fin", "K. Das", "finance", hod: true);
+        api.Stubs.AddPerson(b, "hod-ops-b", "B. Head", "operations", hod: true);
+        var appId = await AcceptedAsync(A, Today.AddMonths(-7));
+        await TickAllAsync(A, appId);
+        await VerifyMandatoryAsync(A, appId);
+        await ProcessAsync(A, EventTypes.Bgv.Cleared, new { caseId = "bgv-h1", appId, clearedAt = api.Clock.GetUtcNow() });
+        var assigned = await api.ClientFor(A, RecuroRoles.HrTa).PutAsJsonAsync($"/api/v1/onboarding/cases/{appId}/assignments", new { reportingManagerId = "mgr-ops", reportingManager = "R. Iyer" });
+        Assert.Equal(HttpStatusCode.OK, assigned.StatusCode);
+
+        // Probation has ended: the review and end reminders name the operations head (found in tenant A only).
+        Assert.True(await api.Services.GetRequiredService<MilestoneSchedulerJob>().ScanAllTenantsAsync(CancellationToken.None));
+        var endReminder = await ReminderAsync(A, appId, "probation-end");
+        Assert.Equal("hod-ops", endReminder.GetProperty("departmentHeadId").GetString());
+        Assert.Equal(["hrta"], endReminder.GetProperty("assigneeRoles").EnumerateArray().Select(r => r.GetString()));
+
+        var hrHead = await DecideAsync(A, appId, new { decision = "confirm" });
+        Assert.Equal(HttpStatusCode.Forbidden, hrHead.StatusCode);
+        Assert.Contains("not_department_head", await hrHead.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        Assert.Equal(HttpStatusCode.Forbidden, (await DecideAsHodAsync(A, appId, "hod-fin", "K. Das", new { decision = "confirm" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await DecideAsHodAsync(A, appId, "hod-ops-b", "B. Head", new { decision = "confirm" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await api.ClientFor(A, RecuroRoles.Employee, "hod-ops").PostAsJsonAsync($"/api/v1/onboarding/cases/{appId}/probation/decision", new { decision = "confirm" })).StatusCode);
+
+        var confirmed = await DecideAsHodAsync(A, appId, "hod-ops", "S. Menon", new { decision = "confirm", reason = "Strong first six months" });
+        Assert.Equal(HttpStatusCode.OK, confirmed.StatusCode);
+        var body = await confirmed.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("Confirmed", body.GetProperty("status").GetString());
+        Assert.Equal("S. Menon", body.GetProperty("decisions")[0].GetProperty("decidedBy").GetString());
+    }
+
+    [Fact]
+    public async Task Without_a_department_head_HR_Head_decides_probation()
+    {
+        api.Stubs.AddPerson(A, "hod-ops", "S. Menon", "operations", hod: true);
+        var appId = await AcceptedAsync(A, Today.AddMonths(-7));
+        await TickAllAsync(A, appId);
+        var hrTa = api.ClientFor(A, RecuroRoles.HrTa);
+        Assert.Equal(HttpStatusCode.BadRequest, (await hrTa.PutAsJsonAsync($"/api/v1/onboarding/cases/{appId}/assignments", new { department = "Legal Team" })).StatusCode);
+        var assigned = await hrTa.PutAsJsonAsync($"/api/v1/onboarding/cases/{appId}/assignments", new { department = "legal" });
+        Assert.Equal("legal", (await assigned.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("department").GetString());
+
+        Assert.True(await api.Services.GetRequiredService<MilestoneSchedulerJob>().ScanAllTenantsAsync(CancellationToken.None));
+        var endReminder = await ReminderAsync(A, appId, "probation-end");
+        Assert.Equal(JsonValueKind.Null, endReminder.GetProperty("departmentHeadId").ValueKind);
+        Assert.Equal(["hrta", "hrhead"], endReminder.GetProperty("assigneeRoles").EnumerateArray().Select(r => r.GetString()));
+
+        var hod = await DecideAsHodAsync(A, appId, "hod-ops", "S. Menon", new { decision = "extend", reason = "More time", extendByMonths = 2 });
+        Assert.Equal(HttpStatusCode.Forbidden, hod.StatusCode);
+        Assert.Contains("hr_head_decides", await hod.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+
+        api.Stubs.IdentityDown = true;
+        try
+        {
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, (await DecideAsync(A, appId, new { decision = "extend", reason = "More time", extendByMonths = 2 })).StatusCode);
+        }
+        finally
+        {
+            api.Stubs.IdentityDown = false;
+        }
+
+        var extended = await DecideAsync(A, appId, new { decision = "extend", reason = "More time", extendByMonths = 2 });
+        Assert.Equal(HttpStatusCode.OK, extended.StatusCode);
+    }
+
+    [Fact]
     public async Task A_withdrawn_offer_cancels_the_case_and_a_new_acceptance_opens_a_fresh_one()
     {
         var offerId = Guid.NewGuid().ToString();
@@ -366,13 +438,22 @@ public sealed class OnboardingApiTests(OnboardingApiFactory api) : IClassFixture
         return await scope.ServiceProvider.GetRequiredService<OnboardingDbContext>().Cases.CountAsync(c => c.AppId == appId);
     }
 
-    private async Task<int> OutboxCountAsync(Guid tenant, string type, string appId)
+    private async Task<int> OutboxCountAsync(Guid tenant, string type, string appId) =>
+        (await OutboxEnvelopesAsync(tenant, type, appId)).Count;
+
+    /// <summary>The <c>data</c> of the one milestone.due event for this case and milestone kind.</summary>
+    private async Task<JsonElement> ReminderAsync(Guid tenant, string appId, string milestone) =>
+        (await OutboxEnvelopesAsync(tenant, EventTypes.Onboarding.MilestoneDue, appId))
+            .Select(e => JsonDocument.Parse(e).RootElement.GetProperty("data"))
+            .Single(d => d.GetProperty("milestone").GetString() == milestone);
+
+    private async Task<List<string>> OutboxEnvelopesAsync(Guid tenant, string type, string appId)
     {
         await using var scope = api.Services.CreateAsyncScope();
         scope.ServiceProvider.GetRequiredService<ScopeContext>().SetTenant(tenant);
         var db = scope.ServiceProvider.GetRequiredService<OnboardingDbContext>();
         var envelopes = await db.OutboxMessages.Where(m => m.TenantId == tenant && m.Type == type).Select(m => m.Envelope).ToListAsync();
-        return envelopes.Count(e => e.Contains($"\"{appId}\"", StringComparison.Ordinal));
+        return envelopes.Where(e => e.Contains($"\"{appId}\"", StringComparison.Ordinal)).ToList();
     }
 
     private Task ProcessAsync(Guid tenant, string type, object data) =>

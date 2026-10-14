@@ -41,8 +41,11 @@ internal sealed class SetChecklistItemCommandHandler(
     }
 }
 
-/// <summary>Records the reporting manager (who gets probation reminders) and the buddy.</summary>
-public sealed record AssignPeopleCommand(string CaseRef, string? ReportingManagerId, string? ReportingManager, string? Buddy) : ICommand<OnboardingCaseDto>;
+/// <summary>
+/// Records the reporting manager (who gets probation reminders), the buddy and the joiner's department
+/// (whose head decides probation; when blank, the manager's department applies).
+/// </summary>
+public sealed record AssignPeopleCommand(string CaseRef, string? ReportingManagerId, string? ReportingManager, string? Buddy, string? Department = null) : ICommand<OnboardingCaseDto>;
 
 internal sealed class AssignPeopleCommandValidator : AbstractValidator<AssignPeopleCommand>
 {
@@ -51,6 +54,10 @@ internal sealed class AssignPeopleCommandValidator : AbstractValidator<AssignPeo
         RuleFor(c => c.ReportingManagerId).MaximumLength(OnboardingLimits.PersonIdLength);
         RuleFor(c => c.ReportingManager).MaximumLength(OnboardingLimits.ActorLength);
         RuleFor(c => c.Buddy).MaximumLength(OnboardingLimits.ActorLength);
+        RuleFor(c => c.Department!)
+            .Matches(OnboardingLimits.DepartmentKeyPattern)
+            .When(c => !string.IsNullOrWhiteSpace(c.Department))
+            .WithMessage("department is a lowercase key of letters, digits and dashes, e.g. operations.");
     }
 }
 
@@ -65,7 +72,7 @@ internal sealed class AssignPeopleCommandHandler(IOnboardingCaseRepository cases
             return OnboardingErrors.NotFound(command.CaseRef);
         }
 
-        var assigned = onboardingCase.Assign(command.ReportingManagerId, command.ReportingManager, command.Buddy);
+        var assigned = onboardingCase.Assign(command.ReportingManagerId, command.ReportingManager, command.Buddy, command.Department);
         if (assigned.IsFailure)
         {
             return assigned.Error!;

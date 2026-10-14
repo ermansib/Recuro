@@ -55,6 +55,13 @@ public static class OnboardingErrors
 
     public static readonly Error ReasonRequired = Error.Validation(
         [new FieldError("reason", "reason_required", "An extension must give its reason.")]);
+
+    public static Error NotDepartmentHead(string department) =>
+        Error.Forbidden("not_department_head", $"The head of department '{department}' decides this probation.");
+
+    public static readonly Error HrHeadDecides = Error.Forbidden(
+        "hr_head_decides",
+        "No department head is on record for this joiner, so HR Head decides this probation.");
 }
 
 /// <summary>A mandatory §13 document that keeps the file from being complete.</summary>

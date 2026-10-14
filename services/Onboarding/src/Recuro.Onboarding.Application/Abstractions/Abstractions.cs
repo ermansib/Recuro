@@ -83,6 +83,21 @@ public interface ICandidateDirectory
     Task<string?> GetNameAsync(string candidateId, CancellationToken ct);
 }
 
+/// <summary>A person of the tenant as Identity knows them: user id, name and department key.</summary>
+public sealed record Person(string Id, string Name, string Department);
+
+/// <summary>
+/// Identity's tenant-scoped people lookups (<c>GET /api/v1/identity/users/{id}</c> and
+/// <c>?role=hod&amp;department=…</c>). Null when Identity has nobody; Identity not answering is
+/// <see cref="DependencyUnavailableException"/>.
+/// </summary>
+public interface IPeopleDirectory
+{
+    Task<Person?> FindAsync(string userId, CancellationToken ct);
+
+    Task<Person?> FindDepartmentHeadAsync(string department, CancellationToken ct);
+}
+
 /// <summary>RCU-ONB-005: renders the confirmation letter (white-label: names no company).</summary>
 public interface IConfirmationLetterRenderer
 {

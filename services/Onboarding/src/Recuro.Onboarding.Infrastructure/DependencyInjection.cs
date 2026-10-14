@@ -49,13 +49,14 @@ public static class DependencyInjection
     }
 
     /// <summary>Config (onboarding matrix, working days) and Candidate (letter name) as typed clients; the API adds the handlers.</summary>
-    public static (IHttpClientBuilder Config, IHttpClientBuilder Candidate) AddOnboardingClients(this IServiceCollection services)
+    public static (IHttpClientBuilder Config, IHttpClientBuilder Candidate, IHttpClientBuilder Identity) AddOnboardingClients(this IServiceCollection services)
     {
         var config = services.AddHttpClient<ConfigClient>((sp, http) => Endpoints(sp).Apply(http, Endpoints(sp).Config, nameof(ServiceEndpoints.Config)));
         services.AddTransient<IOnboardingRules>(sp => sp.GetRequiredService<ConfigClient>());
         services.AddTransient<IWorkingDays>(sp => sp.GetRequiredService<ConfigClient>());
         var candidate = services.AddHttpClient<ICandidateDirectory, CandidateDirectoryClient>((sp, http) => Endpoints(sp).Apply(http, Endpoints(sp).Candidate, nameof(ServiceEndpoints.Candidate)));
-        return (config, candidate);
+        var identity = services.AddHttpClient<IPeopleDirectory, PeopleDirectoryClient>((sp, http) => Endpoints(sp).Apply(http, Endpoints(sp).Identity, nameof(ServiceEndpoints.Identity)));
+        return (config, candidate, identity);
     }
 
     private static ServiceEndpoints Endpoints(IServiceProvider sp) =>

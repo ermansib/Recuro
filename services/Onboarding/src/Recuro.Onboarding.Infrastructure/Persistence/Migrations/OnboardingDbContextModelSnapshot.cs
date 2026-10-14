@@ -196,6 +196,11 @@ namespace Recuro.Onboarding.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("day1ready_at");
 
+                    b.Property<string>("Department")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("department");
+
                     b.Property<DateTimeOffset?>("FileCompletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("file_completed_at");

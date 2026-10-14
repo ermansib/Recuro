@@ -18,11 +18,11 @@ builder.Services
     .AddExceptionHandler<DependencyExceptionHandler>()
     .AddTransient<ForwardCallerHandler>();
 
-// Calls made for a request carry the caller's own credentials, so Config and Candidate authorise and
+// Calls made for a request carry the caller's own credentials, so Config, Candidate and Identity authorise and
 // mask for the real caller. Calls with no caller (event handlers, the scheduler) are signed as the
 // onboarding service account (RCU-AUT-005); ServiceTokenHandler leaves forwarded calls alone, so it runs after.
-var (config, candidate) = builder.Services.AddOnboardingClients();
-foreach (var client in new[] { config, candidate })
+var (config, candidate, identity) = builder.Services.AddOnboardingClients();
+foreach (var client in new[] { config, candidate, identity })
 {
     client
         .AddHttpMessageHandler<ForwardCallerHandler>()

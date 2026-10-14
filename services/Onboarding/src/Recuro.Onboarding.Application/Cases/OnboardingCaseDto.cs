@@ -58,6 +58,7 @@ public sealed record OnboardingCaseDto(
     string? ReportingManagerId,
     string? ReportingManager,
     string? Buddy,
+    string? Department,
     int ChecklistPercent,
     DateTimeOffset? Day1ReadyAt,
     IReadOnlyList<ChecklistItemDto> Checklist,
@@ -92,6 +93,7 @@ public sealed record OnboardingCaseDto(
             c.ReportingManagerId,
             c.ReportingManager,
             c.Buddy,
+            c.Department,
             c.ChecklistPercent,
             c.Day1ReadyAt,
             c.Checklist.OrderBy(i => i.Position).Select(i => new ChecklistItemDto(i.Key, i.Label, i.Done, i.Remarks, i.UpdatedAt, i.UpdatedBy)).ToList(),
@@ -138,6 +140,11 @@ public static class OnboardingLimits
     public const int ReasonLength = 2000;
     public const int ActorLength = 200;
     public const int PersonIdLength = 100;
+
+    /// <summary>Identity's department keys: lowercase letters, digits and dashes (Keycloak attribute <c>department</c>).</summary>
+    public const string DepartmentKeyPattern = "^[a-z0-9][a-z0-9-]{0,63}$";
+
+    public const int DepartmentLength = 64;
     public const int VersionIdLength = 64;
     public const int FileNameLength = 255;
     public const int ContentTypeLength = 100;

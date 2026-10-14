@@ -7,7 +7,7 @@ using System.Web;
 namespace Recuro.Onboarding.IntegrationTests;
 
 /// <summary>
-/// Stands in for Config (resolve endpoints) and Candidate (name), routed by path. Like the real Config
+/// Stands in for Config (resolve endpoints), Candidate (name) and Identity (people, per tenant), routed by path. Like the real Config
 /// today, it has no onboarding matrix and refuses negative working days unless a test says otherwise.
 /// Records the role each call carried.
 /// </summary>
@@ -25,6 +25,14 @@ public sealed class StubServices : HttpMessageHandler
 
     public ConcurrentQueue<string?> ConfigCallRoles { get; } = new();
 
+    public bool IdentityDown { get; set; }
+
+    private readonly ConcurrentDictionary<(string Tenant, string Id), (string Name, string Department, bool Hod)> _people = new();
+
+    /// <summary>Puts a person on record in Identity for one tenant, optionally as their department's head.</summary>
+    public void AddPerson(Guid tenant, string id, string name, string department, bool hod = false) =>
+        _people[(tenant.ToString(), id)] = (name, department, hod);
+
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -40,6 +48,17 @@ public sealed class StubServices : HttpMessageHandler
             }
 
             return Task.FromResult(Config(path, HttpUtility.ParseQueryString(request.RequestUri.Query)));
+        }
+
+        if (path.StartsWith("/api/v1/identity/users", StringComparison.Ordinal))
+        {
+            if (IdentityDown)
+            {
+                throw new HttpRequestException("Identity is down (test).");
+            }
+
+            var tenant = request.Headers.TryGetValues("X-Dev-Tenant", out var tenants) ? tenants.FirstOrDefault() ?? string.Empty : string.Empty;
+            return Task.FromResult(Identity(tenant, path, HttpUtility.ParseQueryString(request.RequestUri.Query)));
         }
 
         if (path.StartsWith("/api/v1/candidates/", StringComparison.Ordinal))
@@ -87,6 +106,32 @@ public sealed class StubServices : HttpMessageHandler
         }
 
         return new HttpResponseMessage(HttpStatusCode.NotFound);
+    }
+
+    private HttpResponseMessage Identity(string tenant, string path, System.Collections.Specialized.NameValueCollection query)
+    {
+        object Dto(string id, (string Name, string Department, bool Hod) p) =>
+            new { id, tenantId = tenant, name = p.Name, role = p.Hod ? "employee" : "hrta", department = p.Department, managerId = string.Empty };
+
+        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length == 5)
+        {
+            var id = Uri.UnescapeDataString(segments[4]);
+            return _people.TryGetValue((tenant, id), out var person) ? Json(Dto(id, person)) : new HttpResponseMessage(HttpStatusCode.NotFound);
+        }
+
+        var department = query["department"];
+        if (department is not null && (department.Length == 0 || department.Any(ch => char.IsUpper(ch) || char.IsWhiteSpace(ch))))
+        {
+            return new HttpResponseMessage(HttpStatusCode.BadRequest);
+        }
+
+        var heads = _people
+            .Where(p => p.Key.Tenant == tenant && p.Value.Hod && query["role"] == "hod" && p.Value.Department == department)
+            .OrderBy(p => p.Value.Name, StringComparer.Ordinal)
+            .Select(p => Dto(p.Key.Id, p.Value))
+            .ToList();
+        return Json(heads);
     }
 
     private static HttpResponseMessage Json(object body) => new(HttpStatusCode.OK) { Content = JsonContent.Create(body) };

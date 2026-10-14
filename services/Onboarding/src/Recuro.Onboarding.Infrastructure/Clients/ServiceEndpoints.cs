@@ -11,6 +11,9 @@ public sealed class ServiceEndpoints
     /// <summary>Candidate service (name on the confirmation letter), e.g. <c>http://localhost:5107/</c>.</summary>
     public Uri? Candidate { get; set; }
 
+    /// <summary>Identity service (reporting manager, department head), e.g. <c>http://localhost:5101/</c>.</summary>
+    public Uri? Identity { get; set; }
+
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(5);
 
     /// <summary>How long a resolved onboarding template is reused (architecture.md: up to 5 minutes).</summary>
