@@ -38,18 +38,18 @@ export function createHttpClient(
     getAuthConfig: () => request('GET', '/auth/config'),
     getMe: () => request('GET', '/auth/me'),
     listPersonas: () => request('GET', '/dev/personas'),
-    listTenants: () => request('GET', '/platform/tenants'),
-    createTenant: (body) => request('POST', '/platform/tenants', body),
-    updateTenant: (id, body) => request('PUT', `/platform/tenants/${key(id)}`, body),
+    listTenants: () => request('GET', '/platform/workspaces'),
+    createTenant: (body) => request('POST', '/platform/workspaces', body),
+    updateTenant: (id, body) => request('PUT', `/platform/workspaces/${key(id)}`, body),
     setTenantSuspended: (id, suspended) =>
-      request('PUT', `/platform/tenants/${key(id)}/status`, { status: suspended ? 'suspended' : 'active' }),
-    assignTenantTheme: (id, body) => request('PUT', `/platform/tenants/${key(id)}/theme`, body),
+      request('PUT', `/platform/workspaces/${key(id)}/status`, { status: suspended ? 'suspended' : 'active' }),
+    assignTenantTheme: (id, body) => request('PUT', `/platform/workspaces/${key(id)}/theme`, body),
     listThemes: () => request('GET', '/platform/themes'),
     setThemePublished: (themeKey, isPublished) =>
       request('PUT', `/platform/themes/${key(themeKey)}/published`, { isPublished }),
-    getBranding: () => request('GET', '/tenant/branding'),
-    listScreens: () => request('GET', '/tenant/screens'),
-    getScreen: (screenKey) => request('GET', `/tenant/screens/${key(screenKey)}`),
-    updateScreen: (screenKey, body) => request('PUT', `/tenant/screens/${key(screenKey)}`, body),
+    getBranding: () => request('GET', '/workspace/branding'),
+    listScreens: () => request('GET', '/workspace/screens'),
+    getScreen: (screenKey) => request('GET', `/workspace/screens/${key(screenKey)}`),
+    updateScreen: (screenKey, body) => request('PUT', `/workspace/screens/${key(screenKey)}`, body),
   }
 }

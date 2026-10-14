@@ -19,7 +19,7 @@ export function TenantThemePage() {
   const [params, setParams] = useSearchParams()
 
   const available = themes.data?.filter((preset) => preset.isPublished) ?? []
-  const tenant = tenants.data?.find((candidate) => candidate.id === params.get('tenant')) ?? tenants.data?.[0]
+  const tenant = tenants.data?.find((candidate) => candidate.id === params.get('workspace')) ?? tenants.data?.[0]
 
   return (
     <>
@@ -33,7 +33,7 @@ export function TenantThemePage() {
                 id="tenant-select"
                 className="input"
                 value={tenant.id}
-                onChange={(event) => setParams({ tenant: event.target.value }, { replace: true })}
+                onChange={(event) => setParams({ workspace: event.target.value }, { replace: true })}
               >
                 {tenants.data?.map((option) => (
                   <option key={option.id} value={option.id}>

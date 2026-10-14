@@ -39,7 +39,7 @@ public sealed class WorkspaceSignUpTests : IDisposable
         var found = await client.GetFromJsonAsync<WorkspaceDto>("/api/v1/workspaces/acme-corp", Json);
         Assert.Equal(JsonSerializer.Serialize(signUp.Workspace, Json), JsonSerializer.Serialize(found, Json));
 
-        var tenants = await _factory.ClientAs("platform").GetFromJsonAsync<List<TenantDto>>("/api/v1/platform/tenants", Json);
+        var tenants = await _factory.ClientAs("platform").GetFromJsonAsync<List<TenantDto>>("/api/v1/platform/workspaces", Json);
         var tenant = Assert.Single(tenants!, t => t.Slug == "acme-corp");
         Assert.Equal((TenantKind.Agency, TenantPlan.Starter, TenantStatus.Active), (tenant.Kind, tenant.Plan, tenant.Status));
     }
@@ -95,11 +95,11 @@ public sealed class WorkspaceSignUpTests : IDisposable
     public async Task Suspended_workspaces_are_not_found()
     {
         var platform = _factory.ClientAs("platform");
-        var tenants = await platform.GetFromJsonAsync<List<TenantDto>>("/api/v1/platform/tenants", Json);
+        var tenants = await platform.GetFromJsonAsync<List<TenantDto>>("/api/v1/platform/workspaces", Json);
         var aurora = tenants!.Single(t => t.Slug == "aurora");
         Assert.Equal(HttpStatusCode.OK, (await platform.GetAsync(new Uri("/api/v1/workspaces/aurora", UriKind.Relative))).StatusCode);
 
-        await platform.PutAsJsonAsync($"/api/v1/platform/tenants/{aurora.Id}/status", new ChangeTenantStatusRequest(TenantStatus.Suspended), Json);
+        await platform.PutAsJsonAsync($"/api/v1/platform/workspaces/{aurora.Id}/status", new ChangeTenantStatusRequest(TenantStatus.Suspended), Json);
 
         Assert.Equal(HttpStatusCode.NotFound, (await platform.GetAsync(new Uri("/api/v1/workspaces/aurora", UriKind.Relative))).StatusCode);
     }

@@ -10,13 +10,13 @@ interface NavItem {
 
 const NAV: Record<AdminLevel, NavItem[]> = {
   platform: [
-    { to: '/platform/tenants', labelKey: 'common.nav.tenants' },
-    { to: '/platform/tenant-themes', labelKey: 'common.nav.tenantThemes' },
+    { to: '/platform/workspaces', labelKey: 'common.nav.tenants' },
+    { to: '/platform/workspace-themes', labelKey: 'common.nav.tenantThemes' },
     { to: '/platform/themes', labelKey: 'common.nav.themes' },
   ],
   tenant: [
-    { to: '/tenant/branding', labelKey: 'common.nav.branding' },
-    { to: '/tenant/screens', labelKey: 'common.nav.screens' },
+    { to: '/workspace/branding', labelKey: 'common.nav.branding' },
+    { to: '/workspace/screens', labelKey: 'common.nav.screens' },
   ],
 }
 

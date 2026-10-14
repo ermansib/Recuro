@@ -4,7 +4,7 @@ Recuro is a white-label recruitment portal for in-house HR teams and staffing ag
 recruitment CRM. The React + TypeScript frontend is built first, on static JSON mocks; .NET Core
 microservices come later. See [CLAUDE.md](CLAUDE.md) for the architecture and conventions.
 
-The admin portal (platform console and tenant admin, .NET 10 + React) lives in [`admin/`](admin/README.md).
+The admin portal (platform console and workspace admin, .NET 10 + React) lives in [`admin/`](admin/README.md).
 
 ## Run the frontend
 
@@ -27,7 +27,7 @@ The demo personas (and the persona switcher in the account menu) appear in `npm 
 `VITE_DEMO_PERSONAS=true` to keep them in a production build. Accounts and workspaces you create are
 kept in the browser's localStorage; hiring data lives in memory and resets on reload.
 
-**Themes.** Each workspace's theme is assigned in the admin portal's platform console (Tenant themes). With the
+**Themes.** Each workspace's theme is assigned in the admin portal's platform console (Workspace themes). With the
 admin portal running on port 5080, `npm run dev` proxies `/api/v1/runtime` to it, so a theme you
 publish there shows up on the sign-in page and across the portal (reload, or switch back to the tab).
 Set `ADMIN_API_PROXY` to use another address, or `VITE_ADMIN_API_URL` for a build. Without the admin

@@ -13,7 +13,7 @@ internal static class DevelopmentEndpoints
                 IEnumerable<PersonaDto> personas =
                 [
                     new("platform", "Platform admin", null),
-                    .. list.Select(t => new PersonaDto($"tenant:{t.Id}", "Tenant admin", t.Name)),
+                    .. list.Select(t => new PersonaDto($"tenant:{t.Id}", "Workspace admin", t.Name)),
                 ];
                 return Results.Ok(personas);
             })

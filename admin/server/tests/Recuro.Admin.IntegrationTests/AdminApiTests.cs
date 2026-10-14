@@ -24,8 +24,8 @@ public sealed class AdminApiTests : IDisposable
     {
         var client = _factory.ClientAs(null);
 
-        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync(new Uri("/api/v1/platform/tenants", UriKind.Relative))).StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync(new Uri("/api/v1/tenant/screens", UriKind.Relative))).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync(new Uri("/api/v1/platform/workspaces", UriKind.Relative))).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync(new Uri("/api/v1/workspace/screens", UriKind.Relative))).StatusCode);
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public sealed class AdminApiTests : IDisposable
     {
         var client = _factory.ClientAs(AdminApiFactory.Aurora);
 
-        var response = await client.GetAsync(new Uri("/api/v1/platform/tenants", UriKind.Relative));
+        var response = await client.GetAsync(new Uri("/api/v1/platform/workspaces", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -43,14 +43,14 @@ public sealed class AdminApiTests : IDisposable
     {
         var client = _factory.ClientAs("platform");
 
-        var tenants = await client.GetFromJsonAsync<List<TenantDto>>("/api/v1/platform/tenants", Json);
+        var tenants = await client.GetFromJsonAsync<List<TenantDto>>("/api/v1/platform/workspaces", Json);
         Assert.Equal(["Aurora Housing Finance", "TalentBridge Staffing"], tenants!.Select(t => t.Name));
 
         var request = new CreateTenantRequest("Acme Corp", "acme", TenantKind.InHouse, TenantPlan.Starter, "careers.acme.example");
-        var created = await client.PostAsJsonAsync("/api/v1/platform/tenants", request, Json);
+        var created = await client.PostAsJsonAsync("/api/v1/platform/workspaces", request, Json);
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
 
-        var duplicate = await client.PostAsJsonAsync("/api/v1/platform/tenants", request, Json);
+        var duplicate = await client.PostAsJsonAsync("/api/v1/platform/workspaces", request, Json);
         Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
     }
 
@@ -72,11 +72,11 @@ public sealed class AdminApiTests : IDisposable
         var talentBridge = _factory.ClientAs(AdminApiFactory.TalentBridge);
 
         var update = new UpdateScreenRequest(true, "Raise a hiring request", null, [new UpdateFieldRequest("location", "Branch", true, true, 40)]);
-        var response = await aurora.PutAsJsonAsync("/api/v1/tenant/screens/mrf", update, Json);
+        var response = await aurora.PutAsJsonAsync("/api/v1/workspace/screens/mrf", update, Json);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var auroraScreen = await aurora.GetFromJsonAsync<EffectiveScreen>("/api/v1/tenant/screens/mrf", Json);
-        var bridgeScreen = await talentBridge.GetFromJsonAsync<EffectiveScreen>("/api/v1/tenant/screens/mrf", Json);
+        var auroraScreen = await aurora.GetFromJsonAsync<EffectiveScreen>("/api/v1/workspace/screens/mrf", Json);
+        var bridgeScreen = await talentBridge.GetFromJsonAsync<EffectiveScreen>("/api/v1/workspace/screens/mrf", Json);
 
         Assert.Equal("Raise a hiring request", auroraScreen!.Title);
         Assert.Equal("Branch", auroraScreen.Fields.Single(f => f.Key == "location").Label);
@@ -90,7 +90,7 @@ public sealed class AdminApiTests : IDisposable
         var client = _factory.ClientAs(AdminApiFactory.Aurora);
         var update = new UpdateScreenRequest(true, null, null, [new UpdateFieldRequest("grade", null, false, false, 1)]);
 
-        var response = await client.PutAsJsonAsync("/api/v1/tenant/screens/mrf", update, Json);
+        var response = await client.PutAsJsonAsync("/api/v1/workspace/screens/mrf", update, Json);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Contains("screen.lockedField", await response.Content.ReadAsStringAsync(), StringComparison.Ordinal);
@@ -104,14 +104,14 @@ public sealed class AdminApiTests : IDisposable
         var anonymous = _factory.ClientAs(null);
 
         var response = await platform.PutAsJsonAsync(
-            $"/api/v1/platform/tenants/{Infrastructure.Persistence.Seed.DatabaseSeeder.AuroraTenantId}/theme",
+            $"/api/v1/platform/workspaces/{Infrastructure.Persistence.Seed.DatabaseSeeder.AuroraTenantId}/theme",
             new AssignTenantThemeRequest("royal-plum", ThemeMode.Dark),
             Json);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var tenant = await response.Content.ReadFromJsonAsync<TenantDto>(Json);
         Assert.Equal("royal-plum", tenant!.ThemePresetKey);
 
-        var branding = await aurora.GetFromJsonAsync<BrandingDto>("/api/v1/tenant/branding", Json);
+        var branding = await aurora.GetFromJsonAsync<BrandingDto>("/api/v1/workspace/branding", Json);
         Assert.Equal("royal-plum", branding!.ThemePresetKey);
         Assert.Equal("Royal Plum", branding.Theme.Name);
 
@@ -139,7 +139,7 @@ public sealed class AdminApiTests : IDisposable
         var client = _factory.ClientAs("platform");
 
         var response = await client.PutAsJsonAsync(
-            $"/api/v1/platform/tenants/{Infrastructure.Persistence.Seed.DatabaseSeeder.AuroraTenantId}/theme",
+            $"/api/v1/platform/workspaces/{Infrastructure.Persistence.Seed.DatabaseSeeder.AuroraTenantId}/theme",
             new AssignTenantThemeRequest("neon", ThemeMode.Light),
             Json);
 
@@ -150,9 +150,9 @@ public sealed class AdminApiTests : IDisposable
     public async Task Tenant_admins_cannot_change_their_own_theme()
     {
         var aurora = _factory.ClientAs(AdminApiFactory.Aurora);
-        var tenantRoute = await aurora.PutAsJsonAsync("/api/v1/tenant/branding", new AssignTenantThemeRequest("royal-plum", ThemeMode.Dark), Json);
+        var tenantRoute = await aurora.PutAsJsonAsync("/api/v1/workspace/branding", new AssignTenantThemeRequest("royal-plum", ThemeMode.Dark), Json);
         var platformRoute = await aurora.PutAsJsonAsync(
-            $"/api/v1/platform/tenants/{Infrastructure.Persistence.Seed.DatabaseSeeder.AuroraTenantId}/theme",
+            $"/api/v1/platform/workspaces/{Infrastructure.Persistence.Seed.DatabaseSeeder.AuroraTenantId}/theme",
             new AssignTenantThemeRequest("royal-plum", ThemeMode.Dark),
             Json);
 
@@ -167,7 +167,7 @@ public sealed class AdminApiTests : IDisposable
         var anonymous = _factory.ClientAs(null);
 
         var response = await platform.PutAsJsonAsync(
-            $"/api/v1/platform/tenants/{Infrastructure.Persistence.Seed.DatabaseSeeder.TalentBridgeTenantId}/status",
+            $"/api/v1/platform/workspaces/{Infrastructure.Persistence.Seed.DatabaseSeeder.TalentBridgeTenantId}/status",
             new ChangeTenantStatusRequest(TenantStatus.Suspended),
             Json);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

@@ -217,12 +217,12 @@ public static class TenantErrors
         Error.Validation("tenant.customDomain", "Custom domain must be a valid host name, for example careers.example.com.");
 
     public static readonly Error SlugTaken =
-        Error.Conflict("tenant.slugTaken", "Another tenant already uses this slug.");
+        Error.Conflict("tenant.slugTaken", "Another workspace already uses this slug.");
 
-    public static Error NotFound(Guid id) => Error.NotFound("tenant.notFound", $"Tenant '{id}' was not found.");
+    public static Error NotFound(Guid id) => Error.NotFound("tenant.notFound", $"Workspace '{id}' was not found.");
 
-    public static Error NotFound(string slug) => Error.NotFound("tenant.notFound", $"Tenant '{slug}' was not found.");
+    public static Error NotFound(string slug) => Error.NotFound("tenant.notFound", $"Workspace '{slug}' was not found.");
 
     public static Error AlreadyInStatus(TenantStatus status) =>
-        Error.Conflict("tenant.status", $"Tenant is already {status.ToString().ToLowerInvariant()}.");
+        Error.Conflict("tenant.status", $"Workspace is already {status.ToString().ToLowerInvariant()}.");
 }

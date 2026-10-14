@@ -45,7 +45,7 @@ export function ScreensPage() {
                       </span>
                     </td>
                     <td>
-                      <Link className="btn secondary small" to={`/tenant/screens/${screen.key}`} aria-label={`${t('screens.edit')}: ${screen.title}`}>
+                      <Link className="btn secondary small" to={`/workspace/screens/${screen.key}`} aria-label={`${t('screens.edit')}: ${screen.title}`}>
                         {t('screens.edit')}
                       </Link>
                     </td>

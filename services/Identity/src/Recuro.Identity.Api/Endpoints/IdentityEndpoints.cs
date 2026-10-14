@@ -27,7 +27,7 @@ internal static class IdentityEndpoints
 
         group.MapGet("/users", ListUsersAsync)
             .RequireAuthorization(IdentityPolicies.ReadUsers)
-            .WithSummary("The tenant's people (frontend listTeam); filter by role to find recipients.");
+            .WithSummary("The workspace's people (frontend listTeam); filter by role to find recipients.");
 
         group.MapPost("/decide", DecideAsync)
             .WithSummary("RCU-AUT-003: policy decision point. Allow/deny with reasons; default deny; cacheable for ttlSeconds.");

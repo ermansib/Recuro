@@ -40,7 +40,7 @@ describe('sign-in', () => {
     await userEvent.click(await screen.findByRole('button', { name: /Platform admin/ }))
 
     expect(signIn).toHaveBeenCalledWith('platform')
-    expect(await screen.findByRole('link', { name: 'Tenants' })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Workspaces' })).toBeInTheDocument()
   })
 
   it('explains when the account has no admin role', async () => {

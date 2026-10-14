@@ -14,7 +14,7 @@ describe('createHttpClient', () => {
     await api.assignTenantTheme('t-1', { themePresetKey: 'royal-plum', themeMode: 'dark' })
 
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit]
-    expect(url).toBe('/api/v1/platform/tenants/t-1/theme')
+    expect(url).toBe('/api/v1/platform/workspaces/t-1/theme')
     expect(init.method).toBe('PUT')
     expect((init.headers as Record<string, string>)[PERSONA_HEADER]).toBe('platform')
     expect(JSON.parse(init.body as string)).toEqual({ themePresetKey: 'royal-plum', themeMode: 'dark' })

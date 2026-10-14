@@ -14,22 +14,22 @@ internal static class PlatformEndpoints
             .RequireAuthorization(AdminPolicies.Platform)
             .WithTags("Platform console");
 
-        platform.MapGet("/tenants", async (ListTenantsHandler handler, CancellationToken ct) =>
+        platform.MapGet("/workspaces", async (ListTenantsHandler handler, CancellationToken ct) =>
             Results.Ok(await handler.HandleAsync(ct)));
 
-        platform.MapGet("/tenants/{id:guid}", async (Guid id, GetTenantHandler handler, CancellationToken ct) =>
+        platform.MapGet("/workspaces/{id:guid}", async (Guid id, GetTenantHandler handler, CancellationToken ct) =>
             (await handler.HandleAsync(id, ct)).ToHttpResult());
 
-        platform.MapPost("/tenants", async (CreateTenantRequest request, CreateTenantHandler handler, CancellationToken ct) =>
-            (await handler.HandleAsync(request, ct)).ToCreatedResult(t => $"/api/v1/platform/tenants/{t.Id}"));
+        platform.MapPost("/workspaces", async (CreateTenantRequest request, CreateTenantHandler handler, CancellationToken ct) =>
+            (await handler.HandleAsync(request, ct)).ToCreatedResult(t => $"/api/v1/platform/workspaces/{t.Id}"));
 
-        platform.MapPut("/tenants/{id:guid}", async (Guid id, UpdateTenantRequest request, UpdateTenantHandler handler, CancellationToken ct) =>
+        platform.MapPut("/workspaces/{id:guid}", async (Guid id, UpdateTenantRequest request, UpdateTenantHandler handler, CancellationToken ct) =>
             (await handler.HandleAsync(id, request, ct)).ToHttpResult());
 
-        platform.MapPut("/tenants/{id:guid}/status", async (Guid id, ChangeTenantStatusRequest request, ChangeTenantStatusHandler handler, CancellationToken ct) =>
+        platform.MapPut("/workspaces/{id:guid}/status", async (Guid id, ChangeTenantStatusRequest request, ChangeTenantStatusHandler handler, CancellationToken ct) =>
             (await handler.HandleAsync(id, request, ct)).ToHttpResult());
 
-        platform.MapPut("/tenants/{id:guid}/theme", async (Guid id, AssignTenantThemeRequest request, AssignTenantThemeHandler handler, CancellationToken ct) =>
+        platform.MapPut("/workspaces/{id:guid}/theme", async (Guid id, AssignTenantThemeRequest request, AssignTenantThemeHandler handler, CancellationToken ct) =>
             (await handler.HandleAsync(id, request, ct)).ToHttpResult());
 
         platform.MapGet("/themes", async (ListThemePresetsHandler handler, CancellationToken ct) =>

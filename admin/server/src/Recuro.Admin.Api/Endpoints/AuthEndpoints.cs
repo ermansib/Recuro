@@ -39,7 +39,7 @@ internal static class AuthEndpoints
                 var tenant = await tenants.HandleAsync(tenantId, ct);
                 if (tenant.IsFailure || tenant.Value.Status == TenantStatus.Suspended)
                 {
-                    return Results.Problem(statusCode: StatusCodes.Status403Forbidden, title: "This account's tenant is not active.");
+                    return Results.Problem(statusCode: StatusCodes.Status403Forbidden, title: "This account's workspace is not active.");
                 }
 
                 return Results.Ok(new CurrentAdminDto(name, "tenant", tenantId, tenant.Value.Name));
