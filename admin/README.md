@@ -1,6 +1,6 @@
 # Recuro Admin
 
-The admin portal controls how every tenant's Recuro portal looks and behaves. It is one deployable
+The admin portal controls how every workspace's Recuro portal looks and behaves. It is one deployable
 (a modular monolith): an ASP.NET Core API on **.NET 10 (LTS, C# 14)** that also serves the
 **React + TypeScript** client.
 
@@ -8,11 +8,15 @@ It has two levels:
 
 | Level | Who | What they control |
 |---|---|---|
-| Platform console | Recuro's own team | Tenants (create, plan, custom domain, suspend), each tenant's theme and default colour mode (Tenant themes), the theme library |
-| Tenant admin | Each customer's HR admin | A view of the theme assigned to them, and every screen's on/off, header text, field labels, visibility, required flags and order |
+| Platform console | Recuro's own team | Workspaces (create, plan, custom domain, suspend), each workspace's theme and default colour mode (Workspace themes), the theme library |
+| Workspace admin | Each customer's HR admin | A view of the theme assigned to them, and every screen's on/off, header text, field labels, visibility, required flags and order |
 
-The main portal reads the result from `GET /api/v1/runtime/{tenantSlug}`: theme tokens (keyed by the
+The main portal reads the result from `GET /api/v1/runtime/{workspaceSlug}`: theme tokens (keyed by the
 CSS variables in `frontend/src/styles/tokens.css`) plus the resolved screen layout.
+
+"Workspace" is the product term for a tenant. Users only ever see "workspace"; routes are
+`/api/v1/platform/workspaces` (platform console) and `/api/v1/workspace/*` (workspace admin). The
+internal key is still `TenantId` / the Keycloak `tenant_id` attribute, and the table is `tenants`.
 
 ## Layout
 
@@ -66,7 +70,7 @@ and reads two claims:
 | Claim | Value | Set in Keycloak as |
 |---|---|---|
 | `roles` | `platform-admin` or `tenant-admin` | realm roles |
-| `tenant_id` | the tenant's id (tenant admins only) | user attribute, editable by Keycloak admins only |
+| `tenant_id` | the workspace's id (workspace admins only) | user attribute, editable by Keycloak admins only |
 
 `keycloak/recuro-realm.json` creates the `recuro` realm, the `recuro-admin` client and three demo
 users for local runs (password `Recuro@2026`): `platform@recuro.example`, `admin@aurora.example` and
@@ -74,8 +78,8 @@ users for local runs (password `Recuro@2026`): `platform@recuro.example`, `admin
 These demo accounts and passwords are for local development only; production realms are created
 without them.
 
-Tenant admins of a suspended tenant are refused. To add a tenant admin, create the user in Keycloak,
-give them the `tenant-admin` role, and set `tenant_id` to the tenant's id from the platform console.
+Workspace admins of a suspended workspace are refused. To add a workspace admin, create the user in Keycloak,
+give them the `tenant-admin` role, and set `tenant_id` to the workspace's id from the platform console.
 
 ## Workspace sign-up
 
@@ -116,6 +120,10 @@ Roles are data, not code: each workspace has its own rows in **`workspace_roles`
   `tenant_id`) are imported when the list is opened. Assigning roles writes them to Keycloak first: the
   `workspace_roles` user attribute always, plus the realm role of the same name where one exists (the
   built-in persona roles), so tokens keep working for services that still read realm roles.
+- Microservices read a workspace's roles and members from `GET /api/v1/internal/workspaces/{id}/access`
+  (service-account tokens only: audience `Auth:ServiceAudience`, default `recuro-api`, plus the `service`
+  role; set `Auth:ServiceAuthority` if services reach Keycloak under another host name). The Identity service
+  uses it so `/identity/decide` and the masking map follow the workspace's roles (see `services/README.md`).
 
 ## Checks
 

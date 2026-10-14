@@ -28,11 +28,11 @@ internal static class IdentityEndpoints
 
         group.MapGet("/users", ListUsersAsync)
             .RequireAuthorization(IdentityPolicies.ReadUsers)
-            .WithSummary("The tenant's people (frontend listTeam); filter by role to find recipients, and by department for a department's head (role=hod&department=…).");
+            .WithSummary("The workspace's people (frontend listTeam); filter by role to find recipients, and by department for a department's head (role=hod&department=…).");
 
         group.MapGet("/users/{id}", GetUserAsync)
             .RequireAuthorization(IdentityPolicies.ReadUsers)
-            .WithSummary("One person of the tenant by user id, e.g. a reporting manager; 404 when unknown.");
+            .WithSummary("One person of the workspace by user id, e.g. a reporting manager; 404 when unknown.");
 
         group.MapPost("/decide", DecideAsync)
             .WithSummary("RCU-AUT-003: policy decision point. Allow/deny with reasons; default deny; cacheable for ttlSeconds.");

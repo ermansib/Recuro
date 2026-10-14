@@ -20,8 +20,17 @@ internal sealed class DevelopmentAuthenticationHandler(
     public const string PersonaHeader = "X-Recuro-Persona";
     private const string TenantPrefix = "tenant:";
 
+    /// <summary>What a Recuro microservice sends in Auth:Mode=Development instead of a service-account token.</summary>
+    public const string DevRolesHeader = "X-Dev-Roles";
+
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
+        if (Request.Headers[DevRolesHeader].ToString().Split(',', StringSplitOptions.TrimEntries).Contains(AdminRoles.Service))
+        {
+            var service = new ClaimsIdentity([new(ClaimTypes.Name, "Recuro service"), new(ClaimTypes.Role, AdminRoles.Service)], SchemeName);
+            return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(service), SchemeName)));
+        }
+
         if (!Request.Headers.TryGetValue(PersonaHeader, out var values) || values.ToString() is not { Length: > 0 } persona)
         {
             return Task.FromResult(AuthenticateResult.NoResult());
@@ -36,7 +45,7 @@ internal sealed class DevelopmentAuthenticationHandler(
         {
             claims =
             [
-                new(ClaimTypes.Name, "Tenant admin"),
+                new(ClaimTypes.Name, "Workspace admin"),
                 new(ClaimTypes.Role, AdminRoles.TenantAdmin),
                 new(AdminClaims.Tenant, tenantId.ToString()),
             ];

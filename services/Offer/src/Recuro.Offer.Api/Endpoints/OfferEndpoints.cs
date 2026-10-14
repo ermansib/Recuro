@@ -40,7 +40,7 @@ internal static class OfferEndpoints
 
         offers.MapPost("/", CreateAsync)
             .RequireAuthorization(OfferPolicies.Edit)
-            .WithSummary("RCU-OFR-001: draft an offer for a selected application. The CTC must pass the tenant's Finance rule-set.");
+            .WithSummary("RCU-OFR-001: draft an offer for a selected application. The CTC must pass the workspace's Finance rule-set.");
 
         offers.MapPut("/{id:guid}/components", ReviseAsync)
             .RequireAuthorization(OfferPolicies.Edit)

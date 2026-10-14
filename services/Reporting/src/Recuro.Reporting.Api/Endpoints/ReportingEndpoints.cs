@@ -86,7 +86,7 @@ internal static class ReportingEndpoints
 
         reports.MapGet("/settings", SettingsAsync)
             .RequireAuthorization(ReportingPolicies.Manage)
-            .WithSummary("The tenant's reporting time zone and pack schedule.");
+            .WithSummary("The workspace's reporting time zone and pack schedule.");
 
         reports.MapPut("/settings", UpdateSettingsAsync)
             .RequireAuthorization(ReportingPolicies.Manage)

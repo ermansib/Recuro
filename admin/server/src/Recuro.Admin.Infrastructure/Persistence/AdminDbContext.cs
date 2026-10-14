@@ -66,7 +66,7 @@ public sealed class AdminDbContext(DbContextOptions<AdminDbContext> options, ITe
 
         if (foreign)
         {
-            throw new InvalidOperationException("Attempted to write data owned by another tenant.");
+            throw new InvalidOperationException("Attempted to write data owned by another workspace.");
         }
     }
 }

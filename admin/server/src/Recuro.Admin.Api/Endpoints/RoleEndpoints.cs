@@ -5,16 +5,16 @@ using Recuro.Admin.Application.Roles;
 namespace Recuro.Admin.Api.Endpoints;
 
 /// <summary>
-/// Workspace roles and who holds them. The same routes exist twice: under /tenant for a tenant admin (tenant from
-/// the token) and under /platform/tenants/{id} for a platform admin acting on any workspace.
+/// Workspace roles and who holds them. The same routes exist twice: under /workspace for a workspace admin (workspace from
+/// the token) and under /platform/workspaces/{id} for a platform admin acting on any workspace.
 /// </summary>
 internal static class RoleEndpoints
 {
     public static void MapRoleEndpoints(this IEndpointRouteBuilder app)
     {
-        var tenant = app.MapGroup("/api/v1/tenant")
+        var tenant = app.MapGroup("/api/v1/workspace")
             .RequireAuthorization(AdminPolicies.Tenant)
-            .WithTags("Tenant admin");
+            .WithTags("Workspace admin");
         tenant.MapGet("/roles/catalog", async (GetRoleCatalogHandler handler, CancellationToken ct) => Results.Ok(await handler.HandleAsync(ct)));
         MapRoutes(tenant, _ => null);
 
@@ -22,7 +22,7 @@ internal static class RoleEndpoints
             .RequireAuthorization(AdminPolicies.Platform)
             .WithTags("Platform console");
         platform.MapGet("/role-catalog", async (GetRoleCatalogHandler handler, CancellationToken ct) => Results.Ok(await handler.HandleAsync(ct)));
-        MapRoutes(platform.MapGroup("/tenants/{tenantId:guid}"), http => Guid.Parse((string)http.Request.RouteValues["tenantId"]!));
+        MapRoutes(platform.MapGroup("/workspaces/{tenantId:guid}"), http => Guid.Parse((string)http.Request.RouteValues["tenantId"]!));
     }
 
     private static void MapRoutes(RouteGroupBuilder group, Func<HttpContext, Guid?> tenantOf)

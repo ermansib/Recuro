@@ -22,6 +22,7 @@ public sealed class MaskingMap
 {
     private readonly Dictionary<string, Dictionary<string, IReadOnlyDictionary<string, MaskStrategy>>> _byResource;
     private readonly HashSet<string> _listedRolesOnly;
+    private readonly Dictionary<string, string> _aliases = new(StringComparer.Ordinal);
 
     public MaskingMap(
         string version,
@@ -40,6 +41,27 @@ public sealed class MaskingMap
 
     public string Version { get; }
 
+    /// <summary>
+    /// A copy where each alias role (a role a workspace defined) is masked like the persona it maps to.
+    /// </summary>
+    public MaskingMap WithAliases(string version, IReadOnlyDictionary<string, string> aliases)
+    {
+        ArgumentNullException.ThrowIfNull(aliases);
+        var copy = new MaskingMap(
+            version,
+            _byResource.ToDictionary(
+                r => r.Key,
+                r => (IReadOnlyDictionary<string, IReadOnlyDictionary<string, MaskStrategy>>)r.Value,
+                StringComparer.Ordinal),
+            _listedRolesOnly);
+        foreach (var (role, persona) in aliases)
+        {
+            copy._aliases[role] = persona;
+        }
+
+        return copy;
+    }
+
     public IEnumerable<string> Resources => _byResource.Keys;
 
     /// <summary>
@@ -48,12 +70,13 @@ public sealed class MaskingMap
     /// </summary>
     public IReadOnlyDictionary<string, MaskStrategy>? For(string role, string resource)
     {
-        if (!PersonaRoles.HasMaskingMap(role) || !_byResource.TryGetValue(resource, out var roles))
+        var persona = _aliases.GetValueOrDefault(role, role);
+        if (!PersonaRoles.HasMaskingMap(persona) || !_byResource.TryGetValue(resource, out var roles))
         {
             return null;
         }
 
-        if (roles.TryGetValue(role, out var fields))
+        if (roles.TryGetValue(persona, out var fields))
         {
             return fields;
         }

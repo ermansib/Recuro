@@ -10,11 +10,11 @@ internal static class TenantEndpoints
 {
     public static void MapTenantEndpoints(this IEndpointRouteBuilder app)
     {
-        var tenant = app.MapGroup("/api/v1/tenant")
+        var tenant = app.MapGroup("/api/v1/workspace")
             .RequireAuthorization(AdminPolicies.Tenant)
-            .WithTags("Tenant admin");
+            .WithTags("Workspace admin");
 
-        // Read-only: the platform console assigns each tenant's theme (PUT /api/v1/platform/tenants/{id}/theme).
+        // Read-only: the platform console assigns each tenant's theme (PUT /api/v1/platform/workspaces/{id}/theme).
         tenant.MapGet("/branding", async (GetBrandingHandler handler, CancellationToken ct) =>
             (await handler.HandleAsync(ct)).ToHttpResult());
 

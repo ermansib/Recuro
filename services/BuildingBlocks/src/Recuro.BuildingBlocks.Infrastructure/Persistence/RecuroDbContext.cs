@@ -133,7 +133,7 @@ public abstract class RecuroDbContext : DbContext, IUnitOfWork
         }
         else if (value != current)
         {
-            throw new InvalidOperationException($"Cannot write a {entry.Metadata.ClrType.Name} for another tenant.");
+            throw new InvalidOperationException($"Cannot write a {entry.Metadata.ClrType.Name} for another workspace.");
         }
     }
 }

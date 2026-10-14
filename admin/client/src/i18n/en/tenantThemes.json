@@ -1,7 +1,7 @@
 {
-  "title": "Tenant themes",
-  "subtitle": "Choose a tenant, then the theme and default colour mode its portal uses. Each tenant has its own.",
-  "tenant": "Tenant",
+  "title": "Workspace themes",
+  "subtitle": "Choose a workspace, then the theme and default colour mode its portal uses. Each workspace has its own.",
+  "tenant": "Workspace",
   "presets": "Theme for {{tenant}}",
   "assign": "Save theme for {{tenant}}",
   "savedToast": "Theme saved for {{tenant}}. It shows in their portal the next time it loads."
