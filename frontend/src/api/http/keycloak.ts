@@ -18,6 +18,10 @@ export interface IdentityAccount {
   tenantId: string | null
   /** Realm roles (`roles` claim). */
   roles: string[]
+  /** Role keys the workspace assigned, including roles the workspace created itself (`workspace_roles` claim). */
+  workspaceRoles: string[]
+  /** Bearer token for Recuro APIs that act as the signed-in person. */
+  accessToken: string
   /** Workspace slug the sign-in was started for. */
   workspace: string | null
   /** Page to open after sign-in. */
@@ -78,6 +82,8 @@ export function readJwtClaims(token: string): Record<string, unknown> {
 
 const text = (value: unknown): string | null => (typeof value === 'string' && value.trim() ? value : null)
 
+const texts = (value: unknown): string[] => (Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [])
+
 function isSignInState(value: unknown): value is SignInState {
   return typeof value === 'object' && value !== null && 'workspace' in value && typeof value.workspace === 'string'
 }
@@ -93,7 +99,9 @@ export function accountOf(user: Pick<OidcUser, 'access_token' | 'profile' | 'sta
     name: text(profile.name) ?? text(access.name) ?? text(profile.preferred_username) ?? email,
     email,
     tenantId: text(access.tenant_id),
-    roles: Array.isArray(access.roles) ? access.roles.filter((r): r is string => typeof r === 'string') : [],
+    roles: texts(access.roles),
+    workspaceRoles: texts(access.workspace_roles),
+    accessToken: user.access_token,
     workspace: state?.workspace ?? workspace,
     returnTo: state?.returnTo ?? null,
   }

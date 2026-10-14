@@ -124,6 +124,10 @@ Roles are data, not code: each workspace has its own rows in **`workspace_roles`
   (service-account tokens only: audience `Auth:ServiceAudience`, default `recuro-api`, plus the `service`
   role; set `Auth:ServiceAuthority` if services reach Keycloak under another host name). The Identity service
   uses it so `/identity/decide` and the masking map follow the workspace's roles (see `services/README.md`).
+- The main portal reads the signed-in person's own roles, permissions and pages from `GET /api/v1/me/access`
+  with their portal token (audience `recuro-api`, plus `tenant_id` and `sub`). The workspace and person come from
+  the token only. People the workspace has no member row for yet fall back to the role keys in their token
+  (the `workspace_roles` claim, mapped by the `recuro-portal` client, and realm roles).
 
 ## Checks
 

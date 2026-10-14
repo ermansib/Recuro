@@ -36,6 +36,10 @@ function stubAdminApi() {
     if (init?.method === 'POST') {
       return Promise.resolve(json({ workspace: NORTHWIND, owner: { id: 'kc-1', name: 'J. Doe', email: 'j.doe@northwind.example', role: 'hrhead' } }, 201))
     }
+    if (url.endsWith('/api/v1/me/access')) {
+      const hrta = { key: 'hrta', name: 'HR-TA', permissions: ['mrf.raise', 'candidate.log'], pages: ['dashboard'], requiresMfa: false }
+      return Promise.resolve(json({ workspaceId: NORTHWIND.id, roles: [hrta], permissions: hrta.permissions, pages: hrta.pages }))
+    }
     return Promise.resolve(url.endsWith('/northwind-talent') ? json(NORTHWIND) : json({ title: 'Not found' }, 404))
   })
   vi.stubGlobal('fetch', fetcher)
@@ -142,6 +146,8 @@ describe('sign-in for a workspace saved on the server', () => {
       email: 'j.doe@northwind.example',
       tenantId: NORTHWIND.id,
       roles: ['tenant-admin', 'hrta'],
+      workspaceRoles: ['hrta'],
+      accessToken: 'token',
       workspace: 'northwind-talent',
       returnTo: null,
     })
@@ -158,6 +164,8 @@ describe('sign-in for a workspace saved on the server', () => {
       email: 'x@other.example',
       tenantId: 'another-tenant',
       roles: ['hrta'],
+      workspaceRoles: [],
+      accessToken: 'token',
       workspace: 'northwind-talent',
       returnTo: null,
     })

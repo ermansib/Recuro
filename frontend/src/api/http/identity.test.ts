@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { tenant as defaultTenant } from '../../config/tenant'
-import type { Workspace } from '../../domain/types'
+import type { HeldRole, MyAccess, Workspace } from '../../domain/types'
 import { ApiError, type WorkspaceApi } from '../contract'
 import { createMockClient } from '../mock/mockClient'
 import { DEMO_PASSWORD } from '../mock/seed'
@@ -27,6 +27,8 @@ const OWNER: IdentityAccount = {
   email: 'Owner@MBConsulting.example',
   tenantId: MB.id,
   roles: ['default-roles-recuro', 'tenant-admin', 'hrhead'],
+  workspaceRoles: ['hrhead'],
+  accessToken: 'access-token-mb',
   workspace: MB.slug,
   returnTo: '/approvals',
 }
@@ -41,10 +43,22 @@ const SIGN_UP = {
   acceptTerms: true,
 }
 
-/** The admin API: knows MB Consulting only, or is down. */
-function server({ down = false } = {}): WorkspaceApi {
+const HR_HEAD: HeldRole = { key: 'hrhead', name: 'HR Head', permissions: ['approvals.view', 'candidate.viewSensitive', 'offer.approve'], pages: ['dashboard'], requiresMfa: true }
+const RECRUITER: HeldRole = { key: 'recruiter', name: 'Recruiter', permissions: ['candidate.log', 'pipeline.move'], pages: ['dashboard', 'pipeline'], requiresMfa: false }
+const REVIEWER: HeldRole = { key: 'hiring-reviewer', name: 'Hiring reviewer', permissions: ['approvals.view', 'reports.view'], pages: ['approvals'], requiresMfa: false }
+
+const accessWith = (...roles: HeldRole[]): MyAccess => ({
+  workspaceId: MB.id,
+  roles,
+  permissions: [...new Set(roles.flatMap((r) => r.permissions))],
+  pages: [...new Set(roles.flatMap((r) => r.pages))],
+})
+
+/** The admin API: knows MB Consulting only, or is down. By default the owner holds HR Head. */
+function server({ down = false, accessDown = false, access = accessWith(HR_HEAD) } = {}): WorkspaceApi {
   const unreachable = () => Promise.reject(new ApiError(503, 'We couldn’t reach the Recuro server.'))
   return {
+    getMyAccess: vi.fn(() => (down || accessDown ? unreachable() : Promise.resolve(access))),
     getWorkspace: vi.fn((slug: string) => (down ? unreachable() : Promise.resolve(slug === MB.slug ? MB : null))),
     registerWorkspace: vi.fn(() => (down ? unreachable() : Promise.resolve({ workspace: MB, owner: { id: OWNER.subject, name: OWNER.name, email: 'owner@mbconsulting.example', role: 'hrhead' as const } }))),
   }
@@ -70,8 +84,8 @@ function keycloak(account: IdentityAccount | null = OWNER) {
   return provider
 }
 
-function setup({ down = false, account = OWNER as IdentityAccount | null } = {}) {
-  const workspaces = server({ down })
+function setup({ down = false, accessDown = false, account = OWNER as IdentityAccount | null, access = accessWith(HR_HEAD) } = {}) {
+  const workspaces = server({ down, accessDown, access })
   const provider = keycloak(account)
   const api = createIdentityProviderAuthApi({ local: createMockClient(), workspaces, provider, defaults: defaultTenant })
   return { api, workspaces, provider }
@@ -105,9 +119,33 @@ describe('sign-in for workspaces saved on the server', () => {
     expect(provider.forget).toHaveBeenCalled()
   })
 
-  it('refuses an account without a portal role', async () => {
-    const { api } = setup({ account: { ...OWNER, roles: ['default-roles-recuro', 'tenant-admin'] } })
-    await expect(api.completeSignIn()).rejects.toMatchObject({ status: 403 })
+  it('refuses an account the workspace gave no role the portal can show', async () => {
+    const { api } = setup({ access: accessWith() })
+    await expect(api.completeSignIn()).rejects.toMatchObject({ status: 403, message: expect.stringContaining('no Recuro role') })
+  })
+
+  it('signs in someone whose only role is one the workspace created, with that role’s permissions', async () => {
+    const recruiter = { ...OWNER, roles: ['default-roles-recuro'], workspaceRoles: ['recruiter'] }
+    const { api, workspaces } = setup({ account: recruiter, access: accessWith(RECRUITER) })
+    const { session } = await api.completeSignIn()
+    expect(workspaces.getMyAccess).toHaveBeenCalledWith('access-token-mb')
+    expect(session.user).toMatchObject({ role: 'hrta', tenantId: MB.id, permissions: ['candidate.log', 'pipeline.move'] })
+  })
+
+  it('gives an approver role without access to candidate details the masked view', async () => {
+    const { api } = setup({ account: { ...OWNER, roles: [], workspaceRoles: ['hiring-reviewer'] }, access: accessWith(REVIEWER) })
+    expect((await api.completeSignIn()).session.user.role).toBe('mdceo')
+  })
+
+  it('goes by the workspace’s assignments, not stale realm roles in the token', async () => {
+    const { api } = setup({ access: accessWith(RECRUITER) })
+    expect((await api.completeSignIn()).session.user.role).toBe('hrta')
+  })
+
+  it('falls back to the token’s role keys when the admin API can’t say', async () => {
+    expect((await setup({ accessDown: true }).api.completeSignIn()).session.user.role).toBe('hrhead')
+    const custom = setup({ accessDown: true, account: { ...OWNER, roles: [], workspaceRoles: ['recruiter'] } })
+    await expect(custom.api.completeSignIn()).rejects.toMatchObject({ status: 403 })
   })
 
   it('reports a callback that cannot be finished as 401', async () => {

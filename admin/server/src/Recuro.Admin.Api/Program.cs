@@ -47,6 +47,7 @@ app.MapRoleEndpoints();
 app.MapInternalEndpoints();
 app.MapRuntimeEndpoints();
 app.MapWorkspaceEndpoints();
+app.MapMyAccessEndpoints();
 app.MapAuthEndpoints();
 if (string.Equals(app.Configuration["Auth:Mode"], "Development", StringComparison.OrdinalIgnoreCase))
 {

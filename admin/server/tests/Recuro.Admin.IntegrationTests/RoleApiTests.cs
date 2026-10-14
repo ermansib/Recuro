@@ -157,7 +157,7 @@ public sealed class RoleApiTests : IDisposable
         var before = await service.GetFromJsonAsync<WorkspaceAccessDto>(path, Json);
         Assert.Contains(before!.Roles, r => r.Key == "hrta" && r.Permissions.Contains("mrf.raise"));
 
-        await _factory.ClientAs(AdminApiFactory.Aurora).PostAsJsonAsync("/api/v1/tenant/roles", Recruiter(), Json);
+        await _factory.ClientAs(AdminApiFactory.Aurora).PostAsJsonAsync("/api/v1/workspace/roles", Recruiter(), Json);
         var after = await service.GetFromJsonAsync<WorkspaceAccessDto>(path, Json);
         Assert.Contains(after!.Roles, r => r.Key == "recruiter");
         Assert.NotEqual(before.Version, after.Version);
@@ -165,5 +165,60 @@ public sealed class RoleApiTests : IDisposable
         Assert.Equal(HttpStatusCode.Forbidden, (await _factory.ClientAs(AdminApiFactory.Aurora).GetAsync(new Uri(path, UriKind.Relative))).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await _factory.ClientAs("platform").GetAsync(new Uri(path, UriKind.Relative))).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await service.GetAsync(new Uri($"/api/v1/internal/workspaces/{Guid.NewGuid()}/access", UriKind.Relative))).StatusCode);
+    }
+}
+
+public sealed class MyAccessApiTests : IDisposable
+{
+    private const string Path = "/api/v1/me/access";
+    private readonly AdminApiFactory _factory = new();
+    private static readonly JsonSerializerOptions Json = AdminApiFactory.Json;
+
+    public void Dispose() => _factory.Dispose();
+
+    private static string Person(Guid workspaceId, string roles) => $"person:{workspaceId}:kc-person-1:{roles}";
+
+    private async Task AddAuroraRecruiterAsync()
+    {
+        var created = await _factory.ClientAs(AdminApiFactory.Aurora).PostAsJsonAsync(
+            "/api/v1/workspace/roles",
+            new CreateRoleRequest("recruiter", "Recruiter", null, "hrta", ["candidate.log", "pipeline.move"], ["dashboard", "pipeline"], RequiresMfa: false),
+            Json);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+    }
+
+    [Fact]
+    public async Task A_person_with_only_a_workspace_made_role_gets_that_roles_permissions_and_pages()
+    {
+        await AddAuroraRecruiterAsync();
+
+        var access = await _factory.ClientAs(Person(DatabaseSeeder.AuroraTenantId, "recruiter,default-roles-recuro"))
+            .GetFromJsonAsync<MyAccessDto>(Path, Json);
+
+        Assert.Equal(DatabaseSeeder.AuroraTenantId, access!.WorkspaceId);
+        Assert.Equal(["recruiter"], access.Roles.Select(r => r.Key));
+        Assert.Equal(["candidate.log", "pipeline.move"], access.Permissions);
+        Assert.Equal(["dashboard", "pipeline"], access.Pages);
+    }
+
+    [Fact]
+    public async Task Roles_of_another_workspace_and_switched_off_roles_grant_nothing()
+    {
+        await AddAuroraRecruiterAsync();
+        var bridge = await _factory.ClientAs(Person(DatabaseSeeder.TalentBridgeTenantId, "recruiter")).GetFromJsonAsync<MyAccessDto>(Path, Json);
+        Assert.Empty(bridge!.Roles);
+
+        var off = await _factory.ClientAs(AdminApiFactory.Aurora).PutAsJsonAsync("/api/v1/workspace/roles/recruiter/status", new SetRoleStatusRequest(false), Json);
+        Assert.Equal(HttpStatusCode.OK, off.StatusCode);
+        var aurora = await _factory.ClientAs(Person(DatabaseSeeder.AuroraTenantId, "recruiter")).GetFromJsonAsync<MyAccessDto>(Path, Json);
+        Assert.Empty(aurora!.Roles);
+    }
+
+    [Fact]
+    public async Task Only_signed_in_workspace_people_can_ask()
+    {
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _factory.ClientAs(null).GetAsync(new Uri(Path, UriKind.Relative))).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await _factory.ClientAs("platform").GetAsync(new Uri(Path, UriKind.Relative))).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _factory.ClientAs(Person(Guid.NewGuid(), "hrta")).GetAsync(new Uri(Path, UriKind.Relative))).StatusCode);
     }
 }

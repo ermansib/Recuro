@@ -49,3 +49,27 @@ export function homePath(role: Role): string {
   if (role === 'employee') return '/internal-careers'
   return '/'
 }
+
+/** Roles the portal has screens for, in the order one is chosen when a person holds several. */
+const PERSONA_ORDER: readonly Role[] = ['hrhead', 'mdceo', 'hrta', 'employee', 'candidate']
+
+/** Permissions that only the talent-acquisition screens use. */
+const TA_WORK = ['mrf.raise', 'candidate.log', 'jd.edit', 'offer.edit', 'bgv.initiate', 'assessment.submit']
+const APPROVER_WORK = ['approvals.view', 'mrf.approve', 'offer.approve', 'bgv.decideAdverse', 'reports.view', 'internal.view', 'pipeline.move', 'offer.release']
+const EMPLOYEE_WORK = ['ijp.apply', 'referral.submit']
+
+/**
+ * Which portal persona a person sees, from the role keys their workspace gave them and those roles' permissions.
+ * A persona key they hold wins; a role the workspace created itself (or HOD) gets the persona its permissions
+ * fit, and an approver without `candidate.viewSensitive` gets the masked MD/CEO view (RCU-PLT-002). `null` means
+ * nothing the portal can show. Like the matrix above, this only shapes the UI.
+ */
+export function personaFor(roleKeys: readonly string[], permissions: readonly string[]): Role | null {
+  const held = PERSONA_ORDER.find((r) => roleKeys.includes(r))
+  if (held) return held
+  const has = (keys: readonly string[]) => keys.some((k) => permissions.includes(k))
+  if (has(TA_WORK)) return 'hrta'
+  if (has(APPROVER_WORK)) return permissions.includes('candidate.viewSensitive') ? 'hrhead' : 'mdceo'
+  if (has(EMPLOYEE_WORK)) return 'employee'
+  return null
+}

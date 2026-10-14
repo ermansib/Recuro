@@ -177,6 +177,21 @@
           }
         },
         {
+          "name": "workspace_roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "workspace_roles",
+            "claim.name": "workspace_roles",
+            "multivalued": "true",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
+          }
+        },
+        {
           "name": "audience",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",

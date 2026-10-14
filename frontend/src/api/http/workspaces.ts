@@ -2,10 +2,11 @@
 // admin database (table `tenants`) and the owner's account is created in Keycloak. The lookup tells the
 // sign-in page which workspace it is signing in to. In development Vite proxies /api/v1/workspaces to the
 // admin API, so the base URL is empty (see vite.config.ts).
-import type { RegisteredWorkspace, Workspace } from '../../domain/types'
+import type { MyAccess, RegisteredWorkspace, Workspace } from '../../domain/types'
 import { ApiError, type WorkspaceApi } from '../contract'
 
 export const SIGN_UP_SERVER_DOWN = 'We couldn’t reach the Recuro server to create your workspace. Please try again in a few minutes.'
+export const ACCESS_SERVER_DOWN = 'We couldn’t reach the Recuro server to read your roles. Please try again in a few minutes.'
 export const LOOKUP_SERVER_DOWN = 'We couldn’t reach the Recuro server to open that workspace. Please try again in a few minutes.'
 
 /** Statuses a proxy or gateway returns when the admin API itself is not running. */
@@ -56,6 +57,16 @@ export function createHttpWorkspaceApi(baseUrl: string, fetcher: typeof fetch = 
       } catch {
         // A dev server without the proxy answers with its HTML page: treat it as no admin API.
         throw new ApiError(503, LOOKUP_SERVER_DOWN)
+      }
+    },
+
+    async getMyAccess(accessToken) {
+      const res = await send('/api/v1/me/access', { method: 'GET', headers: { Authorization: `Bearer ${accessToken}` } }, ACCESS_SERVER_DOWN)
+      if (!res.ok) throw new ApiError(res.status, await problemMessage(res, ACCESS_SERVER_DOWN))
+      try {
+        return (await res.json()) as MyAccess
+      } catch {
+        throw new ApiError(503, ACCESS_SERVER_DOWN)
       }
     },
   }

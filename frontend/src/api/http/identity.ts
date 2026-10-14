@@ -7,14 +7,12 @@
 // names another workspace is refused, so one tenant's people can never open another tenant's portal.
 import { initialsOf, isValidEmail, normaliseEmail, unmetPasswordRules } from '../../domain/auth'
 import type { AuthSession, Role, TenantConfig, User, Workspace, WorkspaceBranding } from '../../domain/types'
+import { personaFor } from '../../auth/permissions'
 import { ApiError, type AuthApi, type WorkspaceApi } from '../contract'
 import type { IdentityAccount, IdentityProvider } from './keycloak'
 
 /** Session handles for identity-provider sign-ins start with this; the tokens stay in the provider's store. */
 export const IDP_TOKEN_PREFIX = 'idp:'
-
-/** Portal roles in the order one is chosen when an account has several (realm roles such as tenant-admin are skipped). */
-const PORTAL_ROLES: readonly Role[] = ['hrhead', 'mdceo', 'hrta', 'employee', 'candidate']
 
 const NOT_FINISHED = 'We couldn’t finish signing you in. Please start again from the sign-in page.'
 const WRONG_WORKSPACE = 'This account belongs to a different workspace. Sign in to your own workspace instead.'
@@ -75,11 +73,26 @@ export function createIdentityProviderAuthApi({ local, workspaces, provider, def
     theme: undefined,
   })
 
+  /**
+   * The person's roles and permissions as the workspace assigned them (admin API). While the admin API can't answer,
+   * the role keys in the token stand in, without permissions, so persona roles still sign in.
+   */
+  async function accessOf(account: IdentityAccount): Promise<{ roleKeys: string[]; permissions: string[] }> {
+    try {
+      const access = await workspaces.getMyAccess(account.accessToken)
+      return { roleKeys: access.roles.map((r) => r.key), permissions: access.permissions }
+    } catch (e) {
+      if (e instanceof ApiError && e.status !== 503) throw e
+      return { roleKeys: [...account.roles, ...account.workspaceRoles], permissions: [] }
+    }
+  }
+
   /** Turns the provider's account into a portal session for `ws`, or refuses it. */
-  function sessionFor(account: IdentityAccount, ws: Workspace, issuedAt: string): AuthSession {
+  async function sessionFor(account: IdentityAccount, ws: Workspace, issuedAt: string): Promise<AuthSession> {
     if (!account.subject) throw new ApiError(401, NOT_FINISHED)
     if (account.tenantId !== ws.id) throw new ApiError(403, WRONG_WORKSPACE)
-    const role = PORTAL_ROLES.find((r) => account.roles.includes(r))
+    const { roleKeys, permissions } = await accessOf(account)
+    const role: Role | null = personaFor(roleKeys, permissions)
     if (!role) throw new ApiError(403, NO_ROLE)
     const user: User = {
       id: account.subject,
@@ -90,6 +103,7 @@ export function createIdentityProviderAuthApi({ local, workspaces, provider, def
       title: '',
       email: normaliseEmail(account.email),
       summary: '',
+      permissions,
     }
     return { token: `${IDP_TOKEN_PREFIX}${account.subject}`, user, tenant: tenantOf(ws), issuedAt, viaIdentityProvider: true }
   }
@@ -103,7 +117,7 @@ export function createIdentityProviderAuthApi({ local, workspaces, provider, def
       await provider.forget()
       throw new ApiError(401, SESSION_ENDED)
     }
-    return sessionFor(account, ws, new Date().toISOString())
+    return await sessionFor(account, ws, new Date().toISOString())
   }
 
   return {
@@ -141,7 +155,7 @@ export function createIdentityProviderAuthApi({ local, workspaces, provider, def
       try {
         const ws = account.workspace ? await workspaces.getWorkspace(account.workspace) : null
         if (!ws) throw new ApiError(404, 'We couldn’t find that workspace. Check the name with your administrator.')
-        return { session: sessionFor(account, ws, new Date().toISOString()), returnTo: account.returnTo }
+        return { session: await sessionFor(account, ws, new Date().toISOString()), returnTo: account.returnTo }
       } catch (refused) {
         // Nothing of a refused sign-in stays in this browser.
         await provider.forget()

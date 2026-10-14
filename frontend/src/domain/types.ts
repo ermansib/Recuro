@@ -20,6 +20,8 @@ export interface User {
   summary: string
   /** Department key from the identity service (tenant hierarchy); empty when unknown. */
   department?: string
+  /** Permission keys the workspace's roles give this person (identity-provider sign-ins only). */
+  permissions?: string[]
   /** User id of the reporting manager; empty when unknown. */
   managerId?: string
 }
@@ -118,6 +120,23 @@ export type Workspace = Pick<
   TenantConfig,
   'id' | 'slug' | 'name' | 'orgType' | 'careersTagline' | 'emailDomain' | 'locale' | 'currency' | 'ssoProviders' | 'mfaRoles' | 'sessionIdleMinutes'
 >
+
+/** A role the signed-in person holds in their workspace (admin API `GET /api/v1/me/access`). */
+export interface HeldRole {
+  key: string
+  name: string
+  permissions: string[]
+  pages: string[]
+  requiresMfa: boolean
+}
+
+/** The signed-in person's roles in their own workspace, and the permissions and pages those roles give. */
+export interface MyAccess {
+  workspaceId: string
+  roles: HeldRole[]
+  permissions: string[]
+  pages: string[]
+}
 
 /** What the server saved for a new workspace (admin API `POST /api/v1/workspaces`). */
 export interface RegisteredWorkspace {
