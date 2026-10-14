@@ -5,6 +5,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MailKit" />
+    <!-- Lifts MailKit's transitive System.Security.Cryptography.Pkcs to a patched version. -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
   </ItemGroup>
