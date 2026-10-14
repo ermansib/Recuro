@@ -30,3 +30,12 @@ public interface IMaskingMapProvider
 {
     Task<MaskingMap> GetAsync(CancellationToken ct);
 }
+
+/// <summary>
+/// The roles a workspace configured in the admin portal (RCU-PLT-002). Null when the workspace has none yet or
+/// the admin API can't be reached and nothing was read before; the seeded FRD §3.2 policy then applies.
+/// </summary>
+public interface IWorkspaceAccessSource
+{
+    Task<WorkspaceAccess?> GetAsync(Guid tenantId, CancellationToken ct);
+}

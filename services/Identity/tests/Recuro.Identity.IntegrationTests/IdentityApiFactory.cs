@@ -45,5 +45,7 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
         builder.UseSetting("Auth:Mode", "Development");
         builder.UseSetting("Messaging:Enabled", "false");
         builder.UseSetting("Database:MigrateOnStartup", "false");
+        // No admin API in tests: the seeded policy applies unless a test plugs in workspace roles.
+        builder.UseSetting("Services:Admin:Enabled", "false");
     }
 }

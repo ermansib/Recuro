@@ -116,6 +116,10 @@ Roles are data, not code: each workspace has its own rows in **`workspace_roles`
   `tenant_id`) are imported when the list is opened. Assigning roles writes them to Keycloak first: the
   `workspace_roles` user attribute always, plus the realm role of the same name where one exists (the
   built-in persona roles), so tokens keep working for services that still read realm roles.
+- Microservices read a workspace's roles and members from `GET /api/v1/internal/workspaces/{id}/access`
+  (service-account tokens only: audience `Auth:ServiceAudience`, default `recuro-api`, plus the `service`
+  role; set `Auth:ServiceAuthority` if services reach Keycloak under another host name). The Identity service
+  uses it so `/identity/decide` and the masking map follow the workspace's roles (see `services/README.md`).
 
 ## Checks
 
