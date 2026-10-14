@@ -56,7 +56,7 @@ the project files as `recuro/backenduserstories.html`). Decisions behind this ma
 | 9 | **Interview** | INT-001..007 | rounds, schedules, Annexure B assessments, selection summaries | `interview.*` | `pipeline.stage.changed`, `workflow.task.completed` | Config (interview matrix), Requisition (job description), Identity (PDP), Workflow (ratification) | 5109 |
 | 10 | **Bgv** | BGV-001..009 | BGV cases, checks, consent, vendor refs, webhook dedupe | `bgv.*` | `pipeline.stage.changed`, `vendor.de_empanelled`, `workflow.task.completed` (type `bgv-adverse`) | Config (check matrix, escalation), Vendor (status), Workflow (adverse saga), Identity (masking) | 5110 |
 | 11 | **Offer** | OFR-001..007 | offers, CTC breakup, letters, verbal log | `offer.*` | `pipeline.stage.changed`, `workflow.task.completed`, `bgv.case.initiated`, `bgv.cleared`, `bgv.adverse.flagged`, `bgv.resolved`, `candidate.purged` | Config (offer matrix, working days), Requisition, Identity (masking), Workflow; release gate fed by `bgv.*` events | 5111 |
-| 12 | **Onboarding** | ONB-001..006 | onboarding cases, Day-1 checklist, documents, probation | `onboarding.*` | `offer.accepted`, `offer.withdrawn`, `bgv.case.initiated/cleared/adverse.flagged/resolved` | Config (checklist, working days), Candidate (name for letters) | 5112 |
+| 12 | **Onboarding** | ONB-001..006 | onboarding cases, Day-1 checklist, documents, probation | `onboarding.*` | `offer.accepted`, `offer.withdrawn`, `bgv.case.initiated/cleared/adverse.flagged/resolved` | Config (checklist, working days), Candidate (name for letters), Identity (department head, reporting manager) | 5112 |
 | 13 | **Vendor** (P1) | VND-001..005 | vendors, empanelment gates, agreements, SLA snapshots | `vendor.*` | `bgv.check.updated` | — | 5113 |
 | 14 | **Reporting** (P1) | RPT-001..005 | per-workspace event log, read-model projections, KPI definitions, costs, snapshots, packs | `reporting.pack.ready` | requisition, pipeline, interview and offer events, `candidate.purged`, `notification.email.dispatched/failed` | Config (tat and doa matrices), Identity (masking) | 5114 |
 | 15 | **Careers** (public API) | CAR-001..007 | postings, public applications, throttle state | `career.job.applied` | `recruitment.sourcing.unlocked`, `recruitment.mrf.cancelled`, `pipeline.application.final_rejected`, `pipeline.stage.changed`, `notification.email.dispatched` (regret delivery, template `candidate.regret`) | Candidate, Pipeline (intake saga), Requisition (gate) | 5115 |
@@ -549,7 +549,7 @@ cluster. Routes are under `/api/v1/onboarding`, and `{caseRef}` is either the ca
 | `GET /cases?status=` | list cases |
 | `GET /cases/{caseRef}` | one case |
 | `PUT /cases/{caseRef}/checklist/{itemKey}` | tick an Annexure E item: `{ done, remarks }` |
-| `PUT /cases/{caseRef}/assignments` | assign owners |
+| `PUT /cases/{caseRef}/assignments` | `{ reportingManagerId, reportingManager, buddy, department }`, all optional. `department` is a department key (PR #50) |
 | `PUT /cases/{caseRef}/documents/{type}` | upload a joining document: multipart, at most 10 MB, PDF, JPEG or PNG |
 | `GET /cases/{caseRef}/documents/{type}/file` | download it |
 | `POST /cases/{caseRef}/documents/{type}/review` | `{ verified, note }` |
@@ -558,9 +558,26 @@ cluster. Routes are under `/api/v1/onboarding`, and `{caseRef}` is either the ca
 | `POST /cases/{caseRef}/probation/decision` | `{ decision: confirm \| extend, reason, extendByMonths: 1-6 }`. Accepted only once the file is complete and BGV has cleared |
 | `GET /cases/{caseRef}/confirmation-letter` | the confirmation letter PDF |
 
-Roles: `hrta`, `hrhead` and `service` can read, `hrta` and `hrhead` can operate, and only `hrhead`
-decides probation today. Onboarding is switching that decision to the department's HOD, found
-through Identity's lookup (PR #39), with HR Head as the fallback when no HOD is found.
+Roles: `hrta`, `hrhead` and `service` can read, and `hrta` and `hrhead` can operate. The case DTO
+carries `department` (`null` until assigned).
+
+**Who decides probation (RCU-ONB-005, PR #50).** The head of the joiner's department decides, never
+anyone else's head:
+
+- The department is the one on the case. When the case has none, it is the reporting manager's
+  department from Identity (`users/{reportingManagerId}`).
+- The head is Identity's `users?role=hod&department=<key>` in the same workspace. With two heads on
+  record, the first one listed decides.
+- `hod` and `hrhead` reach the endpoint. A `hod` who isn't that department's head gets
+  403 `not_department_head`. When there is no department or it has no head, only HR Head decides, and
+  anyone else gets 403 `hr_head_decides`.
+- The decision is recorded under the role `hod`, or `hrhead` when HR Head decided.
+- If Identity doesn't answer, the decision returns 503 `dependency_unavailable`. A department key or
+  user Identity refuses (400) or doesn't know (404) counts as "no head".
+- Onboarding reads Identity through `Services:Identity` with a service token. Docker compose sets it.
+- Onboarding validates `department` as `^[a-z0-9][a-z0-9-]{0,63}$`, which is looser than Identity's
+  `^[a-z][a-z0-9-]{0,49}$`. A key only Onboarding accepts finds no head, so HR Head decides. Follow
+  the department-key convention (Identity section) so the two always agree.
 
 **Consumes:**
 
@@ -576,7 +593,7 @@ through Identity's lookup (PR #39), with HR Head as the fallback when no HOD is 
 |---|---|
 | `onboarding.joining_instructions_sent.v1` | `onbId, appId, reqId, candidateId, offerId, joiningDate, documents[{type, label, mandatory}]` |
 | `onboarding.day1.ready.v1` | `onbId, appId, reqId, candidateId, joiningDate, readyAt, readyBy` |
-| `onboarding.milestone.due.v1` | `onbId, appId, reqId, candidateId, milestoneId, milestone, label, phase (PreBoarding \| Probation), cycle, dueOn, joiningDate, assigneeRoles ["hrta"], reportingManagerId` (probation only) |
+| `onboarding.milestone.due.v1` | `onbId, appId, reqId, candidateId, milestoneId, milestone, label, phase (PreBoarding \| Probation), cycle, dueOn, joiningDate, assigneeRoles ["hrta"], reportingManagerId` (probation only), `departmentHeadId` (probation-review and probation-end only, optional; PR #50). With no head on record, `departmentHeadId` is absent and `assigneeRoles` is `["hrta", "hrhead"]` |
 | `onboarding.employee.confirmed.v1` | `onbId, appId, reqId, candidateId, joiningDate, confirmedAt, cycle, decidedBy` |
 | `onboarding.probation.extended.v1` (new) | `onbId, appId, reqId, candidateId, cycle, extendedByMonths, newProbationEnd, reason, decidedBy` |
 
@@ -585,7 +602,10 @@ through Identity's lookup (PR #39), with HR Head as the fallback when no HOD is 
 - `onboarding.joining_instructions_sent.v1`: an email to the candidate (`candidateId`).
 - `onboarding.day1.ready.v1`: `hrta`. There is no Finance or Payroll role yet.
 - `onboarding.milestone.due.v1`: the `assigneeRoles`, plus the reporting manager by user id
-  (`reportingManagerId`) for probation milestones.
+  (`reportingManagerId`) for probation milestones. For probation-review and probation-end,
+  Notification can now also send to the department head by user id (`departmentHeadId`), the person
+  who decides. This is not in Notification's matrix yet. When the head is unknown, `hrhead` in
+  `assigneeRoles` already covers HR Head.
 - `onboarding.employee.confirmed.v1` and `onboarding.probation.extended.v1`: `hrta`.
 
 **Planned (requested of other threads):**
@@ -594,8 +614,8 @@ through Identity's lookup (PR #39), with HR Head as the fallback when no HOD is 
   sections). Until Onboarding reads them, it uses the built-in FRD Annexure E template and counts
   back over weekends only.
 - Offer: an optional `probationMonths` on `offer.accepted.v1`.
-- Identity: the HOD and reporting-manager lookup is built (PR #39). Onboarding is switching its
-  probation decision to it.
+- Notification: send the probation-review and probation-end reminders to `departmentHeadId` by user
+  id, as it already does with `reportingManagerId`.
 
 ### Reporting (owner: Reporting 5114; PR #34)
 
