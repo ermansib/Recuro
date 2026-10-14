@@ -106,10 +106,10 @@ Roles are data, not code: each workspace has its own rows in **`workspace_roles`
   **permissions** (keys from the product's permission catalogue, the same capability keys the Identity policy
   and the main portal use), its **pages** (screen keys from the screen catalogue) and whether holders need MFA.
 - Every new workspace (sign-up or platform console) starts with the persona roles HR-TA, HR Head, HOD, MD/CEO
-  and Employee. Workspaces created earlier get them at startup. Tenants can rename, change or switch these off
+  and Employee. Workspaces created earlier get them at startup. Workspaces can rename, change or switch these off
   and add their own; keys are fixed once created. A role still held by someone, or that others report to,
   can't be switched off. The workspace's sign-in MFA list follows the roles marked "requires MFA".
-- Tenant admins manage their own workspace under **Roles & people** (`/api/v1/tenant/roles`, `/members`);
+- Workspace admins manage their own workspace under **Roles & people** (`/api/v1/tenant/roles`, `/members`);
   platform admins manage any workspace under **Workspace roles** (`/api/v1/platform/tenants/{id}/roles`,
   `/members`). `GET .../roles/catalog` (or `/platform/role-catalog`) lists the permissions and pages.
 - People: the sign-up owner is the first member; accounts that exist only in Keycloak (with the workspace's

@@ -17,8 +17,8 @@ export function PlatformRolesPage() {
       <QueryState isLoading={tenants.isLoading} error={tenants.error}>
         <section className="card">
           <div className="field">
-            <label htmlFor="roles-tenant">{t('roles.tenant')}</label>
-            <select id="roles-tenant" className="input" value={selected ?? ''} onChange={(event) => setParams({ tenant: event.target.value })}>
+            <label htmlFor="roles-workspace">{t('roles.workspace')}</label>
+            <select id="roles-workspace" className="input" value={selected ?? ''} onChange={(event) => setParams({ tenant: event.target.value })}>
               {tenants.data?.map((tenant) => (
                 <option key={tenant.id} value={tenant.id}>
                   {tenant.name}
