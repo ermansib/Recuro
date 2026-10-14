@@ -31,6 +31,12 @@ the project files as `recuro/backenduserstories.html`). Decisions behind this ma
      BGV matrices plus business calendars, versioned and pinned per workflow. Services resolve rules
      through the Config API and react to `config.version.activated`; none of them keeps its own copy
      of a matrix or hard-codes a rule. This may be revisited later; if it moves, only Config changes.
+   - **Workspace rules, hierarchy and page access are managed from the admin portal** (product owner,
+     2026-10-09): the Workspace Admin and Platform Admin sections decide each workspace's rules, its
+     hierarchy (departments, HODs, reporting managers) and which pages each role can open. Services
+     never hard-code them. Until those screens exist, the hierarchy lives in Keycloak user attributes
+     (PR #39), which the admin portal will edit later. All of it is per workspace and
+     `TenantId`-scoped, like every other row in the multi-tenant database (rule 5).
 8. **Free / open-source only.** CI runs a licence check.
 
 ## Service map
@@ -197,8 +203,68 @@ All Identity endpoints accept a workspace member's token or a service token.
 - Callers may cache a decision for `ttlSeconds`.
 
 **`GET /api/v1/identity/me`** provisions the user just in time from the token and returns the frontend
-`User`. **`GET /api/v1/identity/users?role=<role>`** lists the workspace's users by role, which is how
-Workflow and Notification find assignees and recipients.
+`User`. **`GET /api/v1/identity/users?role=<role>[&department=<key>]`** lists the workspace's users by
+role, which is how Workflow and Notification find assignees and recipients.
+**`GET /api/v1/identity/users/{id}`** returns one user of the caller's workspace, or 404. It has the
+same readers as `/users`, including the `service` role.
+
+**Hierarchy (PR #39).** The realm role `hod` marks a department head. Each user carries a
+`department` (a key matching `^[a-z][a-z0-9-]{0,49}$`, such as `operations`) and a `managerId` (their
+reporting manager's user id).
+
+- Both come from admin-only Keycloak user attributes (`department`, `manager_id`), which
+  `recuro-portal` puts in the token as the claims `department` and `manager_id`. Identity refreshes
+  them on every sign-in.
+- `UserDto` (from `/me`, `/users` and `/users/{id}`) carries `department` and `managerId`, `""` when
+  unknown. The frontend `User` has them as optional fields.
+- `hod` is mirrored like other roles and is never a user's primary role. It has no masking map of
+  its own. Since the admin portal seeds `hod` as a workspace role (PR #45), Identity masks it like
+  `mdceo` and grants it that role's permissions (see "Workspace roles and access" below).
+- `users?role=hod&department=operations` finds a department's head, and `users/{managerId}` finds a
+  person's reporting manager.
+- Lookups only ever answer from the caller's own workspace: another workspace's user is a 404. A malformed
+  `department` is a 400.
+- In Development mode, `X-Dev-Department` and `X-Dev-Manager` set the same fields.
+
+**Department-key convention.** A department key is the slug of the department's display name:
+lowercase, with each run of characters outside `[a-z0-9]` replaced by one `-` ("Credit & Risk"
+becomes `credit-risk`). Identity user attributes and the admin portal must use the same keys. No
+event carries a department today, so a service that needs one reads the requisition
+(`GET /api/v1/requisitions/{reqId}`, `service` role) and slugs its `department`. Notification does
+this (PR #40). Requisition may later carry a `departmentKey` so callers stop slugging.
+
+### Workspace roles and access (owners: admin portal and Identity; PR #45, PR #47)
+
+**Roles are workspace data (PR #45).** The admin portal stores each workspace's roles and role
+assignments in `recuro_admin`, in the `TenantId`-scoped tables `workspace_roles` and
+`workspace_members`. A role has a key, name, `reportsTo`, permissions from the product catalogue,
+the pages it can open, `requiresMfa` and `isActive`. Workspace Admin (Roles & people) and the platform
+console (Workspace roles) create, edit and switch off roles and assign them to people. Assignments
+are synced to Keycloak as the `workspace_roles` user attribute plus the matching realm roles.
+
+Every workspace is seeded with the persona roles `hrta`, `hrhead`, `hod`, `mdceo` and `employee`.
+`hod` ("Head of Department") reports to `hrhead` and holds `mrf.approve`, `approvals.view` and
+`reports.view`.
+
+**`GET /api/v1/internal/workspaces/{id}/access`** (admin API, PR #47) returns
+`{ workspaceId, version, roles[{ key, name, reportsTo, permissions, pages, requiresMfa, isActive }], members[{ accountId, roleKeys, department }] }`.
+Only service-account tokens can call it (audience `recuro-api` plus the `service` role). Browsers,
+workspace admins and platform admins get 403. In Development mode it accepts `X-Dev-Roles: service`.
+
+**Identity follows each workspace's roles (PR #47).**
+
+- Identity reads the endpoint through `Services:Admin:BaseUrl` (default `http://localhost:5080/`),
+  signed with `ServiceTokenHandler`. It caches each workspace for 60 seconds and keeps the last good
+  copy for an hour if the admin API is down. With nothing to read, the seeded FRD §3.2 matrix
+  applies. `Services:Admin:Enabled=false` turns the lookup off.
+- The PDP (`/identity/decide`) grants a permission to the workspace's active roles that hold it. A
+  switched-off role grants nothing. Roles assigned in the admin portal count before the person's
+  token carries them, and roles with `requiresMfa` need step-up. Grants for roles outside the
+  workspace (`candidate`, `service`) and assignment-only rules are unchanged.
+- Masking: a workspace-defined role masks like `hrta` if it holds `candidate.viewSensitive`, and
+  like `mdceo` otherwise.
+- `policyVersion` and the masking map version gain a `+roles-<hash>` suffix for the workspace's
+  role content. Callers that cache by version pick up role changes on their own.
 
 ### Config: matrices and versions (owner: Config)
 
@@ -493,7 +559,8 @@ cluster. Routes are under `/api/v1/onboarding`, and `{caseRef}` is either the ca
 | `GET /cases/{caseRef}/confirmation-letter` | the confirmation letter PDF |
 
 Roles: `hrta`, `hrhead` and `service` can read, `hrta` and `hrhead` can operate, and only `hrhead`
-decides probation (standing in for the HOD until a HOD lookup exists).
+decides probation today. Onboarding is switching that decision to the department's HOD, found
+through Identity's lookup (PR #39), with HR Head as the fallback when no HOD is found.
 
 **Consumes:**
 
@@ -527,7 +594,8 @@ decides probation (standing in for the HOD until a HOD lookup exists).
   sections). Until Onboarding reads them, it uses the built-in FRD Annexure E template and counts
   back over weekends only.
 - Offer: an optional `probationMonths` on `offer.accepted.v1`.
-- Identity: a HOD and reporting-manager lookup (still pending).
+- Identity: the HOD and reporting-manager lookup is built (PR #39). Onboarding is switching its
+  probation decision to it.
 
 ### Reporting (owner: Reporting 5114; PR #34)
 
@@ -598,8 +666,12 @@ Notification sends each one to that role's users in the workspace. `assigneeIds`
 `workflow.task.reminder_due.v1` stays in the payload for person-level tasks later, but it is empty
 today. Adding `assigneeRole` was additive, so the event stays v1.
 
-Escalating `interview.feedback.overdue.v1` to the HOD needs a recipient lookup that Identity is adding
-to `GET /api/v1/identity/users`. Until then, Notification sends it to the panel and HR-TA.
+`interview.feedback.overdue.v1` also goes to the requisition department's HOD (Notification,
+PR #40), found through Identity's `users?role=hod&department=` lookup (PR #39). The HOD is added to
+the panel and HR-TA, who still receive it. If no HOD is found, only the panel and HR-TA get it.
+`hod` is now a value of `recipientRole` on `notification.created.v1`,
+`notification.email.dispatched.v1` and `notification.email.failed.v1` (schemas updated in PR #40).
+The frontend `Role` type may need `hod` wherever it renders `recipientRole`.
 
 ### Fields consumers already rely on, for events wave 2 will publish
 
