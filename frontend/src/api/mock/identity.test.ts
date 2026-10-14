@@ -66,7 +66,12 @@ describe('identity mock (RCU-PLT-001)', () => {
 
   it('lets any kind of organisation create a workspace with the same features', async () => {
     const api = createMockClient()
-    const owner = await api.registerOrganisation({
+    const signedIn = async (result: Promise<SignInResult>) => {
+      const r = await result
+      if (r.status !== 'signedIn') throw new Error(`expected signedIn, got ${r.status}`)
+      return r.session
+    }
+    const owner = await signedIn(api.registerOrganisation({
       orgName: 'Northwind Talent Partners',
       orgType: 'agency',
       adminName: 'J. Doe',
@@ -74,10 +79,10 @@ describe('identity mock (RCU-PLT-001)', () => {
       email: 'j.doe@northwind.example',
       password: STRONG,
       acceptTerms: true,
-    })
+    }))
     expect(owner.tenant).toMatchObject({ slug: 'northwind-talent-partners', orgType: 'agency', name: 'Northwind Talent Partners' })
     expect(owner.user.tenantId).toBe(owner.tenant.id)
-    const second = await api.registerOrganisation({
+    const second = await signedIn(api.registerOrganisation({
       orgName: 'Northwind Talent Partners',
       orgType: 'smallBusiness',
       adminName: 'Other',
@@ -85,7 +90,7 @@ describe('identity mock (RCU-PLT-001)', () => {
       email: 'o@other.example',
       password: STRONG,
       acceptTerms: true,
-    })
+    }))
     expect(second.tenant.slug).toBe('northwind-talent-partners-2')
     expect((await api.getWorkspaceBranding('northwind-talent-partners')).orgType).toBe('agency')
     await expectStatus(api.registerOrganisation({ ...{ orgName: 'X', orgType: 'enterprise', adminName: 'Y', adminRole: 'hrhead', email: 'y@x.example', acceptTerms: true }, password: 'weak' }), 400)

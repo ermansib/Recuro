@@ -8,6 +8,7 @@ import { AcceptInvitePage } from './features/auth/AcceptInvitePage'
 import { CandidateSignUpPage } from './features/auth/CandidateSignUpPage'
 import { ForgotPasswordPage } from './features/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from './features/auth/ResetPasswordPage'
+import { SignInCallbackPage } from './features/auth/SignInCallbackPage'
 import { SignInPage } from './features/auth/SignInPage'
 import { SignUpPage } from './features/auth/SignUpPage'
 import { AssessmentPage } from './features/assessment/AssessmentPage'
@@ -35,6 +36,7 @@ export function App() {
   return (
     <Routes>
       <Route path="signin" element={<SignInPage />} />
+      <Route path="auth/callback" element={<SignInCallbackPage />} />
       <Route path="signup" element={<SignUpPage />} />
       <Route path="signup/candidate" element={<CandidateSignUpPage />} />
       <Route path="forgot-password" element={<ForgotPasswordPage />} />

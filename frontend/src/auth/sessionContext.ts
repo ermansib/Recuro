@@ -21,6 +21,8 @@ export interface SessionValue {
   tenant: TenantConfig
   token: string
   actor: Actor
+  /** Signed in through the identity provider (Keycloak) rather than the in-browser demo identity. */
+  viaIdentityProvider: boolean
   /** Demo persona switcher (dev/demo builds only). */
   switchRole: (role: Role) => Promise<void>
   signOut: () => Promise<void>
