@@ -212,8 +212,9 @@ reporting manager's user id).
   them on every sign-in.
 - `UserDto` (from `/me`, `/users` and `/users/{id}`) carries `department` and `managerId`, `""` when
   unknown. The frontend `User` has them as optional fields.
-- `hod` is mirrored like other roles but is not a persona: it has no masking map and is never a
-  user's primary role.
+- `hod` is mirrored like other roles and is never a user's primary role. It has no masking map of
+  its own. Since the admin portal seeds `hod` as a workspace role (PR #45), Identity masks it like
+  `mdceo` and grants it that role's permissions (see "Workspace roles and access" below).
 - `users?role=hod&department=operations` finds a department's head, and `users/{managerId}` finds a
   person's reporting manager.
 - Lookups only ever answer from the caller's own tenant: another tenant's user is a 404. A malformed
@@ -226,6 +227,41 @@ becomes `credit-risk`). Identity user attributes and the admin portal must use t
 event carries a department today, so a service that needs one reads the requisition
 (`GET /api/v1/requisitions/{reqId}`, `service` role) and slugs its `department`. Notification does
 this (PR #40). Requisition may later carry a `departmentKey` so callers stop slugging.
+
+### Workspace roles and access (owners: admin portal and Identity; PR #45, PR #47)
+
+"Workspace" is the user-facing word for a tenant. `TenantId` stays the internal key everywhere.
+
+**Roles are workspace data (PR #45).** The admin portal stores each workspace's roles and role
+assignments in `recuro_admin`, in the `TenantId`-scoped tables `workspace_roles` and
+`workspace_members`. A role has a key, name, `reportsTo`, permissions from the product catalogue,
+the pages it can open, `requiresMfa` and `isActive`. Tenant Admin (Roles & people) and the platform
+console (Workspace roles) create, edit and switch off roles and assign them to people. Assignments
+are synced to Keycloak as the `workspace_roles` user attribute plus the matching realm roles.
+
+Every workspace is seeded with the persona roles `hrta`, `hrhead`, `hod`, `mdceo` and `employee`.
+`hod` ("Head of Department") reports to `hrhead` and holds `mrf.approve`, `approvals.view` and
+`reports.view`.
+
+**`GET /api/v1/internal/workspaces/{id}/access`** (admin API, PR #47) returns
+`{ workspaceId, version, roles[{ key, name, reportsTo, permissions, pages, requiresMfa, isActive }], members[{ accountId, roleKeys, department }] }`.
+Only service-account tokens can call it (audience `recuro-api` plus the `service` role). Browsers,
+tenant admins and platform admins get 403. In Development mode it accepts `X-Dev-Roles: service`.
+
+**Identity follows each workspace's roles (PR #47).**
+
+- Identity reads the endpoint through `Services:Admin:BaseUrl` (default `http://localhost:5080/`),
+  signed with `ServiceTokenHandler`. It caches each workspace for 60 seconds and keeps the last good
+  copy for an hour if the admin API is down. With nothing to read, the seeded FRD §3.2 matrix
+  applies. `Services:Admin:Enabled=false` turns the lookup off.
+- The PDP (`/identity/decide`) grants a permission to the workspace's active roles that hold it. A
+  switched-off role grants nothing. Roles assigned in the admin portal count before the person's
+  token carries them, and roles with `requiresMfa` need step-up. Grants for roles outside the
+  workspace (`candidate`, `service`) and assignment-only rules are unchanged.
+- Masking: a workspace-defined role masks like `hrta` if it holds `candidate.viewSensitive`, and
+  like `mdceo` otherwise.
+- `policyVersion` and the masking map version gain a `+roles-<hash>` suffix for the workspace's
+  role content. Callers that cache by version pick up role changes on their own.
 
 ### Config: matrices and versions (owner: Config)
 
