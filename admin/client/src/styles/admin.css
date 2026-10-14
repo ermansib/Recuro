@@ -113,3 +113,33 @@ tbody th{font-weight:600}
 .facts{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:8px 0 14px}
 .facts dt{color:var(--muted)}
 .facts dd{margin:0;font-weight:600}
+
+/* Roles: grouped permission and page checkboxes */
+.role-options {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.role-options legend {
+  font-weight: 600;
+  padding: 0 6px;
+}
+.role-options.compact {
+  margin-top: 0;
+  padding: 6px 8px;
+  grid-template-columns: 1fr;
+  gap: 4px;
+}
+.role-group {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+.role-group h3 {
+  font-size: 13px;
+  margin: 0 0 2px;
+}

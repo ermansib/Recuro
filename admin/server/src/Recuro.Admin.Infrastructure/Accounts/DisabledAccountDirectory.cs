@@ -19,6 +19,14 @@ internal sealed partial class DisabledAccountDirectory(ILogger<DisabledAccountDi
 
     public Task DeleteAccountAsync(string accountId, CancellationToken ct) => Task.CompletedTask;
 
+    public Task<Result<IReadOnlyList<DirectoryAccount>>> ListTenantAccountsAsync(
+        Guid tenantId, IReadOnlySet<string> knownAccountIds, CancellationToken ct) =>
+        Task.FromResult(Result.Success<IReadOnlyList<DirectoryAccount>>([]));
+
+    public Task<Result> SyncWorkspaceRolesAsync(
+        string accountId, IReadOnlyList<string> roleKeys, IReadOnlyCollection<string> workspaceRoleKeys, CancellationToken ct) =>
+        Task.FromResult(Result.Success());
+
     [LoggerMessage(Level = LogLevel.Warning, Message = "AccountDirectory is disabled: no sign-in account was created for the owner of tenant {TenantId}")]
     private static partial void LogSkipped(ILogger logger, Guid tenantId);
 }

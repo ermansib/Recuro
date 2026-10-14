@@ -27,19 +27,22 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         builder.Property(t => t.OrgType).HasConversion<string>().HasMaxLength(20).HasDefaultValue(OrgType.SmallBusiness);
         builder.Property(t => t.EmailDomain).HasMaxLength(Tenant.EmailDomainMaxLength);
         builder.Property(t => t.CareersTagline).HasMaxLength(200).HasDefaultValue(string.Empty);
-        builder.Property(t => t.SsoProviders).HasConversion(KeyListConverter, KeyListComparer).HasMaxLength(200);
-        builder.Property(t => t.MfaRoles).HasConversion(KeyListConverter, KeyListComparer).HasMaxLength(200);
+        builder.Property(t => t.SsoProviders).HasConversion(KeyList.Converter, KeyList.Comparer).HasMaxLength(200);
+        builder.Property(t => t.MfaRoles).HasConversion(KeyList.Converter, KeyList.Comparer).HasMaxLength(200);
         builder.Property(t => t.Locale).HasMaxLength(20).HasDefaultValue(WorkspaceDefaults.Locale);
         builder.Property(t => t.Currency).HasMaxLength(3).HasDefaultValue(WorkspaceDefaults.Currency);
         builder.Property(t => t.SessionIdleMinutes).HasDefaultValue(WorkspaceDefaults.SessionIdleMinutes);
     }
+}
 
-    /// <summary>Short lists of keys (sso providers, role keys) as one comma-separated column, on Postgres and SQLite alike.</summary>
-    private static readonly ValueConverter<IReadOnlyList<string>, string> KeyListConverter = new(
+/// <summary>Short lists of keys (sso providers, role keys, permissions) as one comma-separated column, on Postgres and SQLite alike.</summary>
+internal static class KeyList
+{
+    public static readonly ValueConverter<IReadOnlyList<string>, string> Converter = new(
         keys => string.Join(',', keys),
         column => column.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
 
-    private static readonly ValueComparer<IReadOnlyList<string>> KeyListComparer = new(
+    public static readonly ValueComparer<IReadOnlyList<string>> Comparer = new(
         (a, b) => (a ?? Array.Empty<string>()).SequenceEqual(b ?? Array.Empty<string>()),
         keys => keys.Aggregate(0, (hash, key) => HashCode.Combine(hash, key.GetHashCode(StringComparison.Ordinal))),
         keys => keys.ToArray());

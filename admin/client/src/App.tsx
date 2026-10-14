@@ -5,6 +5,8 @@ import { useSession } from './auth/sessionContext'
 import { Layout } from './components/Layout'
 import { BrandingPage } from './features/branding/BrandingPage'
 import { ScreenEditorPage } from './features/screens/ScreenEditorPage'
+import { PlatformRolesPage } from './features/roles/PlatformRolesPage'
+import { RolesPage } from './features/roles/RolesPage'
 import { ScreensPage } from './features/screens/ScreensPage'
 import { SignInPage } from './features/signin/SignInPage'
 import { TenantThemePage } from './features/tenantThemes/TenantThemePage'
@@ -39,12 +41,14 @@ export function App() {
             <Route path="/platform/tenants" element={<TenantsPage />} />
             <Route path="/platform/tenant-themes" element={<TenantThemePage />} />
             <Route path="/platform/themes" element={<ThemeLibraryPage />} />
+            <Route path="/platform/roles" element={<PlatformRolesPage />} />
           </>
         ) : (
           <>
             <Route path="/tenant/branding" element={<BrandingPage />} />
             <Route path="/tenant/screens" element={<ScreensPage />} />
             <Route path="/tenant/screens/:key" element={<ScreenEditorPage />} />
+            <Route path="/tenant/roles" element={<RolesPage />} />
           </>
         )}
         <Route path="*" element={<Navigate to={HOME[level]} replace />} />

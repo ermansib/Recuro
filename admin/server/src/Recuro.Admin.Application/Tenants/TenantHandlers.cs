@@ -1,5 +1,6 @@
 using Recuro.Admin.Application.Abstractions;
 using Recuro.Admin.Domain.Common;
+using Recuro.Admin.Domain.Roles;
 using Recuro.Admin.Domain.Tenants;
 
 namespace Recuro.Admin.Application.Tenants;
@@ -21,7 +22,8 @@ public sealed class GetTenantHandler(ITenantRepository tenants)
 
 public sealed record CreateTenantRequest(string Name, string Slug, TenantKind Kind, TenantPlan Plan, string? CustomDomain);
 
-public sealed class CreateTenantHandler(ITenantRepository tenants, IUnitOfWork unitOfWork, IClock clock)
+/// <summary>Creates a tenant from the platform console, with the default workspace roles.</summary>
+public sealed class CreateTenantHandler(ITenantRepository tenants, IWorkspaceRoleRepository roles, IUnitOfWork unitOfWork, IClock clock)
 {
     public async Task<Result<TenantDto>> HandleAsync(CreateTenantRequest request, CancellationToken ct)
     {
@@ -46,6 +48,7 @@ public sealed class CreateTenantHandler(ITenantRepository tenants, IUnitOfWork u
         }
 
         tenants.Add(tenant);
+        roles.AddRange(DefaultWorkspaceRoles.CreateFor(tenant.Id));
         await unitOfWork.SaveChangesAsync(ct);
         return TenantDto.From(tenant);
     }

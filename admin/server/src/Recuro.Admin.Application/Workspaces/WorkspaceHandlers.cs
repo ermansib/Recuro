@@ -1,6 +1,7 @@
 using System.Net.Mail;
 using Recuro.Admin.Application.Abstractions;
 using Recuro.Admin.Domain.Common;
+using Recuro.Admin.Domain.Roles;
 using Recuro.Admin.Domain.Tenants;
 
 namespace Recuro.Admin.Application.Workspaces;
@@ -17,11 +18,13 @@ public sealed record SignUpWorkspaceRequest(
 
 /// <summary>
 /// Creates a workspace from the public sign-up page: a row in <c>tenants</c> and the owner's account in
-/// the account directory. The account is created first; if saving the workspace then fails, it is removed
+/// the account directory, plus the workspace's default roles with the owner as its first member. The account is created first; if saving the workspace then fails, it is removed
 /// again, so a failed sign-up never leaves an account without a workspace.
 /// </summary>
 public sealed class SignUpWorkspaceHandler(
     ITenantRepository tenants,
+    IWorkspaceRoleRepository roles,
+    IWorkspaceMemberRepository members,
     IUnitOfWork unitOfWork,
     IAccountDirectory accounts,
     SignUpDefaults defaults,
@@ -59,6 +62,8 @@ public sealed class SignUpWorkspaceHandler(
         try
         {
             tenants.Add(tenant);
+            roles.AddRange(DefaultWorkspaceRoles.CreateFor(tenant.Id));
+            members.Add(WorkspaceMember.Create(tenant.Id, account.Value, ownerName, email, [request.AdminRole]));
             await unitOfWork.SaveChangesAsync(ct);
         }
         catch

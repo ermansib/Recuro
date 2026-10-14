@@ -140,3 +140,70 @@ export interface Persona {
   role: string
   tenantName: string | null
 }
+
+/** One action a role can be allowed, from the product's permission catalogue. */
+export interface PermissionDefinition {
+  key: string
+  module: string
+  label: string
+}
+
+/** A screen a role can be given access to. */
+export interface RolePage {
+  key: string
+  code: string
+  title: string
+  module: string
+}
+
+export interface RoleCatalog {
+  permissions: PermissionDefinition[]
+  pages: RolePage[]
+}
+
+/** A workspace role, defined per tenant in the database (not hard-coded). */
+export interface WorkspaceRole {
+  key: string
+  name: string
+  description: string | null
+  /** Key of the role this one reports to, or null at the top. */
+  reportsTo: string | null
+  permissions: string[]
+  pages: string[]
+  requiresMfa: boolean
+  isSystem: boolean
+  isActive: boolean
+  memberCount: number
+}
+
+export interface UpdateRoleRequest {
+  name: string
+  description: string | null
+  reportsTo: string | null
+  permissions: string[]
+  pages: string[]
+  requiresMfa: boolean
+}
+
+export interface CreateRoleRequest extends UpdateRoleRequest {
+  key: string
+}
+
+/** A person in the workspace. accountId is the Keycloak subject. */
+export interface WorkspaceMember {
+  accountId: string
+  name: string
+  email: string
+  roleKeys: string[]
+  department: string | null
+}
+
+export interface UpdateMemberRequest {
+  roleKeys: string[]
+  department: string | null
+}
+
+/**
+ * Which workspace a roles call acts on: a tenant admin's own (no id), or the one a platform admin picked.
+ */
+export type RoleScope = string | undefined

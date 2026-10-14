@@ -43,6 +43,7 @@ app.UseRateLimiter();
 
 app.MapPlatformEndpoints();
 app.MapTenantEndpoints();
+app.MapRoleEndpoints();
 app.MapRuntimeEndpoints();
 app.MapWorkspaceEndpoints();
 app.MapAuthEndpoints();

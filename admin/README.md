@@ -97,6 +97,26 @@ only runs on first start).
 `Auth:Mode=Development` swaps Keycloak for a persona picker (sent as an `X-Recuro-Persona` header).
 The API refuses to start in that mode outside the Development and Testing environments.
 
+## Workspace roles
+
+Roles are data, not code: each workspace has its own rows in **`workspace_roles`** (TenantId-scoped) and
+**`workspace_members`** in `recuro_admin`.
+
+- A role has a key, name, description, a **reports to** role (the hierarchy, for example HOD → HR Head), its
+  **permissions** (keys from the product's permission catalogue, the same capability keys the Identity policy
+  and the main portal use), its **pages** (screen keys from the screen catalogue) and whether holders need MFA.
+- Every new workspace (sign-up or platform console) starts with the persona roles HR-TA, HR Head, HOD, MD/CEO
+  and Employee. Workspaces created earlier get them at startup. Tenants can rename, change or switch these off
+  and add their own; keys are fixed once created. A role still held by someone, or that others report to,
+  can't be switched off. The workspace's sign-in MFA list follows the roles marked "requires MFA".
+- Tenant admins manage their own workspace under **Roles & people** (`/api/v1/tenant/roles`, `/members`);
+  platform admins manage any workspace under **Workspace roles** (`/api/v1/platform/tenants/{id}/roles`,
+  `/members`). `GET .../roles/catalog` (or `/platform/role-catalog`) lists the permissions and pages.
+- People: the sign-up owner is the first member; accounts that exist only in Keycloak (with the workspace's
+  `tenant_id`) are imported when the list is opened. Assigning roles writes them to Keycloak first: the
+  `workspace_roles` user attribute always, plus the realm role of the same name where one exists (the
+  built-in persona roles), so tokens keep working for services that still read realm roles.
+
 ## Checks
 
 ```bash
