@@ -157,7 +157,7 @@ public sealed class RoleApiTests : IDisposable
         var before = await service.GetFromJsonAsync<WorkspaceAccessDto>(path, Json);
         Assert.Contains(before!.Roles, r => r.Key == "hrta" && r.Permissions.Contains("mrf.raise"));
 
-        await _factory.ClientAs(AdminApiFactory.Aurora).PostAsJsonAsync("/api/v1/tenant/roles", Recruiter(), Json);
+        await _factory.ClientAs(AdminApiFactory.Aurora).PostAsJsonAsync("/api/v1/workspace/roles", Recruiter(), Json);
         var after = await service.GetFromJsonAsync<WorkspaceAccessDto>(path, Json);
         Assert.Contains(after!.Roles, r => r.Key == "recruiter");
         Assert.NotEqual(before.Version, after.Version);

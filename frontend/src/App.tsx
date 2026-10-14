@@ -1,8 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { can, homePath, type Capability } from './auth/permissions'
+import { homePath, useCan, useCanOpen, type Capability } from './auth/permissions'
 import { RequireAuth } from './auth/RequireAuth'
 import { useSession } from './auth/sessionContext'
 import { Layout } from './components/Layout'
+import { NAV_ITEMS } from './components/nav'
 import { ApprovalsPage } from './features/approvals/ApprovalsPage'
 import { AcceptInvitePage } from './features/auth/AcceptInvitePage'
 import { CandidateSignUpPage } from './features/auth/CandidateSignUpPage'
@@ -23,14 +24,26 @@ import { PipelinePage } from './features/pipeline/PipelinePage'
 import { TeamPage } from './features/team/TeamPage'
 import type { ReactElement } from 'react'
 
-/** Shows the screen only to roles with the capability; everyone else goes to their own landing page. */
-function Allowed({ capability, children }: { capability: Capability; children: ReactElement }) {
+/**
+ * Shows the screen only to roles allowed to open it; everyone else goes to the first screen they may open.
+ * When the workspace configured the signed-in role in the admin portal, its pages decide (`screen`);
+ * otherwise the role needs `capability` (FRD §3.2).
+ */
+function Allowed({ capability, screen, children }: { capability: Capability; screen?: string; children: ReactElement }) {
   const { user } = useSession()
-  return can(user.role, capability) ? children : <Navigate to={homePath(user.role)} replace />
+  const can = useCan()
+  const canOpen = useCanOpen()
+  const allowed = (screen === undefined ? null : canOpen(screen)) ?? can(capability)
+  if (allowed) return children
+  const landing = NAV_ITEMS.find((n) => n.screen !== screen && (canOpen(n.screen) ?? n.roles.includes(user.role)))
+  // The public careers site has no guard, so a role with no screens at all can't loop between redirects.
+  return <Navigate to={landing?.to ?? (screen === 'dashboard' ? '/careers' : homePath(user.role))} replace />
 }
 
 /** Internal screens are for HR personas; employees and candidates are sent to their portal. */
-const Internal = ({ children }: { children: ReactElement }) => <Allowed capability="internal.view">{children}</Allowed>
+const Internal = ({ screen, children }: { screen: string; children: ReactElement }) => (
+  <Allowed capability="internal.view" screen={screen}>{children}</Allowed>
+)
 
 export function App() {
   return (
@@ -43,17 +56,17 @@ export function App() {
       <Route path="reset-password" element={<ResetPasswordPage />} />
       <Route path="invite/:token" element={<AcceptInvitePage />} />
       <Route element={<RequireAuth><Layout /></RequireAuth>}>
-        <Route index element={<Internal><DashboardPage /></Internal>} />
-        <Route path="mrf/new" element={<Internal><MrfWizardPage /></Internal>} />
-        <Route path="jd" element={<Internal><JdBuilderPage /></Internal>} />
-        <Route path="approvals" element={<Internal><ApprovalsPage /></Internal>} />
-        <Route path="pipeline" element={<Internal><PipelinePage /></Internal>} />
-        <Route path="assessment" element={<Internal><AssessmentPage /></Internal>} />
-        <Route path="offer" element={<Internal><OfferPage /></Internal>} />
-        <Route path="bgv" element={<Internal><BgvPage /></Internal>} />
-        <Route path="onboarding" element={<Internal><Phase1Placeholder screen="onboarding" stories="RCU-ONB-001..006" /></Internal>} />
-        <Route path="vendors" element={<Internal><Phase1Placeholder screen="vendors" stories="RCU-VEN-001..005" /></Internal>} />
-        <Route path="reports" element={<Internal><Phase1Placeholder screen="reports" stories="RCU-RPT-001..006" /></Internal>} />
+        <Route index element={<Internal screen="dashboard"><DashboardPage /></Internal>} />
+        <Route path="mrf/new" element={<Internal screen="mrf"><MrfWizardPage /></Internal>} />
+        <Route path="jd" element={<Internal screen="jd"><JdBuilderPage /></Internal>} />
+        <Route path="approvals" element={<Internal screen="approvals"><ApprovalsPage /></Internal>} />
+        <Route path="pipeline" element={<Internal screen="pipeline"><PipelinePage /></Internal>} />
+        <Route path="assessment" element={<Internal screen="assessment"><AssessmentPage /></Internal>} />
+        <Route path="offer" element={<Internal screen="offer"><OfferPage /></Internal>} />
+        <Route path="bgv" element={<Internal screen="bgv"><BgvPage /></Internal>} />
+        <Route path="onboarding" element={<Internal screen="onboarding"><Phase1Placeholder screen="onboarding" stories="RCU-ONB-001..006" /></Internal>} />
+        <Route path="vendors" element={<Internal screen="vendors"><Phase1Placeholder screen="vendors" stories="RCU-VEN-001..005" /></Internal>} />
+        <Route path="reports" element={<Internal screen="reports"><Phase1Placeholder screen="reports" stories="RCU-RPT-001..006" /></Internal>} />
         <Route path="internal-careers" element={<Phase1Placeholder screen="internalCareers" stories="RCU-EMP-001..005" />} />
         <Route path="careers" element={<CareersPage />} />
         <Route path="team" element={<Allowed capability="team.invite"><TeamPage /></Allowed>} />

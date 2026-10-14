@@ -586,4 +586,17 @@ export interface TenantAppearance {
   themeMode: ThemeMode
   lightTheme: ThemeTokens
   darkTheme: ThemeTokens
+  /** The workspace's active roles as configured in the admin portal (Roles & people). Empty when none are set. */
+  roles: WorkspaceRoleConfig[]
+}
+
+/**
+ * A role a workspace configured in the admin portal: what its holders may do (capability keys, the same as
+ * auth/permissions.ts) and which screens they may open (screen keys of the admin screen catalogue).
+ */
+export interface WorkspaceRoleConfig {
+  key: string
+  name: string
+  permissions: string[]
+  pages: string[]
 }

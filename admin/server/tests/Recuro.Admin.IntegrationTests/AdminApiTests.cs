@@ -123,6 +123,9 @@ public sealed class AdminApiTests : IDisposable
         Assert.Equal("#C4B5FD", auroraRuntime.DarkTheme["navy"]);
         Assert.Equal(ThemePreset.DefaultKey, bridgeRuntime!.ThemePresetKey);
         Assert.Equal(13, auroraRuntime.Screens.Count);
+        var hrta = Assert.Single(auroraRuntime.Roles, r => r.Key == "hrta");
+        Assert.Contains("mrf.raise", hrta.Permissions);
+        Assert.Contains("pipeline", hrta.Pages);
     }
 
     [Fact]

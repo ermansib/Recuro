@@ -8,7 +8,8 @@ using Recuro.Admin.Domain.Theming;
 namespace Recuro.Admin.Application.Runtime;
 
 /// <summary>
-/// Everything the main Recuro portal needs to render a tenant: name, theme tokens and screen layout.
+/// Everything the main Recuro portal needs to render a tenant: name, theme tokens, screen layout
+/// and the workspace's active roles.
 /// Theme tokens are keyed by the main app's CSS custom properties (frontend/src/styles/tokens.css).
 /// </summary>
 public sealed record RuntimeConfigDto(
@@ -19,7 +20,15 @@ public sealed record RuntimeConfigDto(
     ThemeMode ThemeMode,
     IReadOnlyDictionary<string, string> LightTheme,
     IReadOnlyDictionary<string, string> DarkTheme,
-    IReadOnlyList<EffectiveScreen> Screens);
+    IReadOnlyList<EffectiveScreen> Screens,
+    IReadOnlyList<RuntimeRoleDto> Roles);
+
+/// <summary>An active workspace role as the main portal needs it: what it may do and which screens it opens.</summary>
+public sealed record RuntimeRoleDto(
+    string Key,
+    string Name,
+    IReadOnlyList<string> Permissions,
+    IReadOnlyList<string> Pages);
 
 public static class ThemeTokens
 {
@@ -49,7 +58,8 @@ public sealed class GetRuntimeConfigHandler(
     ITenantRepository tenants,
     IThemePresetRepository presets,
     IScreenCatalog catalog,
-    IScreenConfigurationRepository configurations)
+    IScreenConfigurationRepository configurations,
+    IWorkspaceRoleRepository roles)
 {
     public async Task<Result<RuntimeConfigDto>> HandleAsync(string slug, CancellationToken ct)
     {
@@ -73,6 +83,10 @@ public sealed class GetRuntimeConfigHandler(
         }
 
         var screens = await ListScreensHandler.ResolveAllAsync(catalog, configurations, tenant.Id, ct);
+        var activeRoles = (await roles.ListAsync(tenant.Id, ct))
+            .Where(r => r.IsActive)
+            .Select(r => new RuntimeRoleDto(r.Key, r.Name, r.Permissions, r.Pages))
+            .ToList();
         return new RuntimeConfigDto(
             tenant.Name,
             tenant.Slug,
@@ -81,6 +95,7 @@ public sealed class GetRuntimeConfigHandler(
             tenant.ThemeMode,
             ThemeTokens.From(preset.Light),
             ThemeTokens.From(preset.Dark),
-            screens);
+            screens,
+            activeRoles);
     }
 }

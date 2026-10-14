@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { api } from '../../api/client'
 import { useApiMutation, useInterview, useJobDescription, usePipeline, useRules } from '../../api/hooks'
-import { can } from '../../auth/permissions'
+import { useCan } from '../../auth/permissions'
 import { useSession } from '../../auth/sessionContext'
 import { useErrorToast, useToast } from '../../components/toastContext'
 import { Chip, ErrorBox, Loading, PageHead, Sensitive } from '../../components/ui'
@@ -31,13 +31,14 @@ export function AssessmentPage() {
 
 function AssessmentForm({ initial, card, rules, allowed }: { initial: InterviewRound; card: PipelineCard; rules: RuleConfig; allowed: Set<string> }) {
   const { t } = useTranslation()
-  const { user, actor } = useSession()
+  const { actor } = useSession()
+  const can = useCan()
   const toast = useToast()
   const onError = useErrorToast()
   const [round, setRound] = useState(() => withAllCompetencies(initial, rules, allowed))
   const submit = useApiMutation((r: InterviewRound) => api.submitInterview(actor, r))
   const locked = round.status === 'Submitted'
-  const editable = can(user.role, 'assessment.submit') && !locked
+  const editable = can('assessment.submit') && !locked
   const avg = assessmentAverage(round.ratings)
   const c = card.candidate
 
@@ -87,7 +88,7 @@ function AssessmentForm({ initial, card, rules, allowed }: { initial: InterviewR
             <Chip tone="navy">{t('assessment.interviewer', { name: round.interviewer })}</Chip>
             <Chip tone="slate">📅 {formatDate(round.scheduledFor)} · {formatTime(round.scheduledFor)}</Chip>
             <Chip tone="purple">{t(`assessment.modes.${round.mode}`)}</Chip>
-            {!can(user.role, 'assessment.submit') && <Chip tone="slate">{t('assessment.readOnly')}</Chip>}
+            {!can('assessment.submit') && <Chip tone="slate">{t('assessment.readOnly')}</Chip>}
             {locked && <Chip tone="green">{t('assessment.locked', { at: round.submittedAt ? formatTime(round.submittedAt) : '' })}</Chip>}
           </div>
           <fieldset className="form-body" disabled={!editable} style={{ border: 'none' }}>

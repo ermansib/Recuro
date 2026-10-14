@@ -1,8 +1,10 @@
-// Applies the tenant's theme from the admin portal and the user's light/dark choice (RCU-PLT-006).
+// Applies the tenant's theme from the admin portal and the user's light/dark choice (RCU-PLT-006), and
+// provides the workspace's configured roles from the same runtime config.
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { appearanceApi } from '../api/client'
 import type { AppearanceApi } from '../api/contract'
+import { WorkspaceRolesContext } from '../auth/workspaceRoles'
 import { applyTenantTheme } from '../config/tenant'
 import type { ThemeMode } from '../domain/types'
 import { ThemeContext, type ThemeSource, type ThemeValue } from './themeContext'
@@ -89,5 +91,11 @@ export function ThemeProvider({ children, api = appearanceApi }: { children: Rea
   }, [])
 
   const value = useMemo<ThemeValue>(() => ({ mode, scheme, setMode, setSource }), [mode, scheme, setMode, setSource])
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  // The same runtime config carries the workspace's roles (admin portal → Roles & people).
+  const roles = tenantAppearance?.roles.length ? tenantAppearance.roles : null
+  return (
+    <ThemeContext.Provider value={value}>
+      <WorkspaceRolesContext.Provider value={roles}>{children}</WorkspaceRolesContext.Provider>
+    </ThemeContext.Provider>
+  )
 }

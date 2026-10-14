@@ -14,6 +14,7 @@ const emerald: TenantAppearance = {
   themeMode: 'dark',
   lightTheme: { navy: '#065F46', cy: '#34D399', gold: '#D97706', bg: '#F3FAF7', card: '#FFFFFF', txt: '#0F172A' },
   darkTheme: { navy: '#6EE7B7', cy: '#34D399', gold: '#FBBF24', bg: '#07140F', card: '#0F241C', txt: '#E5E7EB' },
+  roles: [],
 }
 
 function Tenant({ slug }: { slug: string }) {
