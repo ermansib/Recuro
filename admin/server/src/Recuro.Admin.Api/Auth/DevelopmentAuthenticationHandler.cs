@@ -7,7 +7,8 @@ namespace Recuro.Admin.Api.Auth;
 
 /// <summary>
 /// Development-only sign-in that stands in for the real identity provider. The client sends
-/// "X-Recuro-Persona: platform" or "X-Recuro-Persona: tenant:{tenantId}" and gets the same claims a real token would carry.
+/// "X-Recuro-Persona: platform", "X-Recuro-Persona: tenant:{tenantId}" or, for a main-portal person,
+/// "X-Recuro-Persona: person:{tenantId}:{accountId}:{role,role}" and gets the same claims a real token would carry.
 /// Never registered outside Development and Testing (see Program.cs).
 /// </summary>
 internal sealed class DevelopmentAuthenticationHandler(
@@ -19,6 +20,7 @@ internal sealed class DevelopmentAuthenticationHandler(
     public const string SchemeName = "Development";
     public const string PersonaHeader = "X-Recuro-Persona";
     private const string TenantPrefix = "tenant:";
+    private const string PersonPrefix = "person:";
 
     /// <summary>What a Recuro microservice sends in Auth:Mode=Development instead of a service-account token.</summary>
     public const string DevRolesHeader = "X-Dev-Roles";
@@ -48,6 +50,18 @@ internal sealed class DevelopmentAuthenticationHandler(
                 new(ClaimTypes.Name, "Workspace admin"),
                 new(ClaimTypes.Role, AdminRoles.TenantAdmin),
                 new(AdminClaims.Tenant, tenantId.ToString()),
+            ];
+        }
+        else if (persona.StartsWith(PersonPrefix, StringComparison.Ordinal)
+            && persona[PersonPrefix.Length..].Split(':', 3) is [var tenant, var account, var roles]
+            && Guid.TryParse(tenant, out var personTenant) && account.Length > 0)
+        {
+            claims =
+            [
+                new(ClaimTypes.Name, "Workspace person"),
+                new(AdminClaims.Tenant, personTenant.ToString()),
+                new(AdminClaims.Subject, account),
+                .. roles.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(r => new Claim(AdminClaims.WorkspaceRoles, r)),
             ];
         }
         else

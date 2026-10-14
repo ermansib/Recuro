@@ -72,3 +72,17 @@ describe('http workspace lookup', () => {
     await expect(html.getWorkspace('acme')).rejects.toMatchObject({ status: 503 })
   })
 })
+
+describe('http access of the signed-in person', () => {
+  it('sends the person’s token and reads their roles', async () => {
+    const access = { workspaceId: SAVED.workspace.id, roles: [], permissions: [], pages: [] }
+    const fetcher = vi.fn().mockResolvedValue(json(access))
+    expect(await createHttpWorkspaceApi('', fetcher).getMyAccess('tok')).toEqual(access)
+    expect(fetcher).toHaveBeenCalledWith('/api/v1/me/access', expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer tok' }) }))
+  })
+
+  it('passes on a refusal and reports an unreachable server as 503', async () => {
+    await expect(createHttpWorkspaceApi('', vi.fn().mockResolvedValue(json({ title: 'Forbidden' }, 403))).getMyAccess('tok')).rejects.toMatchObject({ status: 403 })
+    await expect(createHttpWorkspaceApi('', vi.fn().mockRejectedValue(new TypeError('down'))).getMyAccess('tok')).rejects.toMatchObject({ status: 503 })
+  })
+})

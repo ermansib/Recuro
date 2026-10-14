@@ -19,6 +19,7 @@ import type {
   InvitationView,
   InviteInput,
   InterviewRound,
+  MyAccess,
   JobDescription,
   JobPosting,
   Offer,
@@ -164,6 +165,8 @@ export interface WorkspaceApi {
   registerWorkspace(input: RegisterOrganisationInput): Promise<RegisteredWorkspace>
   /** The active workspace with this slug, or `null` when the server has none. */
   getWorkspace(slug: string): Promise<Workspace | null>
+  /** The signed-in person's roles in their own workspace; `accessToken` is their identity-provider token. */
+  getMyAccess(accessToken: string): Promise<MyAccess>
 }
 
 /**

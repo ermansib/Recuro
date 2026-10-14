@@ -8,7 +8,7 @@ describe('Keycloak tokens', () => {
   it('reads the workspace id and roles from the access token and the name from the ID token', () => {
     const account = accountOf(
       {
-        access_token: jwt({ sub: 'kc-1', tenant_id: 'tnt-1', roles: ['tenant-admin', 'hrhead', 7] }),
+        access_token: jwt({ sub: 'kc-1', tenant_id: 'tnt-1', roles: ['tenant-admin', 'hrhead', 7], workspace_roles: ['recruiter'] }),
         profile: { sub: 'kc-1', name: 'Mansi Bansal', email: 'owner@mb.example' } as never,
         state: { workspace: 'mb-consulting', returnTo: '/team' },
       },
@@ -20,6 +20,8 @@ describe('Keycloak tokens', () => {
       email: 'owner@mb.example',
       tenantId: 'tnt-1',
       roles: ['tenant-admin', 'hrhead'],
+      workspaceRoles: ['recruiter'],
+      accessToken: expect.any(String),
       workspace: 'mb-consulting',
       returnTo: '/team',
     })

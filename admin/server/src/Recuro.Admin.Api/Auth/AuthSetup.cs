@@ -68,6 +68,13 @@ internal static class AuthSetup
             .AddPolicy(AdminPolicies.Service, policy => policy
                 .AddAuthenticationSchemes(serviceScheme)
                 .RequireRole(AdminRoles.Service));
+        // Main-portal tokens carry the same audience as service tokens (recuro-api), so they use that scheme too; the
+        // workspace id and subject claims tell a person apart from a service account.
+        services.AddAuthorizationBuilder()
+            .AddPolicy(AdminPolicies.WorkspacePerson, policy => policy
+                .AddAuthenticationSchemes(serviceScheme)
+                .RequireClaim(AdminClaims.Tenant)
+                .RequireClaim(AdminClaims.Subject));
         services.AddScoped<IAuthorizationHandler, ActiveTenantHandler>();
 
         return services;
