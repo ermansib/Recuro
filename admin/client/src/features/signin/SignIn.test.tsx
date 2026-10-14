@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 import { App } from '../../App'
 import { ApiError } from '../../api/contract'
+import { SignInIncompleteError } from '../../auth/strategies'
 import { fakeApi, fakeStrategy, renderWithApi } from '../../test/render'
 
 describe('sign-in', () => {
@@ -52,6 +53,18 @@ describe('sign-in', () => {
     })
 
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('no Recuro admin role'))
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument()
+  })
+
+  it('asks to sign in again when the last sign-in did not finish', async () => {
+    renderWithApi(<App />, {
+      api: fakeApi(),
+      admin: null,
+      strategy: fakeStrategy({ mode: 'oidc', restore: () => Promise.reject(new SignInIncompleteError()) }),
+    })
+
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent("Your last sign-in didn't finish"))
+    expect(screen.queryByText(/Something went wrong/)).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument()
   })
 })
