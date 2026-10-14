@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Recuro.Admin.Application.Abstractions;
+using Recuro.Admin.Domain.Roles;
 using Recuro.Admin.Domain.Screens;
 using Recuro.Admin.Domain.Tenants;
 using Recuro.Admin.Domain.Theming;
@@ -70,4 +71,30 @@ internal sealed class ScreenConfigurationRepository(AdminDbContext db) : IScreen
             .FirstOrDefaultAsync(c => c.TenantId == tenantId && c.ScreenKey == screenKey, ct);
 
     public void Add(TenantScreenConfiguration configuration) => db.TenantScreenConfigurations.Add(configuration);
+}
+
+/// <summary>
+/// Takes the tenant explicitly so platform admins (no tenant on the request) can manage any workspace's roles;
+/// a tenant admin is still held to their own tenant by TenantScope and the DbContext's write guard.
+/// </summary>
+internal sealed class WorkspaceRoleRepository(AdminDbContext db) : IWorkspaceRoleRepository
+{
+    public async Task<IReadOnlyList<WorkspaceRole>> ListAsync(Guid tenantId, CancellationToken ct) =>
+        await db.WorkspaceRoles.IgnoreQueryFilters().Where(r => r.TenantId == tenantId).OrderBy(r => r.SortOrder).ThenBy(r => r.Key).ToListAsync(ct);
+
+    public Task<bool> AnyAsync(Guid tenantId, CancellationToken ct) =>
+        db.WorkspaceRoles.IgnoreQueryFilters().AnyAsync(r => r.TenantId == tenantId, ct);
+
+    public void AddRange(IEnumerable<WorkspaceRole> roles) => db.WorkspaceRoles.AddRange(roles);
+}
+
+internal sealed class WorkspaceMemberRepository(AdminDbContext db) : IWorkspaceMemberRepository
+{
+    public async Task<IReadOnlyList<WorkspaceMember>> ListAsync(Guid tenantId, CancellationToken ct) =>
+        await db.WorkspaceMembers.IgnoreQueryFilters().Where(m => m.TenantId == tenantId).ToListAsync(ct);
+
+    public Task<WorkspaceMember?> GetAsync(Guid tenantId, string accountId, CancellationToken ct) =>
+        db.WorkspaceMembers.IgnoreQueryFilters().FirstOrDefaultAsync(m => m.TenantId == tenantId && m.AccountId == accountId, ct);
+
+    public void Add(WorkspaceMember member) => db.WorkspaceMembers.Add(member);
 }
