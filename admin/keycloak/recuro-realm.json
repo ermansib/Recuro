@@ -62,15 +62,19 @@
       "rootUrl": "http://localhost:5080",
       "redirectUris": [
         "http://localhost:5080/*",
-        "http://localhost:5174/*"
+        "http://localhost:5174/*",
+        "http://127.0.0.1:5080/*",
+        "http://127.0.0.1:5174/*"
       ],
       "webOrigins": [
         "http://localhost:5080",
-        "http://localhost:5174"
+        "http://localhost:5174",
+        "http://127.0.0.1:5080",
+        "http://127.0.0.1:5174"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:5080/*##http://localhost:5174/*"
+        "post.logout.redirect.uris": "http://localhost:5080/*##http://localhost:5174/*##http://127.0.0.1:5080/*##http://127.0.0.1:5174/*"
       },
       "protocolMappers": [
         {
@@ -128,14 +132,16 @@
       "fullScopeAllowed": true,
       "rootUrl": "http://localhost:5173",
       "redirectUris": [
-        "http://localhost:5173/*"
+        "http://localhost:5173/*",
+        "http://127.0.0.1:5173/*"
       ],
       "webOrigins": [
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:5173/*"
+        "post.logout.redirect.uris": "http://localhost:5173/*##http://127.0.0.1:5173/*"
       },
       "protocolMappers": [
         {
