@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Recuro.BuildingBlocks.Web.Auth;
+using Recuro.Notification.Application.Abstractions;
 using Recuro.Notification.Infrastructure.Email;
 
 namespace Recuro.Notification.IntegrationTests;
@@ -78,6 +79,35 @@ public sealed class ReminderTests(NotificationApiFactory api)
         Assert.Equal(["Feedback reminder — APP-9"], Titles(await BellAsync(api.ClientFor(tenant, RecuroRoles.HrTa, "int-1"))));
         Assert.Equal(["Feedback reminder — APP-9"], Titles(await BellAsync(api.ClientFor(tenant, RecuroRoles.HrTa, "int-2"))));
         Assert.Empty(await BellAsync(api.ClientFor(tenant, RecuroRoles.HrTa, "int-3")));
+    }
+
+    [Fact]
+    public async Task Overdue_feedback_escalates_to_the_department_head_and_HR_TA()
+    {
+        var tenant = Guid.NewGuid();
+        api.Backends.Departments[(tenant, "REQ-31")] = "Credit & Risk";
+        api.Backends.Heads[(tenant, "credit-risk")] = [new StaffContact("hod-1", "M. Kapoor", "m.kapoor@example.test")];
+        object Overdue(string reqId, string appId) => new
+        {
+            interviewId = Guid.NewGuid(),
+            appId,
+            reqId,
+            roundId = "R1",
+            round = "R1",
+            panel = new[] { "int-1" },
+            pendingInterviewerIds = new[] { "int-1" },
+            endedAt = "2026-10-06T10:00:00Z",
+            dueAt = "2026-10-08T10:00:00Z",
+            overdueAt = "2026-10-08T10:00:00Z",
+        };
+
+        await api.PublishAsync("interview.feedback.overdue.v1", Overdue("REQ-31", "APP-31"), tenant: tenant);
+        await api.PublishAsync("interview.feedback.overdue.v1", Overdue("REQ-UNKNOWN", "APP-32"), tenant: tenant);
+        await ActivatorUtilities.CreateInstance<EmailDispatchJob>(api.Services).RunOnceAsync(CancellationToken.None);
+
+        Assert.Equal(["Panel feedback overdue — APP-31"], Titles(await BellAsync(api.ClientFor(tenant, RecuroRoles.Employee, "hod-1"))));
+        Assert.Equal(2, (await BellAsync(api.ClientFor(tenant, RecuroRoles.HrTa))).Length);
+        Assert.Contains(api.Mail.Sent, m => m.TenantId == tenant && m.ToAddress == "m.kapoor@example.test" && m.RecipientRole == "hod");
     }
 
     [Fact]

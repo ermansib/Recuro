@@ -24,6 +24,10 @@ stream of RCU-GTW-003. Database: `recuro_notification`.
 - **Staff recipients.** A role's people come from Identity's `GET /api/v1/identity/users?role=`, also
   called as this service, and are remembered locally. When Identity can't answer, the local directory
   (Identity's events and people's own sign-ins) stands in.
+- **Department heads.** Overdue interview feedback also reaches the head of the requisition's department:
+  the department comes from Requisition's `GET /api/v1/requisitions/{reqId}` ("Credit & Risk" becomes the
+  key `credit-risk`), the head from Identity's `?role=hod&department=`. When either can't be found, HR-TA
+  and the panel still get the notice.
 - **Delivery log (NTF-004).** Every email row keeps template, template version, matrix version,
   recipient, timestamps, provider message id and status. Rows are never deleted.
 - **Live stream (GTW-003).** `GET /stream/notifications` is Server-Sent Events, proxied by the gateway.

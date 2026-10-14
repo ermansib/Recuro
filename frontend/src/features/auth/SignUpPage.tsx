@@ -54,12 +54,14 @@ export function SignUpPage() {
     setBusy(true)
     setFailure(null)
     try {
-      const created = await api.registerOrganisation(form)
-      toast(t('auth.signUp.created', { name: created.tenant.name }), 'move')
-      complete(created)
+      const result = await api.registerOrganisation(form)
+      // A workspace saved on the server sends the owner to sign in, so the page is left with `busy` on.
+      if (result.status !== 'signedIn') return
+      toast(t('auth.signUp.created', { name: result.session.tenant.name }), 'move')
+      complete(result.session)
+      setBusy(false)
     } catch (err) {
       setFailure(err)
-    } finally {
       setBusy(false)
     }
   }

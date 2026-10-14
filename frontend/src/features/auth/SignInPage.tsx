@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../../api/client'
 import { useDemoAccess, useWorkspaceBranding } from '../../api/hooks'
 import { homePath } from '../../auth/permissions'
@@ -12,7 +12,7 @@ import { DEFAULT_IDLE_MINUTES, isValidEmail } from '../../domain/auth'
 import type { Role, SignInResult, SsoProvider, WorkspaceBranding } from '../../domain/types'
 import { AuthShell } from './AuthShell'
 import { AuthField, FormError, PasswordField } from './fields'
-import { useCompleteSignIn } from './useCompleteSignIn'
+import { useCompleteSignIn, type SignInRedirectState } from './useCompleteSignIn'
 import { useWorkspaceParam, withWorkspace } from './useWorkspace'
 
 type MfaChallenge = Extract<SignInResult, { status: 'mfaRequired' }>
@@ -37,7 +37,11 @@ export function SignInPage() {
 
   return (
     <AuthShell branding={branding.data}>
-      <CredentialsStep branding={branding.data} reason={signedOutReason} />
+      {branding.data.signInFlow === 'redirect' ? (
+        <RedirectStep branding={branding.data} reason={signedOutReason} />
+      ) : (
+        <CredentialsStep branding={branding.data} reason={signedOutReason} />
+      )}
     </AuthShell>
   )
 }
@@ -111,7 +115,7 @@ function CredentialsStep({ branding, reason }: { branding: WorkspaceBranding; re
     try {
       const result = await attempt()
       if (result.status === 'signedIn') complete(result.session)
-      else setChallenge(result)
+      else if (result.status === 'mfaRequired') setChallenge(result)
     } catch (e) {
       setFailure(e)
     } finally {
@@ -175,6 +179,55 @@ function CredentialsStep({ branding, reason }: { branding: WorkspaceBranding; re
       </div>
 
       <DemoPersonas workspace={branding.slug} onPick={(role) => void handle(async () => ({ status: 'signedIn', session: await api.demoSignIn(branding.slug, role) }))} />
+    </>
+  )
+}
+
+/** Workspaces saved on the server: the identity provider (Keycloak) asks for the password on its own page. */
+function RedirectStep({ branding, reason }: { branding: WorkspaceBranding; reason: Reason }) {
+  const { t } = useTranslation()
+  const location = useLocation()
+  const returnTo = (location.state as SignInRedirectState | null)?.from
+  const [email, setEmail] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [failure, setFailure] = useState<unknown>(null)
+  const [busy, setBusy] = useState(false)
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!isValidEmail(email)) return setError(t('auth.errors.email'))
+    setError(null)
+    setFailure(null)
+    setBusy(true)
+    try {
+      // On success the browser leaves for the sign-in page, so `busy` stays on.
+      await api.signIn({ workspace: branding.slug, email, password: '', returnTo })
+    } catch (err) {
+      setFailure(err)
+      setBusy(false)
+    }
+  }
+
+  return (
+    <>
+      <form onSubmit={(e) => void submit(e)} noValidate>
+        <h2>{t('auth.signIn.subtitle', { workspace: branding.name })}</h2>
+        <SignedOutNotice reason={reason} minutes={branding.sessionIdleMinutes} />
+        <FormError error={failure} />
+        <AuthField label={t('auth.fields.email')} type="email" value={email} onChange={setEmail} error={error} autoComplete="username" autoFocus />
+        <p className="auth-sub">{t('auth.signIn.redirectNote')}</p>
+        <button type="submit" className="btn btn-primary auth-submit" disabled={busy}>
+          {busy ? t('auth.signIn.redirecting') : t('auth.signIn.continueToSignIn')}
+        </button>
+      </form>
+      <div className="auth-alt">
+        <p>{t('auth.signIn.staffNote')}</p>
+        <p>
+          <Link to="/signin?workspace=" replace>
+            {t('auth.signIn.switchWorkspace', { workspace: branding.name })}
+          </Link>
+        </p>
+      </div>
     </>
   )
 }

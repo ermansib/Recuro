@@ -12,11 +12,11 @@ import { useErrorToast, useToast } from './toastContext'
 
 export function Topbar({ onOpenDrawer }: { onOpenDrawer: () => void }) {
   const { t } = useTranslation()
-  const { user, tenant, switchRole, signOut } = useSession()
+  const { user, tenant, viaIdentityProvider, switchRole, signOut } = useSession()
   const navigate = useNavigate()
   const toast = useToast()
   const onError = useErrorToast()
-  const demo = useDemoAccess(tenant.slug)
+  const demo = useDemoAccess(viaIdentityProvider ? null : tenant.slug)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const approvals = useApprovals()

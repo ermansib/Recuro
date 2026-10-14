@@ -18,7 +18,7 @@ public sealed record ResolvedRecipients(IReadOnlyList<Recipient> InApp, IReadOnl
 /// that role. People the directory does not know yet still get their bell item; their email is logged
 /// as suppressed for lack of an address.
 /// </summary>
-public sealed class RecipientResolver(INotificationStore store, ICandidateContacts candidates, IStaffDirectory staff, TimeProvider clock)
+public sealed class RecipientResolver(INotificationStore store, ICandidateContacts candidates, IStaffDirectory staff, IRequisitionLookup requisitions, TimeProvider clock)
 {
     public async Task<ResolvedRecipients> ResolveAsync(RecipientRule rule, EventMetadata metadata, JsonElement data, CancellationToken ct)
     {
@@ -29,6 +29,11 @@ public sealed class RecipientResolver(INotificationStore store, ICandidateContac
             return await ForCandidateAsync(rule, data, ct);
         }
 
+        if (rule.Kind == RecipientKind.DepartmentHead)
+        {
+            return await ForDepartmentHeadAsync(rule, data, ct);
+        }
+
         var userIds = rule.Kind switch
         {
             RecipientKind.Role => null,
@@ -36,7 +41,7 @@ public sealed class RecipientResolver(INotificationStore store, ICandidateContac
             RecipientKind.PayloadUser => Single(EventPayload.ReadString(data, rule.Field)),
             RecipientKind.PayloadUsers => EventPayload.ReadStrings(data, rule.Field),
             RecipientKind.SubjectOwner => Single((await store.FindOwnerAsync(metadata.Subject, ct))?.UserId),
-            RecipientKind.PayloadCandidate => throw new InvalidOperationException("Handled above."),
+            RecipientKind.PayloadCandidate or RecipientKind.DepartmentHead => throw new InvalidOperationException("Handled above."),
             _ => throw new ArgumentOutOfRangeException(nameof(rule), rule.Kind, "Unknown recipient kind."),
         };
 
@@ -86,6 +91,25 @@ public sealed class RecipientResolver(INotificationStore store, ICandidateContac
         return new ResolvedRecipients([], [recipient]);
     }
 
+    /// <summary>
+    /// The requisition's department head(s), each addressed by user id. Nobody when the requisition, its
+    /// department or a head can't be found: the rule's other recipients still hear about it.
+    /// </summary>
+    private async Task<ResolvedRecipients> ForDepartmentHeadAsync(RecipientRule rule, JsonElement data, CancellationToken ct)
+    {
+        var reqId = EventPayload.ReadString(data, rule.Field);
+        var department = string.IsNullOrWhiteSpace(reqId) ? null : DepartmentKey.From(await requisitions.DepartmentOfAsync(reqId, ct));
+        var heads = department is null ? null : await staff.DepartmentHeadsAsync(department, ct);
+        if (heads is null)
+        {
+            return new ResolvedRecipients([], []);
+        }
+
+        var people = heads.Where(h => !string.IsNullOrWhiteSpace(h.UserId)).DistinctBy(h => h.UserId, StringComparer.Ordinal)
+            .Select(h => new Recipient(rule.Role, h.UserId, h.Name, h.Email)).ToList();
+        return new ResolvedRecipients(people, people);
+    }
+
     private async Task<ResolvedRecipients> ForRoleAsync(string role, CancellationToken ct)
     {
         var members = await staff.UsersInRoleAsync(role, ct) is { } current
@@ -121,6 +145,39 @@ public sealed class RecipientResolver(INotificationStore store, ICandidateContac
     private static Recipient ToRecipient(string role, DirectoryUser user) => new(role, user.UserId, user.Name, user.Email);
 
     private static List<string> Single(string? userId) => string.IsNullOrWhiteSpace(userId) ? [] : [userId];
+}
+
+/// <summary>
+/// Identity's department keys (<c>credit-risk</c>) from a department as Requisition shows it ("Credit &amp; Risk"):
+/// lower case, with each run of other characters as one dash. A value that is already a key is unchanged.
+/// </summary>
+public static class DepartmentKey
+{
+    public const int MaxLength = 50;
+
+    public static string? From(string? department)
+    {
+        if (string.IsNullOrWhiteSpace(department))
+        {
+            return null;
+        }
+
+        var key = new System.Text.StringBuilder(department.Length);
+        foreach (var c in department.Trim().ToLowerInvariant())
+        {
+            if (char.IsAsciiLetterOrDigit(c))
+            {
+                key.Append(c);
+            }
+            else if (key.Length > 0 && key[^1] != '-')
+            {
+                key.Append('-');
+            }
+        }
+
+        var text = key.ToString().TrimEnd('-');
+        return text.Length is > 0 and <= MaxLength && char.IsAsciiLetterLower(text[0]) ? text : null;
+    }
 }
 
 /// <summary>Tolerant reads of event payload fields (each consumer reads only what it needs).</summary>

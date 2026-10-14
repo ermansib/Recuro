@@ -7,6 +7,7 @@ import type {
   ApprovalItem,
   AuditEvent,
   AuthSession,
+  CompletedSignIn,
   BgvCase,
   BgvCheckType,
   Candidate,
@@ -27,6 +28,7 @@ import type {
   PublicApplicationResult,
   RegisterCandidateInput,
   RegisterOrganisationInput,
+  RegisteredWorkspace,
   Requisition,
   RequisitionInput,
   Role,
@@ -36,6 +38,7 @@ import type {
   SsoProvider,
   TenantAppearance,
   User,
+  Workspace,
   WorkspaceBranding,
 } from '../domain/types'
 
@@ -73,13 +76,16 @@ export interface AuthApi {
   getWorkspaceBranding(workspace: string): Promise<WorkspaceBranding>
   signIn(input: SignInInput): Promise<SignInResult>
   verifyMfa(challengeId: string, code: string): Promise<AuthSession>
+  /** Finishes a redirect sign-in when the identity provider sends the person back to the portal. */
+  completeSignIn(): Promise<CompletedSignIn>
   /** Starts an enterprise SSO redirect. Not connected in the mock. */
   signInWithSso(workspace: string, provider: SsoProvider): Promise<SignInResult>
   /** Restores a session from its token, e.g. after a page reload. */
   getSession(token: string): Promise<AuthSession>
   signOut(token: string): Promise<void>
 
-  registerOrganisation(input: RegisterOrganisationInput): Promise<AuthSession>
+  /** Creates the workspace and its owner, then signs the owner in (or redirects them to sign in). */
+  registerOrganisation(input: RegisterOrganisationInput): Promise<SignInResult>
   registerCandidate(input: RegisterCandidateInput): Promise<AuthSession>
 
   requestPasswordReset(workspace: string, email: string): Promise<PasswordResetRequested>
@@ -147,6 +153,17 @@ export interface ApiClient extends AuthApi {
   getApplicationStatus(appId: string): Promise<string | null>
 
   listAudit(): Promise<AuditEvent[]>
+}
+
+/**
+ * Workspaces (tenants) saved by the admin portal's database. `registerWorkspace` stores the tenant in
+ * PostgreSQL and creates the owner's account in Keycloak. Both calls reject with 503 when the server
+ * can't be reached.
+ */
+export interface WorkspaceApi {
+  registerWorkspace(input: RegisterOrganisationInput): Promise<RegisteredWorkspace>
+  /** The active workspace with this slug, or `null` when the server has none. */
+  getWorkspace(slug: string): Promise<Workspace | null>
 }
 
 /**

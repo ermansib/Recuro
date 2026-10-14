@@ -40,6 +40,7 @@ public sealed class AdminApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Database:SeedDemoTenants", "true");
         builder.UseSetting("ConnectionStrings:AdminDb", $"Data Source={_databasePath}");
         builder.UseSetting("Auth:Mode", "Development");
+        builder.UseSetting("AccountDirectory:Mode", "Disabled");
     }
 
     protected override void Dispose(bool disposing)

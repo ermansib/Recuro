@@ -12,6 +12,7 @@ import {
   MFA_CODE_LENGTH,
   ORG_TYPE_DEFAULTS,
   RESET_LINK_VALID_MINUTES,
+  initialsOf,
   isValidEmail,
   maskEmail,
   normaliseEmail,
@@ -89,13 +90,6 @@ const numericCode = () =>
   String(crypto.getRandomValues(new Uint32Array(1))[0] ?? 0)
     .padStart(MFA_CODE_LENGTH, '0')
     .slice(-MFA_CODE_LENGTH)
-const initialsOf = (name: string) =>
-  name
-    .split(/[\s.]+/)
-    .filter(Boolean)
-    .map((p) => p[0]?.toUpperCase() ?? '')
-    .join('')
-    .slice(0, 2) || '?'
 
 export function brandingOf(t: TenantConfig): WorkspaceBranding {
   return {
@@ -106,6 +100,7 @@ export function brandingOf(t: TenantConfig): WorkspaceBranding {
     theme: t.theme,
     ssoProviders: t.ssoProviders,
     sessionIdleMinutes: t.sessionIdleMinutes,
+    signInFlow: 'password',
   }
 }
 
@@ -184,8 +179,8 @@ export function createIdentityMock({ db, demoPassword, audit, sendEmail, run }: 
     if (!isValidEmail(email)) throw new ApiError(400, 'Enter a valid email address')
   }
 
-  async function createAccount(s: IdentityStore, user: Omit<User, 'id' | 'initials'>, password: string): Promise<User> {
-    const created: User = { ...user, id: `u-${newToken().slice(0, 10)}`, initials: initialsOf(user.name) }
+  async function createAccount(s: IdentityStore, user: Omit<User, 'id' | 'initials'>, password: string, id?: string): Promise<User> {
+    const created: User = { ...user, id: id ?? `u-${newToken().slice(0, 10)}`, initials: initialsOf(user.name) }
     s.users.push(created)
     s.credentials[created.id] = { passwordHash: await hashPassword(password), failedAttempts: 0, lockedUntil: null }
     return created
@@ -257,6 +252,8 @@ export function createIdentityMock({ db, demoPassword, audit, sendEmail, run }: 
         return openSession(s, user)
       }),
 
+    completeSignIn: () => run(() => Promise.reject(new ApiError(400, 'No sign-in is in progress. Start again from the sign-in page.'))),
+
     signInWithSso: (workspace, provider) =>
       run(async () => {
         const tenant = tenantBySlug(await load(), workspace)
@@ -309,7 +306,7 @@ export function createIdentityMock({ db, demoPassword, audit, sendEmail, run }: 
           input.password,
         )
         audit(asActor(owner), `Tenant/${tenant.id}`, 'WORKSPACE_CREATED', { after: input.orgType })
-        return openSession(s, owner)
+        return { status: 'signedIn' as const, session: openSession(s, owner) }
       }),
 
     registerCandidate: (input) =>

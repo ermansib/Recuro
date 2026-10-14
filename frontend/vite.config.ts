@@ -13,6 +13,7 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/api/v1/runtime': { target: env.ADMIN_API_PROXY || DEFAULT_ADMIN_API, changeOrigin: true },
+        '/api/v1/workspaces': { target: env.ADMIN_API_PROXY || DEFAULT_ADMIN_API, changeOrigin: true },
       },
     },
     test: {

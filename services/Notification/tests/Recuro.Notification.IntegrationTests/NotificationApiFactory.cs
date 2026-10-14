@@ -87,10 +87,11 @@ public sealed class NotificationApiFactory : WebApplicationFactory<Program>, IAs
         builder.UseSetting("Database:MigrateOnStartup", "false");
         builder.UseSetting("Services:Candidate:BaseUrl", "http://candidate.test/");
         builder.UseSetting("Services:Identity:BaseUrl", "http://identity.test/");
+        builder.UseSetting("Services:Requisition:BaseUrl", "http://requisition.test/");
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton<IEmailTransport>(Mail);
-            foreach (var client in new[] { nameof(ICandidateContacts), nameof(IStaffDirectory) })
+            foreach (var client in new[] { nameof(ICandidateContacts), nameof(IStaffDirectory), nameof(IRequisitionLookup) })
             {
                 services.Configure<HttpClientFactoryOptions>(client, o => o.HttpMessageHandlerBuilderActions.Add(b => b.PrimaryHandler = Backends));
             }
@@ -128,6 +129,12 @@ public sealed class FakeServices : HttpMessageHandler
 
     public ConcurrentDictionary<(Guid Tenant, string Role), StaffContact[]> Staff { get; } = new();
 
+    /// <summary>Department heads by tenant and department key (Identity <c>role=hod&amp;department=</c>).</summary>
+    public ConcurrentDictionary<(Guid Tenant, string Department), StaffContact[]> Heads { get; } = new();
+
+    /// <summary>Requisition departments by tenant and reqId.</summary>
+    public ConcurrentDictionary<(Guid Tenant, string ReqId), string> Departments { get; } = new();
+
     public ConcurrentBag<(string Path, string? Roles, string? Tenant)> Seen { get; } = [];
 
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -148,8 +155,20 @@ public sealed class FakeServices : HttpMessageHandler
             return Json(new { id, name = candidate.Name, email = candidate.Email, phone = "**********" });
         }
 
+        var query = System.Web.HttpUtility.ParseQueryString(request.RequestUri.Query);
+        if (request.RequestUri.Host == "requisition.test"
+            && Departments.TryGetValue((tenantId, Uri.UnescapeDataString(path[(path.LastIndexOf('/') + 1)..])), out var department))
+        {
+            return Json(new { reqId = path[(path.LastIndexOf('/') + 1)..], department });
+        }
+
+        if (request.RequestUri.Host == "identity.test" && query["role"] == "hod" && query["department"] is { } key)
+        {
+            return Json((Heads.TryGetValue((tenantId, key), out var heads) ? heads : []).Select(p => new { id = p.UserId, tenantId, name = p.Name, role = "hod", email = p.Email, department = key }));
+        }
+
         if (request.RequestUri.Host == "identity.test"
-            && System.Web.HttpUtility.ParseQueryString(request.RequestUri.Query)["role"] is { } role
+            && query["role"] is { } role
             && Staff.TryGetValue((tenantId, role), out var people))
         {
             return Json(people.Select(p => new { id = p.UserId, tenantId, name = p.Name, role, email = p.Email }));

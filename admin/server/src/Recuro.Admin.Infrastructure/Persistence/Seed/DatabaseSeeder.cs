@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Recuro.Admin.Application.Abstractions;
+using Recuro.Admin.Domain.Roles;
 using Recuro.Admin.Domain.Tenants;
 
 namespace Recuro.Admin.Infrastructure.Persistence.Seed;
@@ -30,5 +31,22 @@ public sealed class DatabaseSeeder(AdminDbContext db, IClock clock)
         }
 
         await db.SaveChangesAsync(ct);
+        await SeedDefaultRolesAsync(ct);
+    }
+
+    /// <summary>Gives every workspace without roles (including ones created before roles were configurable) the defaults.</summary>
+    private async Task SeedDefaultRolesAsync(CancellationToken ct)
+    {
+        var withRoles = db.WorkspaceRoles.IgnoreQueryFilters().Select(r => r.TenantId);
+        var missing = await db.Tenants.Where(t => !withRoles.Contains(t.Id)).Select(t => t.Id).ToListAsync(ct);
+        foreach (var tenantId in missing)
+        {
+            db.WorkspaceRoles.AddRange(DefaultWorkspaceRoles.CreateFor(tenantId));
+        }
+
+        if (missing.Count > 0)
+        {
+            await db.SaveChangesAsync(ct);
+        }
     }
 }

@@ -16,7 +16,8 @@
         "hrhead",
         "mdceo",
         "employee",
-        "candidate"
+        "candidate",
+        "hod"
       ]
     },
     "recipientUserId": {

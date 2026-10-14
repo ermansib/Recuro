@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Recuro.Admin.Application.Abstractions;
+using Recuro.Admin.Infrastructure.Accounts;
 using Recuro.Admin.Infrastructure.Persistence;
 using Recuro.Admin.Infrastructure.Persistence.Seed;
 using Recuro.Admin.Infrastructure.Repositories;
@@ -41,9 +42,33 @@ public static class DependencyInjection
         services.AddScoped<IThemePresetRepository, ThemePresetRepository>();
         services.AddScoped<IScreenCatalog, ScreenCatalog>();
         services.AddScoped<IScreenConfigurationRepository, ScreenConfigurationRepository>();
+        services.AddScoped<IWorkspaceRoleRepository, WorkspaceRoleRepository>();
+        services.AddScoped<IWorkspaceMemberRepository, WorkspaceMemberRepository>();
         services.AddScoped<DatabaseSeeder>();
         services.AddSingleton<IClock, SystemClock>();
+        services.AddAccountDirectory(configuration);
         return services;
+    }
+
+    private static void AddAccountDirectory(this IServiceCollection services, IConfiguration configuration)
+    {
+        var section = configuration.GetSection(AccountDirectoryOptions.SectionName);
+        services.Configure<AccountDirectoryOptions>(section);
+        var options = section.Get<AccountDirectoryOptions>() ?? new AccountDirectoryOptions();
+
+        if (options.IsDisabled)
+        {
+            services.AddScoped<IAccountDirectory, DisabledAccountDirectory>();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(options.BaseUrl))
+        {
+            throw new InvalidOperationException(
+                "AccountDirectory:BaseUrl must be set to Keycloak's URL (for example http://127.0.0.1:8080), or AccountDirectory:Mode to Disabled.");
+        }
+
+        services.AddHttpClient<IAccountDirectory, KeycloakAccountDirectory>(http => http.Timeout = TimeSpan.FromSeconds(10));
     }
 
     private sealed class SystemClock : IClock

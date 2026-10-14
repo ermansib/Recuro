@@ -62,6 +62,10 @@ public static class DependencyInjection
     public static IHttpClientBuilder AddStaffDirectory(this IServiceCollection services) =>
         services.AddServiceClient<IStaffDirectory, IdentityStaffDirectory>(ServiceEndpointOptions.IdentitySection);
 
+    /// <summary>Requisition departments, for department-head recipients. The Api adds the service-token handler (RCU-AUT-005).</summary>
+    public static IHttpClientBuilder AddRequisitionLookup(this IServiceCollection services) =>
+        services.AddServiceClient<IRequisitionLookup, RequisitionLookupClient>(ServiceEndpointOptions.RequisitionSection);
+
     private static IHttpClientBuilder AddServiceClient<TClient, TImplementation>(this IServiceCollection services, string section)
         where TClient : class
         where TImplementation : class, TClient

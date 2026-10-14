@@ -67,6 +67,7 @@ export function fakeApi(overrides: Partial<AdminApi> = {}): AdminApi {
   const methods: (keyof AdminApi)[] = [
     'getAuthConfig', 'getMe', 'listPersonas', 'listTenants', 'createTenant', 'updateTenant', 'setTenantSuspended', 'assignTenantTheme',
     'listThemes', 'setThemePublished', 'getBranding', 'listScreens', 'getScreen', 'updateScreen',
+    'getRoleCatalog', 'listRoles', 'createRole', 'updateRole', 'setRoleActive', 'listMembers', 'updateMember',
   ]
   return Object.fromEntries(methods.map((name) => [name, overrides[name] ?? notStubbed(name)])) as unknown as AdminApi
 }

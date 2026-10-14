@@ -21,6 +21,9 @@ builder.Services.AddCandidateContacts()
 builder.Services.AddStaffDirectory()
     .AddHttpMessageHandler<ServiceTokenHandler>()
     .AddHttpMessageHandler<CorrelationHeadersHandler>();
+builder.Services.AddRequisitionLookup()
+    .AddHttpMessageHandler<ServiceTokenHandler>()
+    .AddHttpMessageHandler<CorrelationHeadersHandler>();
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<RememberContactFilter>();
 builder.Services.AddOptions<NotificationStreamOptions>().BindConfiguration(NotificationStreamOptions.SectionName);

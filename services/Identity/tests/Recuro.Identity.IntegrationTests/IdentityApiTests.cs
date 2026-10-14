@@ -30,7 +30,7 @@ public sealed class IdentityApiTests(IdentityApiFactory api) : IClassFixture<Ide
 
         // Exactly the frontend User fields (frontend/src/domain/types.ts).
         Assert.Equal(
-            ["email", "id", "initials", "name", "role", "summary", "tenantId", "title"],
+            ["department", "email", "id", "initials", "managerId", "name", "role", "summary", "tenantId", "title"],
             me.EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal));
         Assert.Equal(subject, me.GetProperty("id").GetString());
         Assert.Equal("hrta", me.GetProperty("role").GetString());
@@ -78,6 +78,35 @@ public sealed class IdentityApiTests(IdentityApiFactory api) : IClassFixture<Ide
 
         Assert.Contains(mine, ids);
         Assert.DoesNotContain(theirs, ids);
+    }
+
+    [Fact]
+    public async Task A_departments_head_is_found_per_tenant_and_a_manager_by_id()
+    {
+        var department = $"ops-{Guid.NewGuid():N}"[..20];
+        var head = NewSubject();
+        var otherHead = NewSubject();
+        var foreignHead = NewSubject();
+        var joiner = NewSubject();
+        await api.ClientFor(IdentityApiFactory.TenantA, "employee,hod", head, "Ravi Menon", department).GetAsync("/api/v1/identity/me");
+        await api.ClientFor(IdentityApiFactory.TenantA, "employee,hod", otherHead, "Other Head", "finance").GetAsync("/api/v1/identity/me");
+        await api.ClientFor(IdentityApiFactory.TenantB, "employee,hod", foreignHead, "Foreign Head", department).GetAsync("/api/v1/identity/me");
+        await api.ClientFor(IdentityApiFactory.TenantA, RecuroRoles.Employee, joiner, "New Joiner", department, head).GetAsync("/api/v1/identity/me");
+        var service = api.ClientFor(IdentityApiFactory.TenantA, RecuroRoles.Service, "svc-onboarding");
+
+        var heads = await service.GetFromJsonAsync<JsonElement>($"/api/v1/identity/users?role=hod&department={department}");
+        var person = await service.GetFromJsonAsync<JsonElement>($"/api/v1/identity/users/{joiner}");
+        var manager = await service.GetFromJsonAsync<JsonElement>($"/api/v1/identity/users/{person.GetProperty("managerId").GetString()}");
+        var unknown = await service.GetAsync($"/api/v1/identity/users/{foreignHead}");
+        var badKey = await service.GetAsync("/api/v1/identity/users?role=hod&department=Not%20A%20Key");
+
+        var only = Assert.Single(heads.EnumerateArray());
+        Assert.Equal(head, only.GetProperty("id").GetString());
+        Assert.Equal(department, only.GetProperty("department").GetString());
+        Assert.Equal(department, person.GetProperty("department").GetString());
+        Assert.Equal("Ravi Menon", manager.GetProperty("name").GetString());
+        Assert.Equal(HttpStatusCode.NotFound, unknown.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, badKey.StatusCode);
     }
 
     [Fact]
