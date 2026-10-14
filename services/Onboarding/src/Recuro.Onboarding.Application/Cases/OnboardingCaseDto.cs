@@ -141,9 +141,13 @@ public static class OnboardingLimits
     public const int ActorLength = 200;
     public const int PersonIdLength = 100;
 
-    /// <summary>Identity's department keys: lowercase letters, digits and dashes (Keycloak attribute <c>department</c>).</summary>
-    public const string DepartmentKeyPattern = "^[a-z0-9][a-z0-9-]{0,63}$";
+    /// <summary>
+    /// Identity's department keys, the same pattern Identity validates (<c>UserPlacement.IsDepartmentKey</c>):
+    /// a lowercase letter, then up to 49 lowercase letters, digits or dashes (Keycloak attribute <c>department</c>).
+    /// </summary>
+    public const string DepartmentKeyPattern = "^[a-z][a-z0-9-]{0,49}$";
 
+    /// <summary>Column width; wider than the 50-character key the pattern allows.</summary>
     public const int DepartmentLength = 64;
     public const int VersionIdLength = 64;
     public const int FileNameLength = 255;
