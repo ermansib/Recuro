@@ -1,6 +1,6 @@
 {
   "title": "Theme library",
-  "subtitle": "Presets you can assign to tenants under Tenant themes. Making one available checks WCAG AA contrast in both modes.",
+  "subtitle": "Presets you can assign to workspaces under Workspace themes. Making one available checks WCAG AA contrast in both modes.",
   "published": "Available",
   "draft": "Not available",
   "publish": "Make available",

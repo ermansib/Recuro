@@ -123,6 +123,10 @@ services:
       ConnectionStrings__redis: redis:6379
       Auth__Authority: http://localhost:${KEYCLOAK_PORT:-8080}/realms/recuro
       Auth__MetadataAddress: http://keycloak:8080/realms/recuro/.well-known/openid-configuration
+      # Workspace roles come from the admin portal's API, which runs on the host (admin/docker-compose.yml + dotnet run).
+      Services__Admin__BaseUrl: http://host.docker.internal:5080/
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "5101:8080"
     depends_on:

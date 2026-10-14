@@ -51,13 +51,13 @@ public sealed class AuthEndpointTests : IDisposable
     public async Task Admins_of_a_suspended_tenant_are_refused()
     {
         await _factory.ClientAs("platform").PutAsJsonAsync(
-            $"/api/v1/platform/tenants/{DatabaseSeeder.AuroraTenantId}/status",
+            $"/api/v1/platform/workspaces/{DatabaseSeeder.AuroraTenantId}/status",
             new ChangeTenantStatusRequest(TenantStatus.Suspended),
             Json);
 
         var aurora = _factory.ClientAs(AdminApiFactory.Aurora);
         var me = await aurora.GetAsync(new Uri("/api/v1/auth/me", UriKind.Relative));
-        var screens = await aurora.GetAsync(new Uri("/api/v1/tenant/screens", UriKind.Relative));
+        var screens = await aurora.GetAsync(new Uri("/api/v1/workspace/screens", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.Forbidden, me.StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, screens.StatusCode);

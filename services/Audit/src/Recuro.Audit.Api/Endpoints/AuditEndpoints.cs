@@ -19,7 +19,7 @@ internal static class AuditEndpoints
 
         group.MapGet("/", ListAsync)
             .RequireAuthorization(AuditPolicies.Read)
-            .WithSummary("The tenant's audit trail, newest first (frontend listAudit).");
+            .WithSummary("The workspace's audit trail, newest first (frontend listAudit).");
 
         group.MapPost("/ingest", IngestAsync)
             .RequireAuthorization(AuditPolicies.Ingest)
@@ -27,7 +27,7 @@ internal static class AuditEndpoints
 
         group.MapGet("/verify", VerifyAsync)
             .RequireAuthorization(AuditPolicies.Read)
-            .WithSummary("RCU-AUD-002: re-checks the tenant's hash chain since the last seal.");
+            .WithSummary("RCU-AUD-002: re-checks the workspace's hash chain since the last seal.");
 
         return app;
     }

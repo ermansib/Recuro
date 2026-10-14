@@ -4,12 +4,12 @@ import { useTenants } from '../../api/hooks'
 import { PageHeader, QueryState } from '../../components/ui'
 import { RolesWorkspace } from './RolesWorkspace'
 
-/** Platform console: pick a workspace, then manage its roles exactly as its tenant admin would. */
+/** Platform console: pick a workspace, then manage its roles exactly as its workspace admin would. */
 export function PlatformRolesPage() {
   const { t } = useTranslation()
   const tenants = useTenants()
   const [params, setParams] = useSearchParams()
-  const selected = params.get('tenant') ?? tenants.data?.[0]?.id
+  const selected = params.get('workspace') ?? tenants.data?.[0]?.id
 
   return (
     <>
@@ -18,7 +18,7 @@ export function PlatformRolesPage() {
         <section className="card">
           <div className="field">
             <label htmlFor="roles-workspace">{t('roles.workspace')}</label>
-            <select id="roles-workspace" className="input" value={selected ?? ''} onChange={(event) => setParams({ tenant: event.target.value })}>
+            <select id="roles-workspace" className="input" value={selected ?? ''} onChange={(event) => setParams({ workspace: event.target.value })}>
               {tenants.data?.map((tenant) => (
                 <option key={tenant.id} value={tenant.id}>
                   {tenant.name}

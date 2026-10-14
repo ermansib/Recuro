@@ -8,8 +8,8 @@ import { ScreenEditorPage } from './ScreenEditorPage'
 function renderEditor(updateScreen = vi.fn((_key: string, _request: UpdateScreenRequest) => Promise.resolve(MRF_SCREEN))) {
   renderWithApi(<ScreenEditorPage />, {
     api: fakeApi({ getScreen: () => Promise.resolve(MRF_SCREEN), updateScreen }),
-    route: '/tenant/screens/mrf',
-    path: '/tenant/screens/:key',
+    route: '/workspace/screens/mrf',
+    path: '/workspace/screens/:key',
   })
   return updateScreen
 }

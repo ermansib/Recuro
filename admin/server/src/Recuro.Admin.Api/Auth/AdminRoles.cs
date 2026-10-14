@@ -5,12 +5,16 @@ public static class AdminRoles
 {
     public const string PlatformAdmin = "platform-admin";
     public const string TenantAdmin = "tenant-admin";
+
+    /// <summary>Recuro microservices' service accounts (client credentials, RCU-AUT-005).</summary>
+    public const string Service = "service";
 }
 
 public static class AdminPolicies
 {
     public const string Platform = "platform";
     public const string Tenant = "tenant";
+    public const string Service = "service";
 }
 
 public static class AdminClaims

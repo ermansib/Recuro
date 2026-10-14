@@ -62,6 +62,16 @@ curl -H "X-Dev-User: u1" -H "X-Dev-Roles: hrhead" -H "X-Dev-Tenant: 6a1e3c4e-0b4
   http://localhost:5103/api/v1/audit
 ```
 
+### Workspace roles
+
+Roles are configured per workspace in the admin portal (Roles & people), not in code. The Identity service
+reads them from the admin API (`Services:Admin:BaseUrl`, default `http://localhost:5080/`) as its service
+account and caches them for 60 s per workspace. `/identity/decide` then allows an action for the workspace's
+active roles that hold that permission, counts the roles a person was given in the admin portal even before
+their token carries them, and asks roles marked "requires MFA" for step-up. A workspace-defined role is masked
+like HR-TA when it may see sensitive candidate data, otherwise like MD/CEO. Without the admin API
+(`Services:Admin:Enabled=false`, or it is down and nothing was read before) the seeded FRD §3.2 matrix applies.
+
 ### Every service exposes
 
 | Path | What |

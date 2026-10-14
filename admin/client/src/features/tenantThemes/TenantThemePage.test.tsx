@@ -23,7 +23,7 @@ const tenant = (id: string, name: string, slug: string): Tenant => ({
 const TENANTS = [tenant('t-aurora', 'Aurora Housing Finance', 'aurora'), tenant('t-bridge', 'TalentBridge Staffing', 'talentbridge')]
 const DRAFT = { ...PRESETS[0]!, key: 'neon', name: 'Neon Draft', isPublished: false }
 
-function renderPage(route = '/platform/tenant-themes') {
+function renderPage(route = '/platform/workspace-themes') {
   const assignTenantTheme = vi.fn((id: string, request: { themePresetKey: string; themeMode: Tenant['themeMode'] }) =>
     Promise.resolve({ ...TENANTS.find((t) => t.id === id)!, ...request }),
   )
@@ -40,7 +40,7 @@ describe('TenantThemePage', () => {
   it('assigns a theme and mode to the chosen tenant only', async () => {
     const assign = renderPage()
 
-    await userEvent.selectOptions(await screen.findByLabelText('Tenant'), 'TalentBridge Staffing')
+    await userEvent.selectOptions(await screen.findByLabelText('Workspace'), 'TalentBridge Staffing')
     const save = screen.getByRole('button', { name: 'Save theme for TalentBridge Staffing' })
     expect(save).toBeDisabled()
 
@@ -53,8 +53,8 @@ describe('TenantThemePage', () => {
   })
 
   it('opens on the tenant named in the link from the tenants list', async () => {
-    renderPage('/platform/tenant-themes?tenant=t-bridge')
-    expect(await screen.findByLabelText('Tenant')).toHaveValue('t-bridge')
+    renderPage('/platform/workspace-themes?workspace=t-bridge')
+    expect(await screen.findByLabelText('Workspace')).toHaveValue('t-bridge')
   })
 
   it('offers only themes that are available in the library', async () => {

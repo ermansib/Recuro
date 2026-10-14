@@ -6,6 +6,9 @@ namespace Recuro.Admin.Api.Auth;
 
 internal static class AuthSetup
 {
+    /// <summary>Second bearer scheme for microservices' service-account tokens (audience <see cref="AdminAuthOptions.ServiceAudience"/>).</summary>
+    public const string ServiceScheme = "Service";
+
     /// <summary>
     /// Auth:Mode "Oidc" validates bearer tokens from Keycloak (or any OpenID Connect provider).
     /// Auth:Mode "Development" uses the persona header and is refused outside Development and Testing.
@@ -15,6 +18,7 @@ internal static class AuthSetup
         var options = configuration.GetSection(AdminAuthOptions.SectionName).Get<AdminAuthOptions>() ?? new AdminAuthOptions();
         services.Configure<AdminAuthOptions>(configuration.GetSection(AdminAuthOptions.SectionName));
 
+        var serviceScheme = options.IsDevelopmentMode ? DevelopmentAuthenticationHandler.SchemeName : ServiceScheme;
         if (options.IsDevelopmentMode)
         {
             if (!(environment.IsDevelopment() || environment.IsEnvironment("Testing")))
@@ -42,6 +46,15 @@ internal static class AuthSetup
                     jwt.RequireHttpsMetadata = !environment.IsDevelopment();
                     jwt.TokenValidationParameters.RoleClaimType = options.RoleClaim;
                     jwt.TokenValidationParameters.NameClaimType = "name";
+                })
+                .AddJwtBearer(ServiceScheme, jwt =>
+                {
+                    jwt.Authority = options.ServiceAuthority ?? options.Authority;
+                    jwt.TokenValidationParameters.ValidIssuers = new[] { options.Authority, options.ServiceAuthority }.OfType<string>().ToArray();
+                    jwt.Audience = options.ServiceAudience;
+                    jwt.MapInboundClaims = false;
+                    jwt.RequireHttpsMetadata = !environment.IsDevelopment();
+                    jwt.TokenValidationParameters.RoleClaimType = options.RoleClaim;
                 });
         }
 
@@ -51,6 +64,10 @@ internal static class AuthSetup
                 .RequireRole(AdminRoles.TenantAdmin)
                 .RequireClaim(AdminClaims.Tenant)
                 .AddRequirements(new ActiveTenantRequirement()));
+        services.AddAuthorizationBuilder()
+            .AddPolicy(AdminPolicies.Service, policy => policy
+                .AddAuthenticationSchemes(serviceScheme)
+                .RequireRole(AdminRoles.Service));
         services.AddScoped<IAuthorizationHandler, ActiveTenantHandler>();
 
         return services;

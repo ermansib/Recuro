@@ -42,7 +42,7 @@ public static class ThemeTokens
 public static class RuntimeErrors
 {
     public static Error Suspended(string slug) =>
-        Error.Forbidden("tenant.suspended", $"Tenant '{slug}' is suspended.");
+        Error.Forbidden("tenant.suspended", $"Workspace '{slug}' is suspended.");
 }
 
 public sealed class GetRuntimeConfigHandler(

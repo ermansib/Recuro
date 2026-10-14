@@ -1,7 +1,7 @@
 {
-  "title": "Tenants",
+  "title": "Workspaces",
   "subtitle": "Companies and agencies using Recuro",
-  "empty": "No tenants yet.",
+  "empty": "No workspaces yet.",
   "columns": {
     "name": "Name",
     "slug": "Slug",
@@ -15,14 +15,14 @@
   "suspend": "Suspend",
   "activate": "Activate",
   "create": {
-    "title": "Add a tenant",
+    "title": "Add a workspace",
     "name": "Company name",
     "slug": "Slug",
     "slugHint": "Lowercase letters, digits and hyphens. Used as the default subdomain.",
     "kind": "Type",
     "plan": "Plan",
     "domain": "Custom domain (optional)",
-    "submit": "Add tenant",
+    "submit": "Add workspace",
     "created": "{{name}} added"
   },
   "change": "Change",

@@ -31,7 +31,7 @@
   "banner": "<b>RECURO</b> · {{tenant}} · White-label recruitment CRM · Phase 0 (MVP) · Demo data",
   "footer": {
     "left": "Strictly Confidential — Internal Circulation Only",
-    "right": "Recuro · white-label recruitment CRM · tenant: {{tenant}} · rules {{version}}"
+    "right": "Recuro · white-label recruitment CRM · workspace: {{tenant}} · rules {{version}}"
   },
   "bell": "Notifications & communications, {{count}} unread",
   "masked": "🔒 Masked",

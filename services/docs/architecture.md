@@ -16,22 +16,27 @@ the project files as `recuro/backenduserstories.html`). Decisions behind this ma
 4. **Events are CloudEvents 1.0** on the RabbitMQ topic exchange `recuro.events`, routing key = event
    type. Names come only from the catalog (`EventTypes`, RCU-BKD-001 §5). Each consumer declares its own
    payload record; JSON schemas go in `services/contracts/events/<type>.schema.json`.
-5. **Multi-tenant from day one.** Every tenant-owned row implements `ITenantOwned`; `RecuroDbContext`
-   filters and stamps `TenantId`. Tests prove tenant A cannot see tenant B.
+5. **Multi-tenant from day one.** Every workspace-owned row implements `ITenantOwned`; `RecuroDbContext`
+   filters and stamps `TenantId`. Tests prove workspace A cannot see workspace B.
+   **Terminology:** "workspace" is the product term, used in every screen, message, email, URL and doc
+   (decided by the product owner on 2026-10-14). "Tenant" survives only as the internal key: the
+   `TenantId` column and filter, `ITenantOwned`/`ITenantContext`, the `tenants` table, the Keycloak
+   `tenant_id` attribute/claim and the `X-Recuro-Tenant`/`X-Dev-Tenant` headers. A workspace's id is its
+   `TenantId`.
 6. **API responses match the frontend mocks** (`frontend/src/domain/types.ts`) field for field.
-7. **Tenant configuration is split in two** (decided by the product owner on 2026-10-07):
+7. **Workspace configuration is split in two** (decided by the product owner on 2026-10-07):
    - **Presentation config lives in the admin portal** (`/admin`): branding, themes, screens, fields,
      labels and email-template overrides. Services read it from the admin API; they don't copy it.
    - **Business rules live in the Config service** (`services/Config`): DOA, TAT, offer, escalation and
      BGV matrices plus business calendars, versioned and pinned per workflow. Services resolve rules
      through the Config API and react to `config.version.activated`; none of them keeps its own copy
      of a matrix or hard-codes a rule. This may be revisited later; if it moves, only Config changes.
-   - **Tenant rules, hierarchy and page access are managed from the admin portal** (product owner,
-     2026-10-09): the Tenant Admin and Platform Admin sections decide each tenant's rules, its
+   - **Workspace rules, hierarchy and page access are managed from the admin portal** (product owner,
+     2026-10-09): the Workspace Admin and Platform Admin sections decide each workspace's rules, its
      hierarchy (departments, HODs, reporting managers) and which pages each role can open. Services
      never hard-code them. Until those screens exist, the hierarchy lives in Keycloak user attributes
-     (PR #39), which the admin portal will edit later. All of it is per tenant and `TenantId`-scoped,
-     like every other row in the multi-tenant database (rule 5).
+     (PR #39), which the admin portal will edit later. All of it is per workspace and
+     `TenantId`-scoped, like every other row in the multi-tenant database (rule 5).
 8. **Free / open-source only.** CI runs a licence check.
 
 ## Service map
@@ -53,7 +58,7 @@ the project files as `recuro/backenduserstories.html`). Decisions behind this ma
 | 11 | **Offer** | OFR-001..007 | offers, CTC breakup, letters, verbal log | `offer.*` | `pipeline.stage.changed`, `workflow.task.completed`, `bgv.case.initiated`, `bgv.cleared`, `bgv.adverse.flagged`, `bgv.resolved`, `candidate.purged` | Config (offer matrix, working days), Requisition, Identity (masking), Workflow; release gate fed by `bgv.*` events | 5111 |
 | 12 | **Onboarding** | ONB-001..006 | onboarding cases, Day-1 checklist, documents, probation | `onboarding.*` | `offer.accepted`, `offer.withdrawn`, `bgv.case.initiated/cleared/adverse.flagged/resolved` | Config (checklist, working days), Candidate (name for letters) | 5112 |
 | 13 | **Vendor** (P1) | VND-001..005 | vendors, empanelment gates, agreements, SLA snapshots | `vendor.*` | `bgv.check.updated` | — | 5113 |
-| 14 | **Reporting** (P1) | RPT-001..005 | per-tenant event log, read-model projections, KPI definitions, costs, snapshots, packs | `reporting.pack.ready` | requisition, pipeline, interview and offer events, `candidate.purged`, `notification.email.dispatched/failed` | Config (tat and doa matrices), Identity (masking) | 5114 |
+| 14 | **Reporting** (P1) | RPT-001..005 | per-workspace event log, read-model projections, KPI definitions, costs, snapshots, packs | `reporting.pack.ready` | requisition, pipeline, interview and offer events, `candidate.purged`, `notification.email.dispatched/failed` | Config (tat and doa matrices), Identity (masking) | 5114 |
 | 15 | **Careers** (public API) | CAR-001..007 | postings, public applications, throttle state | `career.job.applied` | `recruitment.sourcing.unlocked`, `recruitment.mrf.cancelled`, `pipeline.application.final_rejected`, `pipeline.stage.changed`, `notification.email.dispatched` (regret delivery, template `candidate.regret`) | Candidate, Pipeline (intake saga), Requisition (gate) | 5115 |
 | 16 | **Employee** (portal API, P1) | EMP-001..005 | IJP applications, referrals | `employee.ijp.applied`, `employee.referral.submitted` | `recruitment.sourcing.unlocked`, `recruitment.mrf.cancelled`, `pipeline.stage.changed`, `pipeline.application.final_rejected` | Candidate, Pipeline (intake saga) | 5116 |
 
@@ -94,7 +99,7 @@ Built in PR #21 (`ServiceTokenHandler` in `Recuro.BuildingBlocks.Web.Auth`).
   - `TokenEndpoint` is derived from `Auth:MetadataAddress` or `Auth:Authority`.
   - `RenewBefore` sets how early a token is renewed.
 - **The receiving side**: a validated token with role `service` and no `tenant_id` claim takes its
-  tenant from `X-Recuro-Tenant`. User tokens ignore that header. The gateway strips
+  workspace from `X-Recuro-Tenant`. User tokens ignore that header. The gateway strips
   `X-Recuro-Tenant`, along with `X-User-Id`, `X-User-Roles` and `X-Tenant-Id`, from every outside
   request, so only a service inside the network can set it.
 - **`Auth:Mode=Development`**: the handler sends `X-Dev-User: recuro-svc-<service>`,
@@ -139,7 +144,7 @@ Built in PR #21 (`ServiceTokenHandler` in `Recuro.BuildingBlocks.Web.Auth`).
 
 **`GET /api/v1/resolve/working-days?from=<date>&days=<n>[&location=<code>][&versionId=<guid>]`**
 
-This adds `n` working days to `from` using the business calendar for `location` (the tenant default
+This adds `n` working days to `from` using the business calendar for `location` (the workspace default
 when it is omitted). It returns `{ "date": "YYYY-MM-DD", "configVersionId": "guid" }`. This is the
 only working-day calculation in the backend; services never count holidays themselves. `days` runs
 from -1000 to 1000. A negative `days` counts backwards (PR #36), skipping weekends and holidays the
@@ -150,7 +155,7 @@ reached, it counts weekends only and uses the FRD deadlines, so a stage clock ne
 
 ### Identity: masking, PDP and users (owner: Identity; callers: every service and the Gateway BFF)
 
-All Identity endpoints accept a tenant member's token or a service token.
+All Identity endpoints accept a workspace member's token or a service token.
 
 **`GET /api/v1/identity/masking/{role}/{resource}`** (RCU-AUT-004), for example
 `/api/v1/identity/masking/mdceo/candidate`
@@ -165,7 +170,7 @@ All Identity endpoints accept a tenant member's token or a service token.
 - A field that isn't listed passes through unchanged.
 - An unknown role or resource returns 404 `masking_map_not_found`. Callers treat that 404 as "hide
   every sensitive field", so a missing map fails closed.
-- Callers cache the map per tenant, role and version for up to 5 minutes, and apply it when they
+- Callers cache the map per workspace, role and version for up to 5 minutes, and apply it when they
   serialize a response.
 - Map versions: `masking-2026.10.2` adds `bgvCheck`, `masking-2026.10.3` adds `offer` (PR #30) and
   `masking-2026.10.4` adds `report` (PR #36).
@@ -198,9 +203,9 @@ All Identity endpoints accept a tenant member's token or a service token.
 - Callers may cache a decision for `ttlSeconds`.
 
 **`GET /api/v1/identity/me`** provisions the user just in time from the token and returns the frontend
-`User`. **`GET /api/v1/identity/users?role=<role>[&department=<key>]`** lists the tenant's users by
+`User`. **`GET /api/v1/identity/users?role=<role>[&department=<key>]`** lists the workspace's users by
 role, which is how Workflow and Notification find assignees and recipients.
-**`GET /api/v1/identity/users/{id}`** returns one user of the caller's tenant, or 404. It has the
+**`GET /api/v1/identity/users/{id}`** returns one user of the caller's workspace, or 404. It has the
 same readers as `/users`, including the `service` role.
 
 **Hierarchy (PR #39).** The realm role `hod` marks a department head. Each user carries a
@@ -217,7 +222,7 @@ reporting manager's user id).
   `mdceo` and grants it that role's permissions (see "Workspace roles and access" below).
 - `users?role=hod&department=operations` finds a department's head, and `users/{managerId}` finds a
   person's reporting manager.
-- Lookups only ever answer from the caller's own tenant: another tenant's user is a 404. A malformed
+- Lookups only ever answer from the caller's own workspace: another workspace's user is a 404. A malformed
   `department` is a 400.
 - In Development mode, `X-Dev-Department` and `X-Dev-Manager` set the same fields.
 
@@ -230,12 +235,10 @@ this (PR #40). Requisition may later carry a `departmentKey` so callers stop slu
 
 ### Workspace roles and access (owners: admin portal and Identity; PR #45, PR #47)
 
-"Workspace" is the user-facing word for a tenant. `TenantId` stays the internal key everywhere.
-
 **Roles are workspace data (PR #45).** The admin portal stores each workspace's roles and role
 assignments in `recuro_admin`, in the `TenantId`-scoped tables `workspace_roles` and
 `workspace_members`. A role has a key, name, `reportsTo`, permissions from the product catalogue,
-the pages it can open, `requiresMfa` and `isActive`. Tenant Admin (Roles & people) and the platform
+the pages it can open, `requiresMfa` and `isActive`. Workspace Admin (Roles & people) and the platform
 console (Workspace roles) create, edit and switch off roles and assign them to people. Assignments
 are synced to Keycloak as the `workspace_roles` user attribute plus the matching realm roles.
 
@@ -246,7 +249,7 @@ Every workspace is seeded with the persona roles `hrta`, `hrhead`, `hod`, `mdceo
 **`GET /api/v1/internal/workspaces/{id}/access`** (admin API, PR #47) returns
 `{ workspaceId, version, roles[{ key, name, reportsTo, permissions, pages, requiresMfa, isActive }], members[{ accountId, roleKeys, department }] }`.
 Only service-account tokens can call it (audience `recuro-api` plus the `service` role). Browsers,
-tenant admins and platform admins get 403. In Development mode it accepts `X-Dev-Roles: service`.
+workspace admins and platform admins get 403. In Development mode it accepts `X-Dev-Roles: service`.
 
 **Identity follows each workspace's roles (PR #47).**
 
@@ -420,7 +423,7 @@ back:
 ### Live updates: notification stream (owner: Notification; proxied by Gateway, GTW-003)
 
 - Notification serves Server-Sent Events at `GET /stream/notifications`, scoped to the caller's
-  tenant and user. The gateway proxies it under the same path, with buffering and its request timeout
+  workspace and user. The gateway proxies it under the same path, with buffering and its request timeout
   turned off for that route.
 - Each event's `data` is the bell item that `GET /notifications` returns.
 - The browser `EventSource` API can't send a bearer token, so the frontend uses a fetch-based SSE
@@ -429,7 +432,7 @@ back:
 ### Careers and Employee portal APIs (owners: Careers 5115, Employee 5116; PR #22)
 
 **Public careers site** (CAR-001..007). These routes are anonymous. The gateway route
-`careers-public` applies the `public` rate limit, and the tenant comes from the URL, never from a
+`careers-public` applies the `public` rate limit, and the workspace comes from the URL, never from a
 token.
 
 | Method and path | Request | Response |
@@ -597,7 +600,7 @@ through Identity's lookup (PR #39), with HR Head as the fallback when no HOD is 
 ### Reporting (owner: Reporting 5114; PR #34)
 
 Database `recuro_reporting`. The gateway routes `/api/v1/reports/{**rest}` to the `reporting`
-cluster. Reporting never reads another service's database. It keeps its own per-tenant event log and
+cluster. Reporting never reads another service's database. It keeps its own per-workspace event log and
 builds its read models from it, and that log can be replayed.
 
 Policies: `reports.view` is `hrta`, `hrhead` and `mdceo`. `reports.manage` is `hrhead` only.
@@ -612,7 +615,7 @@ Policies: `reports.view` is `hrta`, `hrhead` and `mdceo`. `reports.manage` is `h
 | `GET /costs`, `POST /costs` (both manage) | channel spend |
 | `GET /snapshots`, `POST /snapshots/{period}/recompute` (manage) | frozen snapshots with an audit hash |
 | `GET /packs`, `POST /packs`, `GET /packs/{id}/{pdf\|csv}` | KPI packs |
-| `GET /settings`, `PUT /settings` | the tenant's time zone and pack schedule |
+| `GET /settings`, `PUT /settings` | the workspace's time zone and pack schedule |
 | `GET /projections`, `POST /projections/replay` (manage) | projection status, and replay with `{ fromSequence?, reset }` |
 
 **Consumes:**
@@ -659,7 +662,7 @@ threshold, so a retry never sends a second reminder.
 
 **Workflow assigns tasks to roles, not people.** In every `workflow.*` event, `assignee`,
 `assigneeRole` and `escalateTo` are role keys (`hrta`, `hrhead`, `mdceo`, ...), never user ids.
-Notification sends each one to that role's users in the tenant. `assigneeIds` on
+Notification sends each one to that role's users in the workspace. `assigneeIds` on
 `workflow.task.reminder_due.v1` stays in the payload for person-level tasks later, but it is empty
 today. Adding `assigneeRole` was additive, so the event stays v1.
 
@@ -735,5 +738,5 @@ the calls.
 - Domain rules and state machines as data (`TransitionTable<T>`), unit-tested ≥ 80 %.
 - Every endpoint: authorization policy, validator, OpenAPI summary, frontend DTO shape.
 - Every state change: outbox event from the catalog + audit (Audit mirrors bus events automatically).
-- Integration tests on Testcontainers, including tenant isolation and a negative RBAC test.
+- Integration tests on Testcontainers, including workspace isolation and a negative RBAC test.
 - Saga steps have a compensation and a test exercising it.
