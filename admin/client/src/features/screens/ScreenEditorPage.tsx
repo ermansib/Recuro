@@ -42,7 +42,7 @@ function ScreenEditor({ screen }: { screen: EffectiveScreen }) {
   return (
     <>
       <p>
-        <Link to="/tenant/screens">← {t('screens.back')}</Link>
+        <Link to="/workspace/screens">← {t('screens.back')}</Link>
       </p>
       <PageHeader title={`${screen.code} · ${draft.title || screen.defaultTitle}`} subtitle={screen.module} />
       <ErrorMessage error={update.error} />

@@ -14,8 +14,8 @@ import { TenantsPage } from './features/tenants/TenantsPage'
 import { ThemeLibraryPage } from './features/themes/ThemeLibraryPage'
 
 const HOME: Record<AdminLevel, string> = {
-  platform: '/platform/tenants',
-  tenant: '/tenant/branding',
+  platform: '/platform/workspaces',
+  tenant: '/workspace/branding',
 }
 
 export function App() {
@@ -38,17 +38,17 @@ export function App() {
       <Route element={<Layout />}>
         {level === 'platform' ? (
           <>
-            <Route path="/platform/tenants" element={<TenantsPage />} />
-            <Route path="/platform/tenant-themes" element={<TenantThemePage />} />
+            <Route path="/platform/workspaces" element={<TenantsPage />} />
+            <Route path="/platform/workspace-themes" element={<TenantThemePage />} />
             <Route path="/platform/themes" element={<ThemeLibraryPage />} />
             <Route path="/platform/roles" element={<PlatformRolesPage />} />
           </>
         ) : (
           <>
-            <Route path="/tenant/branding" element={<BrandingPage />} />
-            <Route path="/tenant/screens" element={<ScreensPage />} />
-            <Route path="/tenant/screens/:key" element={<ScreenEditorPage />} />
-            <Route path="/tenant/roles" element={<RolesPage />} />
+            <Route path="/workspace/branding" element={<BrandingPage />} />
+            <Route path="/workspace/screens" element={<ScreensPage />} />
+            <Route path="/workspace/screens/:key" element={<ScreenEditorPage />} />
+            <Route path="/workspace/roles" element={<RolesPage />} />
           </>
         )}
         <Route path="*" element={<Navigate to={HOME[level]} replace />} />

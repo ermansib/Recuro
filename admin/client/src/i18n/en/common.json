@@ -12,17 +12,17 @@
   "skipToContent": "Skip to main content",
   "level": {
     "platform": "Platform console",
-    "tenant": "Tenant admin"
+    "tenant": "Workspace admin"
   },
   "nav": {
     "label": "Admin navigation",
-    "tenants": "Tenants",
+    "tenants": "Workspaces",
     "themes": "Theme library",
     "branding": "Branding & theme",
     "screens": "Screens & fields",
     "roles": "Roles & people",
     "workspaceRoles": "Workspace roles",
-    "tenantThemes": "Tenant themes"
+    "tenantThemes": "Workspace themes"
   },
   "mode": {
     "system": "Follow device",

@@ -45,7 +45,7 @@ internal static class CandidateEndpoints
 
         group.MapPost("/retention/purge", PurgeAsync)
             .RequireAuthorization(CandidatePolicies.Govern)
-            .WithSummary("RCU-CND-003: anonymise this tenant's candidates past retention now. dryRun reports the impact only.");
+            .WithSummary("RCU-CND-003: anonymise this workspace's candidates past retention now. dryRun reports the impact only.");
 
         group.MapPut("/{id:guid}/resume", UploadResumeAsync)
             .RequireAuthorization(CandidatePolicies.Create)

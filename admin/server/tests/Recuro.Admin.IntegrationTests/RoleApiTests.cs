@@ -21,7 +21,7 @@ public sealed class RoleApiTests : IDisposable
     [Fact]
     public async Task Existing_workspaces_get_the_default_roles()
     {
-        var roles = await _factory.ClientAs(AdminApiFactory.Aurora).GetFromJsonAsync<List<RoleDto>>("/api/v1/tenant/roles", Json);
+        var roles = await _factory.ClientAs(AdminApiFactory.Aurora).GetFromJsonAsync<List<RoleDto>>("/api/v1/workspace/roles", Json);
 
         Assert.Equal(["mdceo", "hrhead", "hod", "hrta", "employee"], roles!.Select(r => r.Key));
         Assert.Equal("hrhead", roles!.Single(r => r.Key == "hod").ReportsTo);
@@ -32,13 +32,13 @@ public sealed class RoleApiTests : IDisposable
     {
         var aurora = _factory.ClientAs(AdminApiFactory.Aurora);
 
-        var created = await aurora.PostAsJsonAsync("/api/v1/tenant/roles", Recruiter(), Json);
+        var created = await aurora.PostAsJsonAsync("/api/v1/workspace/roles", Recruiter(), Json);
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
-        var duplicate = await aurora.PostAsJsonAsync("/api/v1/tenant/roles", Recruiter(), Json);
+        var duplicate = await aurora.PostAsJsonAsync("/api/v1/workspace/roles", Recruiter(), Json);
         Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
 
-        var auroraRoles = await aurora.GetFromJsonAsync<List<RoleDto>>("/api/v1/tenant/roles", Json);
-        var bridgeRoles = await _factory.ClientAs(AdminApiFactory.TalentBridge).GetFromJsonAsync<List<RoleDto>>("/api/v1/tenant/roles", Json);
+        var auroraRoles = await aurora.GetFromJsonAsync<List<RoleDto>>("/api/v1/workspace/roles", Json);
+        var bridgeRoles = await _factory.ClientAs(AdminApiFactory.TalentBridge).GetFromJsonAsync<List<RoleDto>>("/api/v1/workspace/roles", Json);
         Assert.Contains(auroraRoles!, r => r.Key == "recruiter" && !r.IsSystem);
         Assert.DoesNotContain(bridgeRoles!, r => r.Key == "recruiter");
     }
@@ -48,7 +48,7 @@ public sealed class RoleApiTests : IDisposable
     [InlineData(null, null)]
     public async Task The_reporting_line_must_point_at_an_existing_role(string? reportsTo, string? code)
     {
-        var response = await _factory.ClientAs(AdminApiFactory.Aurora).PostAsJsonAsync("/api/v1/tenant/roles", Recruiter(reportsTo: reportsTo), Json);
+        var response = await _factory.ClientAs(AdminApiFactory.Aurora).PostAsJsonAsync("/api/v1/workspace/roles", Recruiter(reportsTo: reportsTo), Json);
 
         Assert.Equal(code is null ? HttpStatusCode.Created : HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -60,7 +60,7 @@ public sealed class RoleApiTests : IDisposable
 
         // hrhead reports to mdceo; making mdceo report to hod (who reports to hrhead) would loop.
         var mdceo = new UpdateRoleRequest("MD/CEO", null, "hod", ["mrf.approve"], ["dashboard"], RequiresMfa: true);
-        var response = await aurora.PutAsJsonAsync("/api/v1/tenant/roles/mdceo", mdceo, Json);
+        var response = await aurora.PutAsJsonAsync("/api/v1/workspace/roles/mdceo", mdceo, Json);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Contains("role.hierarchyCycle", await response.Content.ReadAsStringAsync());
@@ -71,7 +71,7 @@ public sealed class RoleApiTests : IDisposable
     {
         var request = Recruiter() with { Pages = ["payroll"] };
 
-        var response = await _factory.ClientAs(AdminApiFactory.Aurora).PostAsJsonAsync("/api/v1/tenant/roles", request, Json);
+        var response = await _factory.ClientAs(AdminApiFactory.Aurora).PostAsJsonAsync("/api/v1/workspace/roles", request, Json);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -82,7 +82,7 @@ public sealed class RoleApiTests : IDisposable
         var aurora = _factory.ClientAs(AdminApiFactory.Aurora);
         var hrta = new UpdateRoleRequest("Talent partner", null, "hrhead", ["mrf.raise"], ["dashboard", "mrf"], RequiresMfa: true);
 
-        var response = await aurora.PutAsJsonAsync("/api/v1/tenant/roles/hrta", hrta, Json);
+        var response = await aurora.PutAsJsonAsync("/api/v1/workspace/roles/hrta", hrta, Json);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var workspace = await aurora.GetFromJsonAsync<WorkspaceDto>("/api/v1/workspaces/aurora", Json);
@@ -94,10 +94,10 @@ public sealed class RoleApiTests : IDisposable
     {
         var aurora = _factory.ClientAs(AdminApiFactory.Aurora);
 
-        var withReports = await aurora.PutAsJsonAsync("/api/v1/tenant/roles/hrhead/status", new SetRoleStatusRequest(false), Json);
+        var withReports = await aurora.PutAsJsonAsync("/api/v1/workspace/roles/hrhead/status", new SetRoleStatusRequest(false), Json);
         Assert.Equal(HttpStatusCode.Conflict, withReports.StatusCode);
 
-        var off = await aurora.PutAsJsonAsync("/api/v1/tenant/roles/employee/status", new SetRoleStatusRequest(false), Json);
+        var off = await aurora.PutAsJsonAsync("/api/v1/workspace/roles/employee/status", new SetRoleStatusRequest(false), Json);
         Assert.Equal(HttpStatusCode.OK, off.StatusCode);
         Assert.False((await off.Content.ReadFromJsonAsync<RoleDto>(Json))!.IsActive);
     }
@@ -112,7 +112,7 @@ public sealed class RoleApiTests : IDisposable
                 Json))
             .Content.ReadFromJsonAsync<WorkspaceSignUpDto>(Json);
         var platform = _factory.ClientAs("platform");
-        var basePath = $"/api/v1/platform/tenants/{signUp!.Workspace.Id}";
+        var basePath = $"/api/v1/platform/workspaces/{signUp!.Workspace.Id}";
 
         var members = await platform.GetFromJsonAsync<List<MemberDto>>($"{basePath}/members", Json);
         var owner = Assert.Single(members!);
@@ -133,7 +133,7 @@ public sealed class RoleApiTests : IDisposable
     {
         var aurora = _factory.ClientAs(AdminApiFactory.Aurora);
 
-        var response = await aurora.GetAsync(new Uri($"/api/v1/platform/tenants/{DatabaseSeeder.TalentBridgeTenantId}/roles", UriKind.Relative));
+        var response = await aurora.GetAsync(new Uri($"/api/v1/platform/workspaces/{DatabaseSeeder.TalentBridgeTenantId}/roles", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -141,7 +141,7 @@ public sealed class RoleApiTests : IDisposable
     [Fact]
     public async Task The_catalogue_lists_permissions_and_screens()
     {
-        var catalog = await _factory.ClientAs(AdminApiFactory.Aurora).GetFromJsonAsync<RoleCatalogDto>("/api/v1/tenant/roles/catalog", Json);
+        var catalog = await _factory.ClientAs(AdminApiFactory.Aurora).GetFromJsonAsync<RoleCatalogDto>("/api/v1/workspace/roles/catalog", Json);
 
         Assert.Contains(catalog!.Permissions, p => p.Key == "offer.approve");
         Assert.Contains(catalog.Pages, p => p.Key == "pipeline" && p.Code == "S-06");

@@ -18,6 +18,10 @@ brand; each tenant brings its own name, careers copy, theme, locale and rules. T
 fictional "Aurora Housing Finance" (`src/mocks/data/tenant.json`). Never hard-code a tenant's name,
 policy wording or branding in components.
 
+**Terminology:** a tenant is called a **workspace** everywhere users can see it: screens, messages,
+emails, URLs, API routes and docs (product owner, 2026-10-14). "Tenant" stays only as the internal key
+(`TenantId`, `ITenantOwned`, the `tenants` table, the Keycloak `tenant_id` claim, code identifiers).
+
 ## Stack and build order
 
 1. **Frontend first (current phase):** React.js + TypeScript. Not Next.js.

@@ -77,7 +77,7 @@ function TenantTable({ tenants }: { tenants: Tenant[] }) {
                     <span className="hex">
                       {tenant.themePresetKey} · {t(`common.mode.${tenant.themeMode}`)}
                     </span>{' '}
-                    <Link to={`/platform/tenant-themes?tenant=${encodeURIComponent(tenant.id)}`} aria-label={t('tenants.changeTheme', { tenant: tenant.name })}>
+                    <Link to={`/platform/workspace-themes?workspace=${encodeURIComponent(tenant.id)}`} aria-label={t('tenants.changeTheme', { tenant: tenant.name })}>
                       {t('tenants.change')}
                     </Link>
                   </td>

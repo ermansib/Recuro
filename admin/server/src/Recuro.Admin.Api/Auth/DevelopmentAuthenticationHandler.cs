@@ -45,7 +45,7 @@ internal sealed class DevelopmentAuthenticationHandler(
         {
             claims =
             [
-                new(ClaimTypes.Name, "Tenant admin"),
+                new(ClaimTypes.Name, "Workspace admin"),
                 new(ClaimTypes.Role, AdminRoles.TenantAdmin),
                 new(AdminClaims.Tenant, tenantId.ToString()),
             ];

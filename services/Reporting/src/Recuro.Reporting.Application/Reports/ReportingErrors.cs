@@ -6,7 +6,7 @@ public static class ReportingErrors
 {
     public static readonly Error InvalidPeriod = Error.Validation([new FieldError("period", "invalid_period", "Use yyyy-MM for a month or yyyy-Qn for a quarter.")]);
 
-    public static readonly Error PackNotFound = Error.NotFound("pack_not_found", "No such report pack for this tenant.");
+    public static readonly Error PackNotFound = Error.NotFound("pack_not_found", "No such report pack for this workspace.");
 
     public static readonly Error PackForbidden = Error.Forbidden("pack_forbidden", "This pack is addressed to another role.");
 
