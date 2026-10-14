@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api, type LogCandidateInput } from '../../api/client'
 import { useApiMutation, usePipeline, useRequisitions, useRules } from '../../api/hooks'
-import { can } from '../../auth/permissions'
+import { useCan } from '../../auth/permissions'
 import { useSession } from '../../auth/sessionContext'
 import { useErrorToast, useToast } from '../../components/toastContext'
 import { Chip, ErrorBox, Loading, Modal, PageHead, Sensitive } from '../../components/ui'
@@ -45,7 +45,8 @@ export function PipelinePage() {
 
 function Board({ req, all, onSelect }: { req: Requisition; all: Requisition[]; onSelect: (id: string) => void }) {
   const { t } = useTranslation()
-  const { user, actor } = useSession()
+  const { actor } = useSession()
+  const can = useCan()
   const toast = useToast()
   const onError = useErrorToast()
   const pipeline = usePipeline(req.reqId)
@@ -53,8 +54,8 @@ function Board({ req, all, onSelect }: { req: Requisition; all: Requisition[]; o
   const [over, setOver] = useState<ApplicationStage | null>(null)
   const [rejecting, setRejecting] = useState<PipelineCard | null>(null)
   const [logging, setLogging] = useState(false)
-  const canMove = can(user.role, 'pipeline.move')
-  const canLog = can(user.role, 'candidate.log')
+  const canMove = can('pipeline.move')
+  const canLog = can('candidate.log')
   const sourcingOpen = SOURCING_OPEN.includes(req.state)
 
   const move = useApiMutation((a: { appId: string; to: ApplicationStage }) => api.moveApplication(actor, a.appId, a.to))

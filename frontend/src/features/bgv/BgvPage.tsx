@@ -3,7 +3,7 @@ import { Trans, useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { api } from '../../api/client'
 import { useApiMutation, useBgvCase, usePipeline } from '../../api/hooks'
-import { can } from '../../auth/permissions'
+import { useCan } from '../../auth/permissions'
 import { useSession } from '../../auth/sessionContext'
 import { useErrorToast, useToast } from '../../components/toastContext'
 import { Card, Chip, ErrorBox, Loading, Modal, PageHead, Sensitive } from '../../components/ui'
@@ -16,7 +16,8 @@ const STATUS_TONE: Record<BgvCheckStatus, ChipTone> = { Pending: 'slate', InProg
 
 export function BgvPage() {
   const { t } = useTranslation()
-  const { user, actor } = useSession()
+  const { actor } = useSession()
+  const can = useCan()
   const toast = useToast()
   const onError = useErrorToast()
   const bgv = useBgvCase(APP_ID)
@@ -99,10 +100,10 @@ export function BgvPage() {
         </div>
       </Card>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        {can(user.role, 'bgv.reportAdverse') && (
+        {can('bgv.reportAdverse') && (
           <button type="button" className="btn btn-danger" onClick={() => setReporting(true)}>{t('bgv.report')}</button>
         )}
-        {can(user.role, 'offer.release') && (
+        {can('offer.release') && (
           <button
             type="button"
             className="btn btn-primary"

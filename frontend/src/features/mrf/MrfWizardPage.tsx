@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { api } from '../../api/client'
 import { useApiMutation, useRules } from '../../api/hooks'
-import { can } from '../../auth/permissions'
+import { useCan } from '../../auth/permissions'
 import { useSession } from '../../auth/sessionContext'
 import { useErrorToast, useToast } from '../../components/toastContext'
 import { Chip, ErrorBox, Loading, PageHead } from '../../components/ui'
@@ -52,7 +52,8 @@ export function MrfWizardPage() {
 
 function MrfWizard({ rules }: { rules: RuleConfig }) {
   const { t } = useTranslation()
-  const { user, actor } = useSession()
+  const { actor } = useSession()
+  const can = useCan()
   const toast = useToast()
   const onError = useErrorToast()
   const [step, setStep] = useState<1 | 2 | 3>(1)
@@ -60,7 +61,7 @@ function MrfWizard({ rules }: { rules: RuleConfig }) {
   const [showErrors, setShowErrors] = useState(false)
   const [submitted, setSubmitted] = useState<Requisition | null>(null)
   const create = useApiMutation((input: RequisitionInput) => api.createRequisition(actor, input))
-  const canRaise = can(user.role, 'mrf.raise')
+  const canRaise = can('mrf.raise')
 
   // RCU-MRF-001: drafts auto-save.
   useEffect(() => {

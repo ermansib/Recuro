@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../../api/client'
 import { useApiMutation, useOffers, useRules } from '../../api/hooks'
-import { can } from '../../auth/permissions'
+import { useCan } from '../../auth/permissions'
 import { useSession } from '../../auth/sessionContext'
 import { useErrorToast, useToast } from '../../components/toastContext'
 import { Card, Chip, ErrorBox, Loading, PageHead, Sensitive } from '../../components/ui'
@@ -29,6 +29,7 @@ export function OfferPage() {
 function OfferDesk({ offer, offers, rules, onSelect }: { offer: Offer; offers: Offer[]; rules: RuleConfig; onSelect: (id: string) => void }) {
   const { t } = useTranslation()
   const { user, actor } = useSession()
+  const can = useCan()
   const toast = useToast()
   const onError = useErrorToast()
   // Local edits; saved on blur. The desk remounts per offer (key), so no resync is needed.
@@ -41,7 +42,7 @@ function OfferDesk({ offer, offers, rules, onSelect }: { offer: Offer; offers: O
   const outcome = useApiMutation((o: 'Accepted' | 'Declined') => api.setOfferOutcome(actor, offer.id, o))
 
   const routing = offerRouting(rules, offer.grade, comp, offer.band)
-  const editable = can(user.role, 'offer.edit') && (offer.state === 'Draft' || offer.state === 'PendingApproval')
+  const editable = can('offer.edit') && (offer.state === 'Draft' || offer.state === 'PendingApproval')
   const approverName = t(`common.roles.${routing.approverRole}`)
   const isApprover = user.role === routing.approverRole && offer.state === 'PendingApproval'
   const scaleMin = offer.band.min - 3
@@ -64,7 +65,7 @@ function OfferDesk({ offer, offers, rules, onSelect }: { offer: Offer; offers: O
         <select id="offer-select" className="btn btn-ghost" value={offer.id} onChange={(e) => onSelect(e.target.value)}>
           {offers.map((o) => <option key={o.id} value={o.id}>{o.candidateName} · {o.designation}</option>)}
         </select>
-        {!can(user.role, 'offer.edit') && <Chip tone="slate">{t('offer.readOnly')}</Chip>}
+        {!can('offer.edit') && <Chip tone="slate">{t('offer.readOnly')}</Chip>}
         <Chip tone={STATE_TONE[offer.state]}>{t(`offer.state.${offer.state}`, { approver: approverName })}</Chip>
       </PageHead>
       <div className="offer-grid">
@@ -75,7 +76,7 @@ function OfferDesk({ offer, offers, rules, onSelect }: { offer: Offer; offers: O
                 {(['fixed', 'variable', 'benefits'] as const).map((k) => (
                   <div key={k} className="field">
                     <label htmlFor={`ctc-${k}`}>{t(`offer.${k}`)}</label>
-                    {can(user.role, 'candidate.viewSensitive') ? (
+                    {can('candidate.viewSensitive') ? (
                       <input id={`ctc-${k}`} type="number" step={0.1} min={0} value={comp[k]} onChange={(e) => setPart(k, e.target.value)} onBlur={persist} />
                     ) : (
                       <input id={`ctc-${k}`} type="text" value="🔒" readOnly />
@@ -125,24 +126,24 @@ function OfferDesk({ offer, offers, rules, onSelect }: { offer: Offer; offers: O
             <div className="fact"><span>{t('offer.facts.bgvClause')}</span><Chip tone="green">{t('offer.facts.included')}</Chip></div>
             <div className="fact"><span>{t('offer.facts.coi')}</span><Chip tone="green">{t('offer.facts.attached')}</Chip></div>
             <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap', marginTop: 16 }}>
-              {can(user.role, 'offer.edit') && offer.state === 'Draft' && (
+              {can('offer.edit') && offer.state === 'Draft' && (
                 <button type="button" className="btn btn-primary" disabled={submit.isPending} onClick={() => submit.mutate(undefined, { onSuccess: () => toast(t('offer.sentForApproval', { label: routing.label }), 'move'), onError })}>
                   {t('offer.sendForApproval')}
                 </button>
               )}
-              {can(user.role, 'offer.release') && offer.state === 'Approved' && (
+              {can('offer.release') && offer.state === 'Approved' && (
                 <button type="button" className="btn btn-primary" disabled={send.isPending} onClick={() => send.mutate(undefined, { onSuccess: () => toast(t('offer.released'), 'move'), onError })}>
                   {t('offer.release')}
                 </button>
               )}
-              {can(user.role, 'offer.edit') && offer.state === 'Sent' && (
+              {can('offer.edit') && offer.state === 'Sent' && (
                 <>
                   <button type="button" className="btn btn-primary" onClick={() => outcome.mutate('Accepted', { onSuccess: () => toast(t('offer.outcomeToast', { outcome: t('offer.accepted') }), 'move'), onError })}>{t('offer.accepted')}</button>
                   <button type="button" className="btn btn-danger" onClick={() => outcome.mutate('Declined', { onSuccess: () => toast(t('offer.outcomeToast', { outcome: t('offer.declined') }), 'warn'), onError })}>{t('offer.declined')}</button>
                 </>
               )}
               <button type="button" className="btn btn-ghost" onClick={() => toast(t('offer.pdfToast'))}>{t('offer.pdf')}</button>
-              {can(user.role, 'offer.edit') && <button type="button" className="btn btn-ghost" onClick={() => toast(t('offer.verbalToast'))}>{t('offer.verbal')}</button>}
+              {can('offer.edit') && <button type="button" className="btn btn-ghost" onClick={() => toast(t('offer.verbalToast'))}>{t('offer.verbal')}</button>}
             </div>
           </div>
         </Card>

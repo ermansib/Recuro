@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useApprovals, useDemoAccess, useEmails, useNotifications } from '../api/hooks'
-import { can, homePath } from '../auth/permissions'
+import { homePath, useCan, useCanOpen } from '../auth/permissions'
 import { useSession } from '../auth/sessionContext'
 import type { Role } from '../domain/types'
 import { Logo } from './Logo'
@@ -13,6 +13,8 @@ import { useErrorToast, useToast } from './toastContext'
 export function Topbar({ onOpenDrawer }: { onOpenDrawer: () => void }) {
   const { t } = useTranslation()
   const { user, tenant, viaIdentityProvider, switchRole, signOut } = useSession()
+  const can = useCan()
+  const canOpen = useCanOpen()
   const navigate = useNavigate()
   const toast = useToast()
   const onError = useErrorToast()
@@ -59,7 +61,7 @@ export function Topbar({ onOpenDrawer }: { onOpenDrawer: () => void }) {
         <Logo />
       </NavLink>
       <nav aria-label={t('common.nav.label')}>
-        {NAV_ITEMS.filter((n) => n.roles.includes(user.role)).map((n) => (
+        {NAV_ITEMS.filter((n) => canOpen(n.screen) ?? n.roles.includes(user.role)).map((n) => (
           <NavLink key={n.to} to={n.to} end={n.to === '/'} className={({ isActive }) => `nav-tab ${isActive ? 'active' : ''}`}>
             {t(`common.nav.${n.key}`)}
             {n.key === 'approvals' && pending > 0 && <span className="tbadge">{pending}</span>}
@@ -93,7 +95,7 @@ export function Topbar({ onOpenDrawer }: { onOpenDrawer: () => void }) {
                 <span>{user.email}</span>
                 <em>{t('auth.menu.signedInAs', { workspace: tenant.name })}</em>
               </div>
-              {can(user.role, 'team.invite') && (
+              {can('team.invite') && (
                 <button type="button" role="menuitem" className="rm-item" onClick={() => { setMenuOpen(false); navigate('/team') }}>
                   <b>{t('auth.menu.team')}</b>
                 </button>

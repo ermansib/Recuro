@@ -1,15 +1,14 @@
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { useApprovals, useDashboard } from '../../api/hooks'
-import { can } from '../../auth/permissions'
-import { useSession } from '../../auth/sessionContext'
+import { useCan } from '../../auth/permissions'
 import { Card, Chip, ErrorBox, Loading, PageHead, Sparkline } from '../../components/ui'
 
 const toneColor = { green: 'var(--green)', amber: 'var(--amber)', slate: 'var(--slate)' } as Record<string, string>
 
 export function DashboardPage() {
   const { t } = useTranslation()
-  const { user } = useSession()
+  const can = useCan()
   const navigate = useNavigate()
   const dashboard = useDashboard()
   const approvals = useApprovals()
@@ -21,12 +20,12 @@ export function DashboardPage() {
   const maxPipe = Math.max(...d.pipeline.map((p) => p.count), 1)
   const total = d.pipeline.reduce((a, p) => a + p.count, 0)
   const ok = d.kpis.filter((k) => k.tone === 'green').length
-  const canRaise = can(user.role, 'mrf.raise')
+  const canRaise = can('mrf.raise')
 
   const quick = [
     canRaise && { to: '/mrf/new', ic: '＋', label: t('dashboard.quick.raiseMrf') },
     { to: '/jd', ic: '📝', label: t('dashboard.quick.jd') },
-    can(user.role, 'mrf.approve') && { to: '/approvals', ic: '✅', label: t('dashboard.quick.approvals', { count: pending }) },
+    can('mrf.approve') && { to: '/approvals', ic: '✅', label: t('dashboard.quick.approvals', { count: pending }) },
     { to: '/pipeline', ic: '👥', label: t('dashboard.quick.pipeline') },
     { to: '/offer', ic: '✉', label: t('dashboard.quick.offer') },
     { to: '/bgv', ic: '🛡', label: t('dashboard.quick.bgv') },

@@ -113,13 +113,16 @@ Roles are data, not code: each workspace has its own rows in **`workspace_roles`
   and Employee. Workspaces created earlier get them at startup. Workspaces can rename, change or switch these off
   and add their own; keys are fixed once created. A role still held by someone, or that others report to,
   can't be switched off. The workspace's sign-in MFA list follows the roles marked "requires MFA".
-- Workspace admins manage their own workspace under **Roles & people** (`/api/v1/tenant/roles`, `/members`);
-  platform admins manage any workspace under **Workspace roles** (`/api/v1/platform/tenants/{id}/roles`,
+- Workspace admins manage their own workspace under **Roles & people** (`/api/v1/workspace/roles`, `/members`);
+  platform admins manage any workspace under **Workspace roles** (`/api/v1/platform/workspaces/{id}/roles`,
   `/members`). `GET .../roles/catalog` (or `/platform/role-catalog`) lists the permissions and pages.
 - People: the sign-up owner is the first member; accounts that exist only in Keycloak (with the workspace's
   `tenant_id`) are imported when the list is opened. Assigning roles writes them to Keycloak first: the
   `workspace_roles` user attribute always, plus the realm role of the same name where one exists (the
   built-in persona roles), so tokens keep working for services that still read realm roles.
+- The main portal gets the workspace's active roles (key, name, permissions, pages) with its runtime config
+  (`GET /api/v1/runtime/{slug}`): menus, screens and buttons follow them, and roles the workspace doesn't
+  configure (such as candidate) keep the built-in FRD §3.2 matrix.
 - Microservices read a workspace's roles and members from `GET /api/v1/internal/workspaces/{id}/access`
   (service-account tokens only: audience `Auth:ServiceAudience`, default `recuro-api`, plus the `service`
   role; set `Auth:ServiceAuthority` if services reach Keycloak under another host name). The Identity service

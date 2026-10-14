@@ -1,7 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { can } from '../auth/permissions'
-import { useSession } from '../auth/sessionContext'
+import { useCan } from '../auth/permissions'
 import type { ChipTone } from '../domain/types'
 
 export function Chip({ tone, children, className = '' }: { tone: ChipTone; children: ReactNode; className?: string }) {
@@ -47,9 +46,9 @@ export function Card({ title, sub, aside, children, className = '', style }: {
 
 /** CTC and contact PII: shown to HR roles, masked for others (RCU-PLT-003). */
 export function Sensitive({ children, mask }: { children: ReactNode; mask?: ReactNode }) {
-  const { user } = useSession()
+  const can = useCan()
   const { t } = useTranslation()
-  return can(user.role, 'candidate.viewSensitive') ? <>{children}</> : <span title={t('common.masked')}>{mask ?? t('common.masked')}</span>
+  return can('candidate.viewSensitive') ? <>{children}</> : <span title={t('common.masked')}>{mask ?? t('common.masked')}</span>
 }
 
 export function Loading() {

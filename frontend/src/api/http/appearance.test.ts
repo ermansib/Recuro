@@ -10,6 +10,7 @@ const dto = {
   lightTheme: { navy: '#065F46', cy: '#34D399', gold: '#D97706', bg: '#F3FAF7', card: '#FFFFFF', txt: '#0F172A' },
   darkTheme: { navy: '#6EE7B7', cy: '#34D399', gold: '#FBBF24', bg: '#07140F', card: '#0F241C', txt: '#E5E7EB' },
   screens: [],
+  roles: [{ key: 'recruiter', name: 'Recruiter', permissions: ['candidate.log', 'pipeline.move'], pages: ['dashboard', 'pipeline'] }],
 }
 
 describe('admin portal runtime config → TenantAppearance', () => {
@@ -20,7 +21,17 @@ describe('admin portal runtime config → TenantAppearance', () => {
       themeMode: 'dark',
       lightTheme: dto.lightTheme,
       darkTheme: dto.darkTheme,
+      roles: dto.roles,
     })
+  })
+
+  it('keeps only well-formed workspace roles', () => {
+    const result = toTenantAppearance({
+      ...dto,
+      roles: [{ key: 'auditor', permissions: ['reports.view', 42, '<b>'], pages: 'reports' }, { name: 'No key' }, 'hrta'],
+    })
+    expect(result?.roles).toEqual([{ key: 'auditor', name: 'auditor', permissions: ['reports.view'], pages: [] }])
+    expect(toTenantAppearance({ ...dto, roles: undefined })?.roles).toEqual([])
   })
 
   it('drops anything that is not a hex colour, so only colours reach CSS', () => {

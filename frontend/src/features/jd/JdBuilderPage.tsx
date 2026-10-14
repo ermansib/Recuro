@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { api } from '../../api/client'
 import { useApiMutation, useJobDescription, useRules } from '../../api/hooks'
-import { can } from '../../auth/permissions'
+import { useCan } from '../../auth/permissions'
 import { useSession } from '../../auth/sessionContext'
 import { useErrorToast, useToast } from '../../components/toastContext'
 import { Card, Chip, ErrorBox, Loading, PageHead } from '../../components/ui'
@@ -22,11 +22,12 @@ export function JdBuilderPage() {
 
 function JdBuilder({ initial, competencies }: { initial: JobDescription; competencies: { id: string; name: string }[] }) {
   const { t } = useTranslation()
-  const { user, actor } = useSession()
+  const { actor } = useSession()
+  const can = useCan()
   const toast = useToast()
   const onError = useErrorToast()
   const [jd, setJd] = useState(initial)
-  const editable = can(user.role, 'jd.edit')
+  const editable = can('jd.edit')
   const submit = useApiMutation((d: JobDescription) => api.submitJobDescription(actor, d))
   const assessmentOptions = t('jd.assessments', { returnObjects: true }) as string[]
 
