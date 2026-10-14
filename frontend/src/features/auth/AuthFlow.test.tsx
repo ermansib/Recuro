@@ -4,6 +4,44 @@ import { App } from '../../App'
 import { DEMO_PASSWORD } from '../../api/mock/seed'
 import { renderWithProviders } from '../../test/render'
 
+// Keycloak, as the portal sees it: the redirect is recorded instead of leaving the page.
+const keycloak = vi.hoisted(() => ({
+  startSignIn: vi.fn(() => Promise.resolve()),
+  finishSignIn: vi.fn(),
+  currentAccount: vi.fn(() => Promise.resolve(null)),
+  forget: vi.fn(() => Promise.resolve()),
+  signOut: vi.fn(() => Promise.resolve()),
+}))
+vi.mock('../../api/http/keycloak', () => ({ createKeycloakIdentityProvider: () => keycloak }))
+
+const NORTHWIND = {
+  id: 'a3a0f6a4-3f43-4a8b-9a54-1b0c7c4c0001',
+  slug: 'northwind-talent',
+  name: 'Northwind Talent',
+  orgType: 'agency',
+  careersTagline: 'Find your next role through us',
+  emailDomain: 'northwind.example',
+  locale: 'en-IN',
+  currency: 'INR',
+  ssoProviders: ['google', 'microsoft'],
+  mfaRoles: ['hrhead', 'mdceo'],
+  sessionIdleMinutes: 30,
+}
+
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
+
+/** The admin API: knows Northwind Talent and answers sign-ups like the real one. */
+function stubAdminApi() {
+  const fetcher = vi.fn((url: string, init?: RequestInit) => {
+    if (init?.method === 'POST') {
+      return Promise.resolve(json({ workspace: NORTHWIND, owner: { id: 'kc-1', name: 'J. Doe', email: 'j.doe@northwind.example', role: 'hrhead' } }, 201))
+    }
+    return Promise.resolve(url.endsWith('/northwind-talent') ? json(NORTHWIND) : json({ title: 'Not found' }, 404))
+  })
+  vi.stubGlobal('fetch', fetcher)
+  return fetcher
+}
+
 describe('sign-in and sign-out (RCU-PLT-001)', () => {
   afterEach(() => vi.unstubAllGlobals())
 
@@ -43,32 +81,8 @@ describe('sign-in and sign-out (RCU-PLT-001)', () => {
     expect(screen.queryByRole('navigation', { name: 'Main navigation' })).not.toBeInTheDocument()
   })
 
-  it('creates a workspace for a recruitment agency and lands the owner in it', async () => {
-    // The admin API saves the workspace (PostgreSQL) and creates the owner in Keycloak; here it answers like the real one.
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            workspace: {
-              id: 'a3a0f6a4-3f43-4a8b-9a54-1b0c7c4c0001',
-              slug: 'northwind-talent',
-              name: 'Northwind Talent',
-              orgType: 'agency',
-              careersTagline: 'Find your next role through us',
-              emailDomain: 'northwind.example',
-              locale: 'en-IN',
-              currency: 'INR',
-              ssoProviders: ['google', 'microsoft'],
-              mfaRoles: ['hrhead', 'mdceo'],
-              sessionIdleMinutes: 30,
-            },
-            owner: { id: 'kc-1', name: 'J. Doe', email: 'j.doe@northwind.example', role: 'hrhead' },
-          }),
-          { status: 201, headers: { 'Content-Type': 'application/json' } },
-        ),
-      ),
-    )
+  it('creates a workspace for a recruitment agency and sends the owner to sign in to it', async () => {
+    stubAdminApi()
     const user = userEvent.setup()
     renderWithProviders(<App />, { signedIn: false, route: '/signup' })
     await user.click(await screen.findByRole('radio', { name: /Recruitment agency/ }))
@@ -85,7 +99,71 @@ describe('sign-in and sign-out (RCU-PLT-001)', () => {
     await user.type(screen.getByLabelText('Password'), 'Str0ng!pass')
     await user.click(screen.getByRole('checkbox'))
     await user.click(screen.getByRole('button', { name: 'Create workspace' }))
-    expect(await screen.findByText(/Northwind Talent · White-label recruitment CRM/)).toBeInTheDocument()
+    await vi.waitFor(() => expect(keycloak.startSignIn).toHaveBeenCalledWith({ workspace: 'northwind-talent', email: 'j.doe@northwind.example' }))
+    expect(screen.getByRole('button', { name: 'Creating workspace…' })).toBeDisabled()
+  })
+
+  it('says so clearly when sign-up can’t reach the server', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('fetch failed')))
+    const user = userEvent.setup()
+    renderWithProviders(<App />, { signedIn: false, route: '/signup' })
+    await user.type(await screen.findByLabelText('Organisation name'), 'Northwind Talent')
+    await user.type(screen.getByLabelText('Full name'), 'J. Doe')
+    await user.type(screen.getByLabelText('Work email'), 'j.doe@northwind.example')
+    await user.type(screen.getByLabelText('Password'), 'Str0ng!pass')
+    await user.click(screen.getByRole('checkbox'))
+    await user.click(screen.getByRole('button', { name: 'Create workspace' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('We couldn’t reach the Recuro server to create your workspace.')
+    expect(screen.getByRole('button', { name: 'Create workspace' })).toBeEnabled()
+  })
+})
+
+describe('sign-in for a workspace saved on the server', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('asks for the email, then hands over to Keycloak for the password', async () => {
+    stubAdminApi()
+    const user = userEvent.setup()
+    renderWithProviders(<App />, { signedIn: false, route: '/signin?workspace=northwind-talent' })
+    expect(await screen.findByRole('heading', { name: 'Sign in to Northwind Talent' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Password')).not.toBeInTheDocument()
+    await user.type(screen.getByLabelText('Email'), 'j.doe@northwind.example')
+    await user.click(screen.getByRole('button', { name: 'Continue to sign in' }))
+    await vi.waitFor(() =>
+      expect(keycloak.startSignIn).toHaveBeenCalledWith({ workspace: 'northwind-talent', email: 'j.doe@northwind.example', returnTo: undefined }),
+    )
+  })
+
+  it('opens the workspace when Keycloak sends the person back', async () => {
+    stubAdminApi()
+    keycloak.finishSignIn.mockResolvedValueOnce({
+      subject: 'kc-1',
+      name: 'J. Doe',
+      email: 'j.doe@northwind.example',
+      tenantId: NORTHWIND.id,
+      roles: ['tenant-admin', 'hrta'],
+      workspace: 'northwind-talent',
+      returnTo: null,
+    })
+    renderWithProviders(<App />, { signedIn: false, route: '/auth/callback?code=abc&state=xyz' })
+    expect(await screen.findByRole('navigation', { name: 'Main navigation' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Account menu, signed in as J\. Doe/ })).toBeInTheDocument()
+  })
+
+  it('explains a sign-in Keycloak refused for this workspace', async () => {
+    stubAdminApi()
+    keycloak.finishSignIn.mockResolvedValueOnce({
+      subject: 'kc-2',
+      name: 'Someone Else',
+      email: 'x@other.example',
+      tenantId: 'another-tenant',
+      roles: ['hrta'],
+      workspace: 'northwind-talent',
+      returnTo: null,
+    })
+    renderWithProviders(<App />, { signedIn: false, route: '/auth/callback?code=def&state=uvw' })
+    expect(await screen.findByRole('alert')).toHaveTextContent('This account belongs to a different workspace.')
+    expect(screen.getByRole('link', { name: 'Back to sign in' })).toBeInTheDocument()
   })
 })
 

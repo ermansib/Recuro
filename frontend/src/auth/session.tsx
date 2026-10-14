@@ -102,7 +102,8 @@ export function AuthProvider({ initialSession, children }: { initialSession?: Au
 
   const switchRole = useCallback(
     async (role: Role) => {
-      if (!session) return
+      // Real accounts keep their own role; personas are for the in-browser demo identity only.
+      if (!session || session.viaIdentityProvider) return
       const next = await api.demoSignIn(session.tenant.slug, role)
       await api.signOut(session.token).catch(() => undefined)
       establish(next)
@@ -129,6 +130,7 @@ export function AuthProvider({ initialSession, children }: { initialSession?: Au
         tenant: session.tenant,
         token: session.token,
         actor: { name: session.user.name, role: session.user.role },
+        viaIdentityProvider: session.viaIdentityProvider === true,
         switchRole,
         signOut: () => signOut('user'),
       },

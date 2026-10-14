@@ -12,6 +12,7 @@ import {
   MFA_CODE_LENGTH,
   ORG_TYPE_DEFAULTS,
   RESET_LINK_VALID_MINUTES,
+  initialsOf,
   isValidEmail,
   maskEmail,
   normaliseEmail,
@@ -29,7 +30,7 @@ import type {
   WorkspaceBranding,
 } from '../../domain/types'
 import { can } from '../../auth/permissions'
-import { ApiError, type Actor, type AuthApi, type WorkspaceApi } from '../contract'
+import { ApiError, type Actor, type AuthApi } from '../contract'
 import type { MockDb } from './seed'
 
 const STORAGE_KEY = 'recuro.mock.identity.v1'
@@ -60,8 +61,6 @@ export interface IdentityDeps {
   audit: (actor: Actor, entity: string, action: string, extra?: { reason?: string; before?: string; after?: string }) => void
   sendEmail: (role: Role, to: string, tenant: TenantConfig, subject: string, paragraphs: string[], cta: string) => void
   run: <T>(fn: () => T | Promise<T>) => Promise<T>
-  /** Saves new workspaces on the server. Absent in tests and offline demos. */
-  workspaces?: WorkspaceApi
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -91,13 +90,6 @@ const numericCode = () =>
   String(crypto.getRandomValues(new Uint32Array(1))[0] ?? 0)
     .padStart(MFA_CODE_LENGTH, '0')
     .slice(-MFA_CODE_LENGTH)
-const initialsOf = (name: string) =>
-  name
-    .split(/[\s.]+/)
-    .filter(Boolean)
-    .map((p) => p[0]?.toUpperCase() ?? '')
-    .join('')
-    .slice(0, 2) || '?'
 
 export function brandingOf(t: TenantConfig): WorkspaceBranding {
   return {
@@ -108,10 +100,11 @@ export function brandingOf(t: TenantConfig): WorkspaceBranding {
     theme: t.theme,
     ssoProviders: t.ssoProviders,
     sessionIdleMinutes: t.sessionIdleMinutes,
+    signInFlow: 'password',
   }
 }
 
-export function createIdentityMock({ db, demoPassword, audit, sendEmail, run, workspaces }: IdentityDeps): AuthApi {
+export function createIdentityMock({ db, demoPassword, audit, sendEmail, run }: IdentityDeps): AuthApi {
   let store: IdentityStore | null = null
 
   async function load(): Promise<IdentityStore> {
@@ -259,6 +252,8 @@ export function createIdentityMock({ db, demoPassword, audit, sendEmail, run, wo
         return openSession(s, user)
       }),
 
+    completeSignIn: () => run(() => Promise.reject(new ApiError(400, 'No sign-in is in progress. Start again from the sign-in page.'))),
+
     signInWithSso: (workspace, provider) =>
       run(async () => {
         const tenant = tenantBySlug(await load(), workspace)
@@ -290,38 +285,28 @@ export function createIdentityMock({ db, demoPassword, audit, sendEmail, run, wo
         if (!input.acceptTerms) throw new ApiError(400, 'Accept the terms to create a workspace')
         const defaults = ORG_TYPE_DEFAULTS[input.orgType]
         const email = normaliseEmail(input.email)
-        // The server is the source of truth: it saves the tenant (PostgreSQL) and the owner's account (Keycloak),
-        // and may refuse (409 email already registered, 503 server down). This browser only keeps a copy for the
-        // session, until sign-in itself moves to Keycloak.
-        const saved = workspaces ? await workspaces.registerWorkspace({ ...input, email }) : undefined
         const tenant: TenantConfig = {
           ...db.tenant,
-          id: saved?.workspace.id ?? `tnt-${newToken().slice(0, 10)}`,
-          slug: saved?.workspace.slug ?? uniqueSlug(s, input.orgName),
-          name: saved?.workspace.name ?? input.orgName.trim(),
-          legalName: saved?.workspace.name ?? input.orgName.trim(),
+          id: `tnt-${newToken().slice(0, 10)}`,
+          slug: uniqueSlug(s, input.orgName),
+          name: input.orgName.trim(),
+          legalName: input.orgName.trim(),
           orgType: input.orgType,
-          careersTagline: saved?.workspace.careersTagline ?? defaults.careersTagline,
+          careersTagline: defaults.careersTagline,
           careersIntro: '',
-          emailDomain: saved?.workspace.emailDomain ?? email.split('@')[1] ?? db.tenant.emailDomain,
+          emailDomain: email.split('@')[1] ?? db.tenant.emailDomain,
           theme: undefined,
-          ssoProviders: saved?.workspace.ssoProviders ?? defaults.ssoProviders,
-          mfaRoles: saved?.workspace.mfaRoles ?? defaults.mfaRoles,
-          ...(saved && {
-            locale: saved.workspace.locale,
-            currency: saved.workspace.currency,
-            sessionIdleMinutes: saved.workspace.sessionIdleMinutes,
-          }),
+          ssoProviders: defaults.ssoProviders,
+          mfaRoles: defaults.mfaRoles,
         }
         s.tenants.push(tenant)
         const owner = await createAccount(
           s,
           { tenantId: tenant.id, name: input.adminName.trim(), role: input.adminRole, title: 'Workspace owner', email, summary: '' },
           input.password,
-          saved?.owner.id,
         )
         audit(asActor(owner), `Tenant/${tenant.id}`, 'WORKSPACE_CREATED', { after: input.orgType })
-        return openSession(s, owner)
+        return { status: 'signedIn' as const, session: openSession(s, owner) }
       }),
 
     registerCandidate: (input) =>
