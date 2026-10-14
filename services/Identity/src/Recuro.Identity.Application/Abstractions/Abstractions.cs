@@ -10,7 +10,7 @@ public interface IUserAccounts
     Task<UserAccount?> FindBySubjectAsync(string subject, CancellationToken ct);
 
     /// <summary>People in the tenant, optionally only those holding <paramref name="role"/>, by name.</summary>
-    Task<IReadOnlyList<UserAccount>> ListAsync(string? role, CancellationToken ct);
+    Task<IReadOnlyList<UserAccount>> ListAsync(string? role, string? department, CancellationToken ct);
 
     /// <summary>
     /// Inserts a newly provisioned user and commits. Returns false when a concurrent request already
