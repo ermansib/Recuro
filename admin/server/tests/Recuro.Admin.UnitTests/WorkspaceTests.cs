@@ -27,7 +27,7 @@ public class WorkspaceTests
     [Fact]
     public void A_signed_up_workspace_starts_on_starter_with_its_org_type_defaults()
     {
-        var tenant = Tenant.SignUp("Globex", "globex", OrgType.Enterprise, " Globex.Example ", "en-GB", "gbp", Now).Value;
+        var tenant = Tenant.Open("Globex", "globex", OrgType.Enterprise, TenantPlan.Starter, " Globex.Example ", "en-GB", "gbp", Now).Value;
 
         Assert.Equal((TenantKind.InHouse, TenantPlan.Starter, TenantStatus.Active), (tenant.Kind, tenant.Plan, tenant.Status));
         Assert.Equal(["microsoft", "google", "saml"], tenant.SsoProviders);

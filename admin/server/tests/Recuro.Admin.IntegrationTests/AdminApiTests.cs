@@ -46,12 +46,18 @@ public sealed class AdminApiTests : IDisposable
         var tenants = await client.GetFromJsonAsync<List<TenantDto>>("/api/v1/platform/workspaces", Json);
         Assert.Equal(["Aurora Housing Finance", "TalentBridge Staffing"], tenants!.Select(t => t.Name));
 
-        var request = new CreateTenantRequest("Acme Corp", "acme", TenantKind.InHouse, TenantPlan.Starter, "careers.acme.example");
+        var request = new CreateTenantRequest(
+            "Acme Corp", OrgType.SmallBusiness, "Asha Rao", "hrta", "owner@acme.example", "Str0ng!pass", TenantPlan.Starter, "careers.acme.example");
         var created = await client.PostAsJsonAsync("/api/v1/platform/workspaces", request, Json);
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        Assert.Equal("acme-corp", (await created.Content.ReadFromJsonAsync<TenantDto>(Json))!.Slug);
 
-        var duplicate = await client.PostAsJsonAsync("/api/v1/platform/workspaces", request, Json);
-        Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
+        var sameDomain = await client.PostAsJsonAsync("/api/v1/platform/workspaces", request with { Email = "other@acme.example" }, Json);
+        Assert.Equal(HttpStatusCode.Conflict, sameDomain.StatusCode);
+
+        var second = await client.PostAsJsonAsync("/api/v1/platform/workspaces", request with { Email = "other@acme.example", CustomDomain = null }, Json);
+        Assert.Equal(HttpStatusCode.Created, second.StatusCode);
+        Assert.Equal("acme-corp-2", (await second.Content.ReadFromJsonAsync<TenantDto>(Json))!.Slug);
     }
 
     [Fact]

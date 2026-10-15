@@ -36,6 +36,9 @@ internal sealed class TenantRepository(AdminDbContext db) : ITenantRepository
     public Task<bool> SlugExistsAsync(string slug, CancellationToken ct) =>
         db.Tenants.AnyAsync(t => t.Slug == slug, ct);
 
+    public Task<bool> CustomDomainExistsAsync(string domain, CancellationToken ct) =>
+        db.Tenants.AnyAsync(t => t.CustomDomain == domain, ct);
+
     public void Add(Tenant tenant) => db.Tenants.Add(tenant);
 }
 

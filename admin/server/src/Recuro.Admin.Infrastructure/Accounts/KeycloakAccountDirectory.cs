@@ -215,7 +215,7 @@ internal sealed partial class KeycloakAccountDirectory(
                 [TenantAttribute] = [owner.TenantId.ToString()],
                 [WorkspaceRolesAttribute] = [owner.Role],
             },
-            [new KeycloakCredential("password", owner.Password, Temporary: false)]);
+            [new KeycloakCredential("password", owner.Password, Temporary: owner.MustChangePassword)]);
 
         using var request = Authorized(HttpMethod.Post, "users", token);
         request.Content = JsonContent.Create(body);

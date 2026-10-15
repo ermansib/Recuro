@@ -18,6 +18,24 @@ CSS variables in `frontend/src/styles/tokens.css`) plus the resolved screen layo
 `/api/v1/platform/workspaces` (platform console) and `/api/v1/workspace/*` (workspace admin). The
 internal key is still `TenantId` / the Keycloak `tenant_id` attribute, and the table is `tenants`.
 
+## Creating a workspace
+
+A workspace can be created in two places, and both ask for exactly the same details, defined once in
+`admin/contracts/workspace-form` (fields, order, defaults, limits, validation and English labels):
+
+| Field | Notes |
+|---|---|
+| Type of organisation | Small business, recruitment agency or enterprise. Sets starting defaults only (owner role, SSO buttons, MFA roles, careers tagline). |
+| Organisation name | Up to 120 characters. The sign-in address (`/signin?workspace=<slug>`) is derived from it; a taken slug gets `-2`, `-3`… |
+| Full name, Role, Work email, Password | The workspace owner. Their account is created in Keycloak with workspace-admin rights, and they become the workspace's first member. |
+
+- **Portal sign-up page** (`POST /api/v1/workspaces`, anonymous, rate limited): adds the terms checkbox. The owner keeps the password they chose; the plan is Starter.
+- **Platform console → Workspaces → Add a workspace** (`POST /api/v1/platform/workspaces`): adds the platform-only settings, plan and custom domain. The password is temporary, so Keycloak asks the owner for a new one at first sign-in.
+
+Both endpoints go through one handler (`OpenWorkspaceHandler`). Both React apps import the form from the
+`@workspace-form` alias, and `WorkspaceFormContractTests` fails the API build if its rules drift from
+`definition.json`.
+
 ## Layout
 
 ```
@@ -30,6 +48,7 @@ admin/
     src/Recuro.Admin.Api             minimal API endpoints, auth, serves the client from wwwroot
     tests/                           unit, integration (real API on SQLite) and architecture tests
   client/                      React + Vite admin UI (builds into the API's wwwroot)
+  contracts/workspace-form/    the create-workspace form, shared by the portal's sign-up page and the platform console
   docker-compose.yml           PostgreSQL for local runs
 ```
 

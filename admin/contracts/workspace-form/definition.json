@@ -1,0 +1,15 @@
+{
+  "fields": ["orgType", "orgName", "adminName", "adminRole", "email", "password"],
+  "orgTypes": ["smallBusiness", "agency", "enterprise"],
+  "defaultOrgType": "smallBusiness",
+  "ownerRoles": ["hrta", "hrhead", "mdceo"],
+  "defaultOwnerRole": {
+    "smallBusiness": "hrta",
+    "agency": "hrhead",
+    "enterprise": "hrhead"
+  },
+  "orgNameMaxLength": 120,
+  "adminNameMaxLength": 120,
+  "slugMaxLength": 40,
+  "passwordMinLength": 8
+}

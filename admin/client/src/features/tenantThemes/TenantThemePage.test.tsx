@@ -12,6 +12,8 @@ const tenant = (id: string, name: string, slug: string): Tenant => ({
   name,
   slug,
   kind: 'inHouse',
+  orgType: 'enterprise',
+  emailDomain: null,
   plan: 'enterprise',
   status: 'active',
   customDomain: null,

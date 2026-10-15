@@ -1,6 +1,6 @@
 using Recuro.Admin.Application.Abstractions;
+using Recuro.Admin.Application.Workspaces;
 using Recuro.Admin.Domain.Common;
-using Recuro.Admin.Domain.Roles;
 using Recuro.Admin.Domain.Tenants;
 
 namespace Recuro.Admin.Application.Tenants;
@@ -20,37 +20,31 @@ public sealed class GetTenantHandler(ITenantRepository tenants)
     }
 }
 
-public sealed record CreateTenantRequest(string Name, string Slug, TenantKind Kind, TenantPlan Plan, string? CustomDomain);
+/// <summary>
+/// The shared create-workspace form (the same fields as the portal's sign-up page) plus the platform console's own
+/// settings. The password is temporary: the owner replaces it at first sign-in.
+/// </summary>
+public sealed record CreateTenantRequest(
+    string OrgName,
+    OrgType OrgType,
+    string AdminName,
+    string AdminRole,
+    string Email,
+    string Password,
+    TenantPlan Plan,
+    string? CustomDomain);
 
-/// <summary>Creates a tenant from the platform console, with the default workspace roles.</summary>
-public sealed class CreateTenantHandler(ITenantRepository tenants, IWorkspaceRoleRepository roles, IUnitOfWork unitOfWork, IClock clock)
+/// <summary>Creates a workspace and its owner's account from the platform console.</summary>
+public sealed class CreateTenantHandler(OpenWorkspaceHandler open)
 {
     public async Task<Result<TenantDto>> HandleAsync(CreateTenantRequest request, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var created = Tenant.Create(request.Name, request.Slug, request.Kind, request.Plan, clock.UtcNow);
-        if (created.IsFailure)
-        {
-            return created.Error!;
-        }
-
-        var tenant = created.Value;
-        var domain = tenant.SetCustomDomain(request.CustomDomain);
-        if (domain.IsFailure)
-        {
-            return domain.Error!;
-        }
-
-        if (await tenants.SlugExistsAsync(tenant.Slug, ct))
-        {
-            return TenantErrors.SlugTaken;
-        }
-
-        tenants.Add(tenant);
-        roles.AddRange(DefaultWorkspaceRoles.CreateFor(tenant.Id));
-        await unitOfWork.SaveChangesAsync(ct);
-        return TenantDto.From(tenant);
+        var details = new NewWorkspace(request.OrgName, request.OrgType, request.AdminName, request.AdminRole, request.Email, request.Password);
+        var settings = new WorkspaceSettings(request.Plan, request.CustomDomain, OwnerMustChangePassword: true);
+        var opened = await open.HandleAsync(details, settings, ct);
+        return opened.IsFailure ? opened.Error! : TenantDto.From(opened.Value.Tenant);
     }
 }
 

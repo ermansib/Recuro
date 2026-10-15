@@ -17,6 +17,7 @@
     "jsx": "react-jsx",
     "strict": true,
     "noUncheckedIndexedAccess": true,
+    "paths": { "@workspace-form": ["../contracts/workspace-form/index.ts"] },
 
     /* Linting */
     "noUnusedLocals": true,

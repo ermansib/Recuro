@@ -1,4 +1,5 @@
 // DTOs returned by the admin API (admin/server). Enums serialise as camelCase strings.
+import type { WorkspaceFormValues, WorkspaceOrgType } from '@workspace-form'
 
 export type TenantKind = 'inHouse' | 'agency'
 export type TenantPlan = 'starter' | 'professional' | 'enterprise'
@@ -15,7 +16,6 @@ export type FieldDataType =
   | 'phone'
   | 'file'
 
-export const TENANT_KINDS: TenantKind[] = ['inHouse', 'agency']
 export const TENANT_PLANS: TenantPlan[] = ['starter', 'professional', 'enterprise']
 export const THEME_MODES: ThemeMode[] = ['system', 'light', 'dark']
 
@@ -23,7 +23,10 @@ export interface Tenant {
   id: string
   name: string
   slug: string
+  /** Derived from orgType: an agency, or in-house HR. */
   kind: TenantKind
+  orgType: WorkspaceOrgType
+  emailDomain: string | null
   plan: TenantPlan
   status: TenantStatus
   customDomain: string | null
@@ -32,10 +35,11 @@ export interface Tenant {
   createdAt: string
 }
 
-export interface CreateTenantRequest {
-  name: string
-  slug: string
-  kind: TenantKind
+/**
+ * The shared create-workspace fields (admin/contracts/workspace-form, the same as the main portal's sign-up page),
+ * plus the platform console's own settings. The password is temporary: the owner changes it at first sign-in.
+ */
+export interface CreateTenantRequest extends WorkspaceFormValues {
   plan: TenantPlan
   customDomain: string | null
 }
