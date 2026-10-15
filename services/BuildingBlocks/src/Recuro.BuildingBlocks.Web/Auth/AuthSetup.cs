@@ -49,7 +49,7 @@ public static class AuthSetup
                     jwt.MapInboundClaims = false;
                     // Keycloak runs on plain http locally; everywhere else discovery must be https.
                     jwt.RequireHttpsMetadata = !environment.IsDevelopment();
-                    jwt.TokenValidationParameters.ValidIssuer = options.Authority;
+                    jwt.TokenValidationParameters.ValidIssuers = LoopbackIssuers.For(options.Authority);
                     jwt.TokenValidationParameters.RoleClaimType = RecuroClaims.Roles;
                     jwt.TokenValidationParameters.NameClaimType = RecuroClaims.Name;
                     jwt.Events = new JwtBearerEvents { OnTokenValidated = ServiceTenantHeader.ApplyAsync };

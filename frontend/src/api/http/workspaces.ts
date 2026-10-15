@@ -7,6 +7,8 @@ import { ApiError, type WorkspaceApi } from '../contract'
 
 export const SIGN_UP_SERVER_DOWN = 'We couldn’t reach the Recuro server to create your workspace. Please try again in a few minutes.'
 export const ACCESS_SERVER_DOWN = 'We couldn’t reach the Recuro server to read your roles. Please try again in a few minutes.'
+export const ACCESS_REFUSED =
+  'The Recuro server didn’t accept your sign-in. Please sign in again, and ask your administrator to check the sign-in settings if this keeps happening.'
 export const LOOKUP_SERVER_DOWN = 'We couldn’t reach the Recuro server to open that workspace. Please try again in a few minutes.'
 
 /** Statuses a proxy or gateway returns when the admin API itself is not running. */
@@ -62,6 +64,8 @@ export function createHttpWorkspaceApi(baseUrl: string, fetcher: typeof fetch = 
 
     async getMyAccess(accessToken) {
       const res = await send('/api/v1/me/access', { method: 'GET', headers: { Authorization: `Bearer ${accessToken}` } }, ACCESS_SERVER_DOWN)
+      // A refused token answers with a bare "Unauthorized" problem, which tells the person nothing.
+      if (res.status === 401) throw new ApiError(401, ACCESS_REFUSED)
       if (!res.ok) throw new ApiError(res.status, await problemMessage(res, ACCESS_SERVER_DOWN))
       try {
         return (await res.json()) as MyAccess
