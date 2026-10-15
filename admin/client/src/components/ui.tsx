@@ -1,11 +1,21 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
-export function PageHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+interface PageHeaderProps {
+  title: string
+  subtitle?: string
+  /** The page's main action, such as an "Add" button. */
+  action?: ReactNode
+}
+
+export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
   return (
     <header className="page-header">
-      <h1>{title}</h1>
-      {subtitle && <p>{subtitle}</p>}
+      <div>
+        <h1>{title}</h1>
+        {subtitle && <p>{subtitle}</p>}
+      </div>
+      {action}
     </header>
   )
 }
