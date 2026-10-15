@@ -92,14 +92,15 @@ public sealed partial class Tenant : Entity
     }
 
     /// <summary>
-    /// A workspace an organisation creates for itself on the sign-up page (RCU-PLT-001). It starts on the
-    /// Starter plan with the org type's default settings; the platform console can change any of it later.
+    /// A workspace opened from the shared create-workspace form: by an organisation on the sign-up page
+    /// (RCU-PLT-001, Starter plan) or by the platform console (any plan). It starts with the org type's default
+    /// settings; the platform console can change any of it later.
     /// </summary>
-    public static Result<Tenant> SignUp(
-        string name, string slug, OrgType orgType, string? emailDomain, string locale, string currency, DateTimeOffset now)
+    public static Result<Tenant> Open(
+        string name, string slug, OrgType orgType, TenantPlan plan, string? emailDomain, string locale, string currency, DateTimeOffset now)
     {
         var kind = orgType == OrgType.Agency ? TenantKind.Agency : TenantKind.InHouse;
-        var created = Create(name, slug, kind, TenantPlan.Starter, now);
+        var created = Create(name, slug, kind, plan, now);
         if (created.IsFailure)
         {
             return created;
@@ -225,6 +226,9 @@ public static class TenantErrors
 
     public static readonly Error SlugTaken =
         Error.Conflict("tenant.slugTaken", "Another workspace already uses this slug.");
+
+    public static readonly Error DomainTaken =
+        Error.Conflict("tenant.customDomainTaken", "Another workspace already uses this custom domain.");
 
     public static Error NotFound(Guid id) => Error.NotFound("tenant.notFound", $"Workspace '{id}' was not found.");
 

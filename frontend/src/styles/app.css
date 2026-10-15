@@ -518,6 +518,7 @@ button.n-item.unread{background:var(--gold-lt)}
 .pw-rules{font-size:11.5px;color:var(--muted);margin-top:-6px}
 .pw-rules ul{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;margin-top:4px}
 .pw-rules li.ok{color:var(--green);font-weight:600}
+.auth-section{font-size:13px;font-weight:700;color:var(--navy);margin:14px 0 6px}
 .org-types{border:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .org-types legend{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px}
 .org-type{border:1.5px solid var(--line);border-radius:10px;padding:10px;cursor:pointer;display:flex;flex-direction:column;gap:3px;font-size:12px}

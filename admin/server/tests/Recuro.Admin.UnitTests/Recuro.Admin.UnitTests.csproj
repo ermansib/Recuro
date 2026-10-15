@@ -15,6 +15,11 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <!-- The create-workspace form shared with both React apps; WorkspaceFormContractTests checks the API matches it. -->
+  <ItemGroup>
+    <None Include="..\..\..\contracts\workspace-form\definition.json" Link="contracts\workspace-form.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\Recuro.Admin.Domain\Recuro.Admin.Domain.csproj" />
     <ProjectReference Include="..\..\src\Recuro.Admin.Application\Recuro.Admin.Application.csproj" />

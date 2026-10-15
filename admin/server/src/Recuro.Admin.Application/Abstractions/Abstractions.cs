@@ -33,6 +33,8 @@ public interface ITenantRepository
 
     Task<bool> SlugExistsAsync(string slug, CancellationToken ct);
 
+    Task<bool> CustomDomainExistsAsync(string domain, CancellationToken ct);
+
     void Add(Tenant tenant);
 }
 
@@ -64,8 +66,11 @@ public interface IScreenConfigurationRepository
     void Add(TenantScreenConfiguration configuration);
 }
 
-/// <summary>A workspace owner to create in the account directory (Keycloak), signed in with email and password.</summary>
-public sealed record NewWorkspaceOwner(Guid TenantId, string Name, string Email, string Role, string Password);
+/// <summary>
+/// A workspace owner to create in the account directory (Keycloak), signed in with email and password.
+/// <paramref name="MustChangePassword"/> makes the password temporary: the owner sets their own at first sign-in.
+/// </summary>
+public sealed record NewWorkspaceOwner(Guid TenantId, string Name, string Email, string Role, string Password, bool MustChangePassword = false);
 
 /// <summary>
 /// The people directory that signs users in (Keycloak). Accounts live there, never in the admin database,

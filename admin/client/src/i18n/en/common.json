@@ -34,10 +34,6 @@
     "professional": "Professional",
     "enterprise": "Enterprise"
   },
-  "kind": {
-    "inHouse": "In-house HR",
-    "agency": "Staffing agency"
-  },
   "status": {
     "active": "Active",
     "suspended": "Suspended"

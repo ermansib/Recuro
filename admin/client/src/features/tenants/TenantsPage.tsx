@@ -42,7 +42,7 @@ function TenantTable({ tenants }: { tenants: Tenant[] }) {
             <tr>
               <th scope="col">{t('tenants.columns.name')}</th>
               <th scope="col">{t('tenants.columns.slug')}</th>
-              <th scope="col">{t('tenants.columns.kind')}</th>
+              <th scope="col">{t('tenants.columns.orgType')}</th>
               <th scope="col">{t('tenants.columns.plan')}</th>
               <th scope="col">{t('tenants.columns.domain')}</th>
               <th scope="col">{t('tenants.columns.theme')}</th>
@@ -57,7 +57,7 @@ function TenantTable({ tenants }: { tenants: Tenant[] }) {
                 <tr key={tenant.id}>
                   <th scope="row">{tenant.name}</th>
                   <td className="hex">{tenant.slug}</td>
-                  <td>{t(`common.kind.${tenant.kind}`)}</td>
+                  <td>{t(`workspaceForm.orgTypes.${tenant.orgType}`)}</td>
                   <td>
                     <select
                       className="input"

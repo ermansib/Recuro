@@ -6,22 +6,28 @@ using Recuro.Admin.Domain.Tenants;
 
 namespace Recuro.Admin.Application.Workspaces;
 
-/// <summary>Body of the public sign-up form (RCU-PLT-001), the frontend's <c>RegisterOrganisationInput</c>.</summary>
-public sealed record SignUpWorkspaceRequest(
-    string OrgName,
-    OrgType OrgType,
-    string AdminName,
-    string AdminRole,
-    string Email,
-    string Password,
-    bool AcceptTerms);
+/// <summary>
+/// The shared create-workspace fields (admin/contracts/workspace-form): the same on the portal's sign-up page
+/// and in the platform console, so a workspace always starts with an owner who can sign in.
+/// </summary>
+public sealed record NewWorkspace(string OrgName, OrgType OrgType, string AdminName, string AdminRole, string Email, string Password);
+
+/// <summary>What only the platform console chooses. Sign-up uses <see cref="SelfService"/>.</summary>
+/// <param name="OwnerMustChangePassword">True when someone else chose the password, so the owner replaces it at first sign-in.</param>
+public sealed record WorkspaceSettings(TenantPlan Plan, string? CustomDomain, bool OwnerMustChangePassword)
+{
+    public static readonly WorkspaceSettings SelfService = new(TenantPlan.Starter, null, OwnerMustChangePassword: false);
+}
+
+public sealed record OpenedWorkspace(Tenant Tenant, WorkspaceOwnerDto Owner);
 
 /// <summary>
-/// Creates a workspace from the public sign-up page: a row in <c>tenants</c> and the owner's account in
-/// the account directory, plus the workspace's default roles with the owner as its first member. The account is created first; if saving the workspace then fails, it is removed
-/// again, so a failed sign-up never leaves an account without a workspace.
+/// Opens a workspace from the shared create-workspace form: a row in <c>tenants</c>, the owner's account in the
+/// account directory, and the workspace's default roles with the owner as its first member. The account is
+/// created first; if saving the workspace then fails, it is removed again, so a failure never leaves an
+/// account without a workspace. Used by the sign-up page and the platform console alike.
 /// </summary>
-public sealed class SignUpWorkspaceHandler(
+public sealed class OpenWorkspaceHandler(
     ITenantRepository tenants,
     IWorkspaceRoleRepository roles,
     IWorkspaceMemberRepository members,
@@ -32,28 +38,41 @@ public sealed class SignUpWorkspaceHandler(
 {
     private const int MaxSlugSuffix = 1000;
 
-    public async Task<Result<WorkspaceSignUpDto>> HandleAsync(SignUpWorkspaceRequest request, CancellationToken ct)
+    public async Task<Result<OpenedWorkspace>> HandleAsync(NewWorkspace details, WorkspaceSettings settings, CancellationToken ct)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(details);
+        ArgumentNullException.ThrowIfNull(settings);
 
-        var invalid = Validate(request);
+        var invalid = Validate(details);
         if (invalid is not null)
         {
             return invalid;
         }
 
-        var email = request.Email.Trim().ToLowerInvariant();
-        var slug = await UniqueSlugAsync(request.OrgName, ct);
-        var created = Tenant.SignUp(request.OrgName, slug, request.OrgType, email.Split('@')[1], defaults.Locale, defaults.Currency, clock.UtcNow);
+        var email = details.Email.Trim().ToLowerInvariant();
+        var slug = await UniqueSlugAsync(details.OrgName, ct);
+        var created = Tenant.Open(
+            details.OrgName, slug, details.OrgType, settings.Plan, email.Split('@')[1], defaults.Locale, defaults.Currency, clock.UtcNow);
         if (created.IsFailure)
         {
             return created.Error!;
         }
 
         var tenant = created.Value;
-        var ownerName = request.AdminName.Trim();
+        var domain = tenant.SetCustomDomain(settings.CustomDomain);
+        if (domain.IsFailure)
+        {
+            return domain.Error!;
+        }
+
+        if (tenant.CustomDomain is not null && await tenants.CustomDomainExistsAsync(tenant.CustomDomain, ct))
+        {
+            return TenantErrors.DomainTaken;
+        }
+
+        var ownerName = details.AdminName.Trim();
         var account = await accounts.CreateWorkspaceOwnerAsync(
-            new NewWorkspaceOwner(tenant.Id, ownerName, email, request.AdminRole, request.Password), ct);
+            new NewWorkspaceOwner(tenant.Id, ownerName, email, details.AdminRole, details.Password, settings.OwnerMustChangePassword), ct);
         if (account.IsFailure)
         {
             return account.Error!;
@@ -63,7 +82,7 @@ public sealed class SignUpWorkspaceHandler(
         {
             tenants.Add(tenant);
             roles.AddRange(DefaultWorkspaceRoles.CreateFor(tenant.Id));
-            members.Add(WorkspaceMember.Create(tenant.Id, account.Value, ownerName, email, [request.AdminRole]));
+            members.Add(WorkspaceMember.Create(tenant.Id, account.Value, ownerName, email, [details.AdminRole]));
             await unitOfWork.SaveChangesAsync(ct);
         }
         catch
@@ -72,32 +91,40 @@ public sealed class SignUpWorkspaceHandler(
             throw;
         }
 
-        return new WorkspaceSignUpDto(WorkspaceDto.From(tenant), new WorkspaceOwnerDto(account.Value, ownerName, email, request.AdminRole));
+        return new OpenedWorkspace(tenant, new WorkspaceOwnerDto(account.Value, ownerName, email, details.AdminRole));
     }
 
-    private static Error? Validate(SignUpWorkspaceRequest request)
+    /// <summary>The same rules, in the same order, as <c>validateWorkspaceForm</c> in admin/contracts/workspace-form.</summary>
+    private static Error? Validate(NewWorkspace details)
     {
-        if (string.IsNullOrWhiteSpace(request.OrgName) || string.IsNullOrWhiteSpace(request.AdminName))
+        if (!Enum.IsDefined(details.OrgType))
+        {
+            return WorkspaceErrors.InvalidOrgType;
+        }
+
+        var orgName = details.OrgName?.Trim() ?? string.Empty;
+        if (orgName.Length is 0 or > WorkspaceForm.OrgNameMaxLength)
         {
             return WorkspaceErrors.OrganisationRequired;
         }
 
-        if (!IsValidEmail(request.Email))
+        var ownerName = details.AdminName?.Trim() ?? string.Empty;
+        if (ownerName.Length is 0 or > WorkspaceForm.OwnerNameMaxLength)
         {
-            return WorkspaceErrors.InvalidEmail;
+            return WorkspaceErrors.OwnerNameRequired;
         }
 
-        if (!PasswordPolicy.IsSatisfiedBy(request.Password))
-        {
-            return WorkspaceErrors.WeakPassword;
-        }
-
-        if (!WorkspaceRoles.OwnerRoles.Contains(request.AdminRole))
+        if (!WorkspaceRoles.OwnerRoles.Contains(details.AdminRole))
         {
             return WorkspaceErrors.InvalidOwnerRole;
         }
 
-        return request.AcceptTerms ? null : WorkspaceErrors.TermsNotAccepted;
+        if (!IsValidEmail(details.Email))
+        {
+            return WorkspaceErrors.InvalidEmail;
+        }
+
+        return PasswordPolicy.IsSatisfiedBy(details.Password) ? null : WorkspaceErrors.WeakPassword;
     }
 
     private static bool IsValidEmail(string? email) =>
@@ -118,6 +145,39 @@ public sealed class SignUpWorkspaceHandler(
         }
 
         return slug;
+    }
+}
+
+/// <summary>Body of the public sign-up form (RCU-PLT-001), the frontend's <c>RegisterOrganisationInput</c>.</summary>
+public sealed record SignUpWorkspaceRequest(
+    string OrgName,
+    OrgType OrgType,
+    string AdminName,
+    string AdminRole,
+    string Email,
+    string Password,
+    bool AcceptTerms);
+
+/// <summary>
+/// Creates a workspace from the public sign-up page: the shared create-workspace form plus the terms, on the
+/// Starter plan, with the password the owner chose.
+/// </summary>
+public sealed class SignUpWorkspaceHandler(OpenWorkspaceHandler open)
+{
+    public async Task<Result<WorkspaceSignUpDto>> HandleAsync(SignUpWorkspaceRequest request, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (!request.AcceptTerms)
+        {
+            return WorkspaceErrors.TermsNotAccepted;
+        }
+
+        var details = new NewWorkspace(request.OrgName, request.OrgType, request.AdminName, request.AdminRole, request.Email, request.Password);
+        var opened = await open.HandleAsync(details, WorkspaceSettings.SelfService, ct);
+        return opened.IsFailure
+            ? opened.Error!
+            : new WorkspaceSignUpDto(WorkspaceDto.From(opened.Value.Tenant), opened.Value.Owner);
     }
 }
 

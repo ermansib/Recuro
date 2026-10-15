@@ -34,6 +34,17 @@ public sealed record OrgTypeDefaults(string OwnerRole, IReadOnlyList<string> Sso
     };
 }
 
+/// <summary>
+/// Limits of the create-workspace form shared by the portal's sign-up page and the platform console
+/// (admin/contracts/workspace-form/definition.json; WorkspaceFormContractTests keeps them equal).
+/// </summary>
+public static class WorkspaceForm
+{
+    public const int OrgNameMaxLength = Tenant.NameMaxLength;
+    public const int OwnerNameMaxLength = 120;
+    public const int SlugMaxLength = Tenant.SlugMaxLength;
+}
+
 /// <summary>Persona role keys a workspace owner can take: the Keycloak realm roles and the frontend's staff roles.</summary>
 public static class WorkspaceRoles
 {
@@ -60,13 +71,18 @@ public static class PasswordPolicy
 public static class WorkspaceErrors
 {
     public static readonly Error OrganisationRequired =
-        Error.Validation("workspace.orgName", "Organisation and your name are required.");
+        Error.Validation("workspace.orgName", $"Enter the organisation's name (up to {WorkspaceForm.OrgNameMaxLength} characters).");
+
+    public static readonly Error OwnerNameRequired =
+        Error.Validation("workspace.adminName", $"Enter the owner's full name (up to {WorkspaceForm.OwnerNameMaxLength} characters).");
 
     public static readonly Error InvalidEmail = Error.Validation("workspace.email", "Enter a valid email address.");
 
     public static readonly Error WeakPassword = Error.Validation("workspace.password", "Password does not meet the policy.");
 
     public static readonly Error TermsNotAccepted = Error.Validation("workspace.terms", "Accept the terms to create a workspace.");
+
+    public static readonly Error InvalidOrgType = Error.Validation("workspace.orgType", "Choose the type of organisation.");
 
     public static readonly Error InvalidOwnerRole =
         Error.Validation("workspace.adminRole", "Choose HR-TA, HR Head or MD/CEO as your role.");

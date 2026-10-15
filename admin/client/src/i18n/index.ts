@@ -1,5 +1,6 @@
 // All user-facing strings live in the JSON files under ./en, one per area (NFR-07).
 import i18n from 'i18next'
+import { workspaceFormLabels as workspaceForm } from '@workspace-form'
 import { initReactI18next } from 'react-i18next'
 import branding from './en/branding.json'
 import common from './en/common.json'
@@ -11,7 +12,7 @@ import tenants from './en/tenants.json'
 import themes from './en/themes.json'
 
 export const resources = {
-  en: { translation: { common, signin, tenants, tenantThemes, themes, branding, screens, roles } },
+  en: { translation: { common, signin, tenants, tenantThemes, themes, branding, screens, roles, workspaceForm } },
 } as const
 
 void i18n.use(initReactI18next).init({

@@ -1,8 +1,9 @@
 // Pure identity rules shared by the UI and the mock. The .NET identity service must apply the
 // same policy (RCU-PLT-001, NFR-01), so keep these free of React and storage.
+import { WORKSPACE_FORM, workspaceSlug, type WorkspaceOwnerRole } from '@workspace-form'
 import type { OrgType, Role, SsoProvider, StaffRole, TenantConfig } from './types'
 
-export const PASSWORD_MIN_LENGTH = 8
+export const PASSWORD_MIN_LENGTH = WORKSPACE_FORM.passwordMinLength
 /** RCU-PLT-001: the account locks after this many failed attempts in a row. */
 export const MAX_FAILED_SIGN_INS = 5
 export const LOCKOUT_MINUTES = 15
@@ -15,34 +16,13 @@ export const MFA_CODE_LENGTH = 6
 /** Staff roles an administrator can invite, in menu order. Candidates sign up on the careers site. */
 export const INVITABLE_ROLES: StaffRole[] = ['hrta', 'hrhead', 'mdceo', 'employee']
 
-export type PasswordRule = 'length' | 'upper' | 'lower' | 'digit' | 'symbol'
-
-const PASSWORD_RULES: Record<PasswordRule, (pw: string) => boolean> = {
-  length: (pw) => pw.length >= PASSWORD_MIN_LENGTH,
-  upper: (pw) => /[A-Z]/.test(pw),
-  lower: (pw) => /[a-z]/.test(pw),
-  digit: (pw) => /\d/.test(pw),
-  symbol: (pw) => /[^A-Za-z0-9]/.test(pw),
-}
-
-export const PASSWORD_RULE_ORDER = Object.keys(PASSWORD_RULES) as PasswordRule[]
-
-/** Rules the password still fails, in display order. Empty means it is acceptable. */
-export function unmetPasswordRules(password: string): PasswordRule[] {
-  return PASSWORD_RULE_ORDER.filter((rule) => !PASSWORD_RULES[rule](password))
-}
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-export function isValidEmail(email: string): boolean {
-  return EMAIL_PATTERN.test(email.trim())
-}
+export type { PasswordRule } from '@workspace-form'
+export { PASSWORD_RULE_ORDER, isValidEmail, unmetPasswordRules } from '@workspace-form'
 
 export function normaliseEmail(email: string): string {
   return email.trim().toLowerCase()
 }
 
-/** `Aurora Housing Finance` → `aurora-housing-finance`. */
 /** Up to two initials for an avatar, e.g. `Asha Rao` → `AR`. */
 export function initialsOf(name: string): string {
   return (
@@ -55,15 +35,8 @@ export function initialsOf(name: string): string {
   )
 }
 
-export function slugify(name: string): string {
-  return name
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '') // drop accents: Ü → U
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 40)
-}
+/** `Aurora Housing Finance` → `aurora-housing-finance`; the same rule as the admin API's workspace slugs. */
+export const slugify = workspaceSlug
 
 /** `k.iyer@aurora.example` → `k.***@aurora.example`, so screens confirm a destination without exposing it. */
 export function maskEmail(email: string): string {
@@ -73,7 +46,7 @@ export function maskEmail(email: string): string {
 }
 
 export interface OrgTypeDefaults {
-  adminRole: Exclude<StaffRole, 'employee'>
+  adminRole: WorkspaceOwnerRole
   ssoProviders: SsoProvider[]
   mfaRoles: Role[]
   careersTagline: string
@@ -85,19 +58,19 @@ export interface OrgTypeDefaults {
  */
 export const ORG_TYPE_DEFAULTS: Record<OrgType, OrgTypeDefaults> = {
   smallBusiness: {
-    adminRole: 'hrta',
+    adminRole: WORKSPACE_FORM.defaultOwnerRole.smallBusiness,
     ssoProviders: ['google', 'microsoft'],
     mfaRoles: ['hrhead', 'mdceo'],
     careersTagline: 'Build something great with us',
   },
   agency: {
-    adminRole: 'hrhead',
+    adminRole: WORKSPACE_FORM.defaultOwnerRole.agency,
     ssoProviders: ['google', 'microsoft'],
     mfaRoles: ['hrhead', 'mdceo'],
     careersTagline: 'Find your next role through us',
   },
   enterprise: {
-    adminRole: 'hrhead',
+    adminRole: WORKSPACE_FORM.defaultOwnerRole.enterprise,
     ssoProviders: ['microsoft', 'google', 'saml'],
     mfaRoles: ['hrhead', 'mdceo'],
     careersTagline: 'Grow your career where it matters',

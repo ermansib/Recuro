@@ -58,13 +58,13 @@ export function PasswordChecklist({ password }: { password: string }) {
   const unmet = new Set(unmetPasswordRules(password))
   return (
     <div className="pw-rules">
-      <span>{t('auth.passwordRules.title')}</span>
+      <span>{t('workspaceForm.passwordRules.title')}</span>
       <ul>
         {PASSWORD_RULE_ORDER.map((rule) => {
           const ok = !unmet.has(rule)
           return (
             <li key={rule} className={ok ? 'ok' : ''}>
-              <span aria-hidden="true">{ok ? '✓' : '○'}</span> {t(`auth.passwordRules.${rule}`, { count: PASSWORD_MIN_LENGTH })}
+              <span aria-hidden="true">{ok ? '✓' : '○'}</span> {t(`workspaceForm.passwordRules.${rule}`, { count: PASSWORD_MIN_LENGTH })}
               <span className="sr-only"> ({ok ? t('auth.met') : t('auth.notMet')})</span>
             </li>
           )

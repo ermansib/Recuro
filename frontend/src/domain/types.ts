@@ -1,6 +1,8 @@
 // Domain types. Shapes follow the FRD data model (§9) and use camelCase, which is how
 // ASP.NET Core serialises DTOs by default, so the future .NET services can return them as-is.
 
+import type { WorkspaceFormValues, WorkspaceOrgType } from '@workspace-form'
+
 export type Role = 'hrta' | 'hrhead' | 'mdceo' | 'employee' | 'candidate'
 
 export type Grade = 'E' | 'M1' | 'M3' | 'VP' | 'KMP'
@@ -27,7 +29,8 @@ export interface User {
 }
 
 /** Kind of organisation running the workspace. It only seeds defaults; every type gets every feature. */
-export type OrgType = 'smallBusiness' | 'agency' | 'enterprise'
+/** Kind of organisation a workspace is for; defined with the create-workspace form (admin/contracts). */
+export type OrgType = WorkspaceOrgType
 
 export type SsoProvider = 'microsoft' | 'google' | 'saml'
 
@@ -104,14 +107,8 @@ export type SignInResult =
   /** The browser is on its way to the identity provider's sign-in page. */
   | { status: 'redirecting' }
 
-export interface RegisterOrganisationInput {
-  orgName: string
-  orgType: OrgType
-  adminName: string
-  /** Role the workspace creator takes. Defaults per org type, the person can change it. */
-  adminRole: Exclude<Role, 'candidate' | 'employee'>
-  email: string
-  password: string
+/** The shared create-workspace fields (admin/contracts/workspace-form), plus the sign-up page's consent. */
+export interface RegisterOrganisationInput extends WorkspaceFormValues {
   acceptTerms: boolean
 }
 

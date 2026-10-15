@@ -5,7 +5,7 @@
   "columns": {
     "name": "Name",
     "slug": "Slug",
-    "kind": "Type",
+    "orgType": "Type of organisation",
     "plan": "Plan",
     "domain": "Custom domain",
     "theme": "Theme",
@@ -16,14 +16,13 @@
   "activate": "Activate",
   "create": {
     "title": "Add a workspace",
-    "name": "Company name",
-    "slug": "Slug",
-    "slugHint": "Lowercase letters, digits and hyphens. Used as the default subdomain.",
-    "kind": "Type",
+    "intro": "Same details as the sign-up page on the portal. The owner signs in with this email and must change the password at first sign-in.",
+    "passwordHint": "Temporary: the owner changes it at first sign-in.",
+    "platformSection": "Platform settings",
     "plan": "Plan",
     "domain": "Custom domain (optional)",
     "submit": "Add workspace",
-    "created": "{{name}} added"
+    "created": "{{name}} added. Its owner can sign in at {{url}}"
   },
   "change": "Change",
   "changeTheme": "Change {{tenant}}'s theme"

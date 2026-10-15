@@ -1,6 +1,7 @@
 // All user-facing strings live in the JSON files under ./en, one per area (NFR-07).
 // Add a locale by adding a sibling folder and registering it here.
 import i18n from 'i18next'
+import { workspaceFormLabels as workspaceForm } from '@workspace-form'
 import { initReactI18next } from 'react-i18next'
 import approvals from './en/approvals.json'
 import auth from './en/auth.json'
@@ -15,7 +16,7 @@ import offer from './en/offer.json'
 import pipeline from './en/pipeline.json'
 
 export const resources = {
-  en: { translation: { common, auth, dashboard, mrf, approvals, jd, pipeline, assessment, bgv, offer, careers } },
+  en: { translation: { common, auth, dashboard, mrf, approvals, jd, pipeline, assessment, bgv, offer, careers, workspaceForm } },
 } as const
 
 void i18n.use(initReactI18next).init({
