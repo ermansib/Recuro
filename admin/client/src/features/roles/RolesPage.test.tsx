@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 import type { CreateMemberRequest, CreateRoleRequest, ResetMemberPasswordRequest, RoleCatalog, UpdateMemberRequest, WorkspaceMember, WorkspaceRole } from '../../api/types'
 import { fakeApi, renderWithApi } from '../../test/render'
-import { suggestTemporaryPassword } from './memberDraft'
+import { suggestTemporaryPassword } from '../../utils/password'
 import { RolesPage } from './RolesPage'
 
 const CATALOG: RoleCatalog = {

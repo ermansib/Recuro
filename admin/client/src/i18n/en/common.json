@@ -37,5 +37,10 @@
   "status": {
     "active": "Active",
     "suspended": "Suspended"
-  }
+  },
+  "close": "Close",
+  "temporaryPassword": "Temporary password",
+  "suggestPassword": "Suggest a password",
+  "ruleMet": "(done)",
+  "ruleUnmet": "(not yet)"
 }

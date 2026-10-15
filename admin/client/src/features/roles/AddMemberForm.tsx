@@ -5,7 +5,7 @@ import type { RoleScope, WorkspaceMember, WorkspaceRole } from '../../api/types'
 import { ErrorMessage } from '../../components/ui'
 import { EMPTY_MEMBER, MEMBER_LIMITS, toCreateRequest, validateMember, type MemberDraft, type MemberField } from './memberDraft'
 import { toggle } from './roleDraft'
-import { TemporaryPasswordField } from './TemporaryPasswordField'
+import { TemporaryPasswordField } from '../../components/TemporaryPasswordField'
 
 interface AddMemberFormProps {
   scope: RoleScope
@@ -90,6 +90,7 @@ export function AddMemberForm({ scope, roles, onAdded, onCancel }: AddMemberForm
         id={id('password')}
         value={draft.temporaryPassword}
         onChange={(temporaryPassword) => update({ temporaryPassword })}
+        hint={t('roles.members.temporaryPasswordHint')}
         error={errors.temporaryPassword}
       />
       <div className="actions">

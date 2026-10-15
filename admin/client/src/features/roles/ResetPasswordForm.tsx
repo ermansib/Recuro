@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useResetMemberPassword } from '../../api/hooks'
 import type { RoleScope, WorkspaceMember } from '../../api/types'
 import { ErrorMessage } from '../../components/ui'
-import { TemporaryPasswordField } from './TemporaryPasswordField'
+import { TemporaryPasswordField } from '../../components/TemporaryPasswordField'
 
 interface ResetPasswordFormProps {
   scope: RoleScope
@@ -35,7 +35,13 @@ export function ResetPasswordForm({ scope, member, onDone, onCancel }: ResetPass
     <form className="member-form" onSubmit={submit} noValidate aria-label={t('roles.members.resetPasswordFor', { name: member.name })}>
       <p className="muted">{t('roles.members.resetIntro', { name: member.name })}</p>
       <ErrorMessage error={reset.error} />
-      <TemporaryPasswordField id={`${id}-password`} value={password} onChange={setPassword} error={error} />
+      <TemporaryPasswordField
+        id={`${id}-password`}
+        value={password}
+        onChange={setPassword}
+        hint={t('roles.members.temporaryPasswordHint')}
+        error={error}
+      />
       <div className="actions">
         <button type="submit" className="btn small" disabled={reset.isPending}>
           {reset.isPending ? t('common.saving') : t('roles.members.setPassword')}

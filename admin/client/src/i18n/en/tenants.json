@@ -16,14 +16,26 @@
   "activate": "Activate",
   "create": {
     "title": "Add a workspace",
-    "intro": "Same details as the sign-up page on the portal. The owner signs in with this email and must change the password at first sign-in.",
-    "passwordHint": "Temporary: the owner changes it at first sign-in.",
+    "intro": "Set up a workspace for a company or agency and create its owner's account. These are the same details as the sign-up page on the portal.",
+    "fixErrors_one": "Check the highlighted field below.",
+    "fixErrors_other": "Check the {{count}} highlighted fields below.",
+    "workspaceHint": "What kind of team will use Recuro, and the name people will see.",
+    "orgNameHint": "The workspace's sign-in address is made from this name.",
+    "ownerHint": "The first admin. They sign in with this email, choose a new password, then invite the rest of the team.",
+    "emailHint": "The owner signs in with this address.",
+    "passwordHint": "Give this to the owner yourself. They must choose a new password at first sign-in.",
     "platformSection": "Platform settings",
+    "platformHint": "Only the platform console can set these. You can change them later from the workspace list.",
     "plan": "Plan",
-    "domain": "Custom domain (optional)",
+    "domain": "Custom domain",
+    "optional": "Optional",
+    "domainPlaceholder": "careers.example.com",
+    "domainHint": "Leave blank to use the standard sign-in address.",
+    "clear": "Clear form",
     "submit": "Add workspace",
     "created": "{{name}} added. Its owner can sign in at {{url}}"
   },
   "change": "Change",
-  "changeTheme": "Change {{tenant}}'s theme"
+  "changeTheme": "Change {{tenant}}'s theme",
+  "add": "Add workspace"
 }
