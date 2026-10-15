@@ -93,6 +93,8 @@ describe('identity mock (RCU-PLT-001)', () => {
     }))
     expect(second.tenant.slug).toBe('northwind-talent-partners-2')
     expect((await api.getWorkspaceBranding('northwind-talent-partners')).orgType).toBe('agency')
+    // The name as people type it opens the same workspace.
+    expect((await api.getWorkspaceBranding(' Northwind Talent Partners ')).slug).toBe('northwind-talent-partners')
     await expectStatus(api.registerOrganisation({ ...{ orgName: 'X', orgType: 'enterprise', adminName: 'Y', adminRole: 'hrhead', email: 'y@x.example', acceptTerms: true }, password: 'weak' }), 400)
   })
 

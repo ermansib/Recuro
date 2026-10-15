@@ -140,7 +140,10 @@ export function createIdentityMock({ db, demoPassword, audit, sendEmail, run }: 
   const asActor = (u: User): Actor => ({ name: u.name, role: u.role })
 
   function tenantBySlug(s: IdentityStore, workspace: string): TenantConfig {
-    const tenant = s.tenants.find((t) => t.slug === workspace.trim().toLowerCase())
+    // People type the workspace's name ("MB Consulting") as often as its address (mb-consulting); both open it.
+    const slug = slugify(workspace)
+    const name = workspace.trim().toLowerCase()
+    const tenant = s.tenants.find((t) => t.slug === slug) ?? s.tenants.find((t) => t.name.trim().toLowerCase() === name || t.legalName.trim().toLowerCase() === name)
     if (!tenant) throw new ApiError(404, 'We couldn’t find that workspace. Check the name with your administrator.')
     return tenant
   }

@@ -22,6 +22,17 @@ internal sealed class TenantRepository(AdminDbContext db) : ITenantRepository
         return db.Tenants.FirstOrDefaultAsync(t => t.Slug == normalised, ct);
     }
 
+    public async Task<IReadOnlyList<Tenant>> ListActiveByNameAsync(string name, CancellationToken ct)
+    {
+        var normalised = name.Trim().ToLowerInvariant();
+#pragma warning disable CA1304, CA1311, CA1862 // runs as SQL lower() in the database, where culture doesn't apply
+        return await db.Tenants
+            .Where(t => t.Status == TenantStatus.Active && t.Name.ToLower() == normalised)
+            .Take(2)
+            .ToListAsync(ct);
+#pragma warning restore CA1304, CA1311, CA1862
+    }
+
     public Task<bool> SlugExistsAsync(string slug, CancellationToken ct) =>
         db.Tenants.AnyAsync(t => t.Slug == slug, ct);
 
