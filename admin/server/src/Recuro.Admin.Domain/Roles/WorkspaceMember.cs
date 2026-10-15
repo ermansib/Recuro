@@ -91,3 +91,21 @@ public sealed class WorkspaceMember : Entity, ITenantOwned
 
     public static Error NotFound(string accountId) => Error.NotFound("member.notFound", $"Person '{accountId}' is not in this workspace.");
 }
+
+/// <summary>Failures when a workspace admin adds a person or sets their password.</summary>
+public static class MemberErrors
+{
+    public static readonly Error NameRequired =
+        Error.Validation("member.name", $"Enter the person's full name (up to {WorkspaceMember.NameMaxLength} characters).");
+
+    public static readonly Error InvalidEmail = Error.Validation("member.email", "Enter a valid email address.");
+
+    public static readonly Error WeakPassword =
+        Error.Validation("member.password", "The temporary password does not meet the password rules.");
+
+    public static readonly Error EmailTaken =
+        Error.Conflict("member.emailTaken", "Someone already has an account with this email.");
+
+    public static readonly Error AccountServiceUnavailable =
+        Error.Unavailable("member.accountsUnavailable", "The sign-in service isn't answering right now. Try again in a few minutes.");
+}

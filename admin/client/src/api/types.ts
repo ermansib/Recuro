@@ -207,6 +207,18 @@ export interface UpdateMemberRequest {
   department: string | null
 }
 
+/** A person a workspace admin adds. They sign in once with the temporary password and then choose their own. */
+export interface CreateMemberRequest extends UpdateMemberRequest {
+  name: string
+  email: string
+  temporaryPassword: string
+}
+
+/** A new temporary password for someone who forgot theirs; they replace it at their next sign-in. */
+export interface ResetMemberPasswordRequest {
+  temporaryPassword: string
+}
+
 /**
  * Which workspace a roles call acts on: a tenant admin's own (no id), or the one a platform admin picked.
  */

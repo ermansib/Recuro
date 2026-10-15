@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useApi } from './client'
 import type {
   AssignTenantThemeRequest,
+  CreateMemberRequest,
   CreateRoleRequest,
   CreateTenantRequest,
+  ResetMemberPasswordRequest,
   RoleScope,
   UpdateMemberRequest,
   UpdateRoleRequest,
@@ -158,4 +160,18 @@ export function useUpdateMember(scope: RoleScope) {
   return useRolesMutation(scope, ({ accountId, request }: { accountId: string; request: UpdateMemberRequest }) =>
     api.updateMember(scope, accountId, request),
   )
+}
+
+export function useCreateMember(scope: RoleScope) {
+  const api = useApi()
+  return useRolesMutation(scope, (request: CreateMemberRequest) => api.createMember(scope, request))
+}
+
+/** Changes nothing the page lists, so nothing is refetched. */
+export function useResetMemberPassword(scope: RoleScope) {
+  const api = useApi()
+  return useMutation({
+    mutationFn: ({ accountId, request }: { accountId: string; request: ResetMemberPasswordRequest }) =>
+      api.resetMemberPassword(scope, accountId, request),
+  })
 }

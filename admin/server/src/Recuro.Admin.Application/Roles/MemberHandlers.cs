@@ -1,6 +1,7 @@
 using Recuro.Admin.Application.Abstractions;
 using Recuro.Admin.Domain.Common;
 using Recuro.Admin.Domain.Roles;
+using Recuro.Admin.Domain.Tenants;
 
 namespace Recuro.Admin.Application.Roles;
 
@@ -110,5 +111,132 @@ public sealed class UpdateMemberHandler(
 
         await unitOfWork.SaveChangesAsync(ct);
         return MemberDto.From(member);
+    }
+}
+
+/// <summary>
+/// A workspace admin adds a person (email isn't set up yet, so no invite link): their account is created in the
+/// identity provider with a temporary password and their roles, then saved as a member. If saving fails the
+/// account is removed again, so a failure never leaves an account without a member row.
+/// </summary>
+public sealed class CreateMemberHandler(
+    ITenantContext tenantContext,
+    ITenantRepository tenants,
+    IWorkspaceRoleRepository roles,
+    IWorkspaceMemberRepository members,
+    IAccountDirectory accounts,
+    IUnitOfWork unitOfWork)
+{
+    private const string PendingAccount = "pending";
+
+    public async Task<Result<MemberDto>> HandleAsync(Guid? tenantId, CreateMemberRequest request, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var tenant = await TenantScope.ResolveAsync(tenantContext, tenants, tenantId, ct);
+        if (tenant.IsFailure)
+        {
+            return tenant.Error!;
+        }
+
+        var name = request.Name?.Trim() ?? string.Empty;
+        if (name.Length is 0 or > WorkspaceMember.NameMaxLength)
+        {
+            return MemberErrors.NameRequired;
+        }
+
+        if (!EmailAddresses.IsValid(request.Email))
+        {
+            return MemberErrors.InvalidEmail;
+        }
+
+        // Checks the roles and department before any account exists.
+        var email = request.Email.Trim().ToLowerInvariant();
+        var workspaceRoles = await roles.ListAsync(tenant.Value, ct);
+        var draft = WorkspaceMember.Create(tenant.Value, PendingAccount, name, email, []);
+        var assigned = draft.Assign(request.RoleKeys, request.Department, workspaceRoles);
+        if (assigned.IsFailure)
+        {
+            return assigned.Error!;
+        }
+
+        if (!PasswordPolicy.IsSatisfiedBy(request.TemporaryPassword))
+        {
+            return MemberErrors.WeakPassword;
+        }
+
+        var account = await accounts.CreateWorkspacePersonAsync(
+            new NewWorkspacePerson(tenant.Value, name, email, draft.RoleKeys, request.TemporaryPassword), ct);
+        if (account.IsFailure)
+        {
+            return MemberAccountErrors.ForAdmin(account.Error!);
+        }
+
+        var member = WorkspaceMember.Create(tenant.Value, account.Value, name, email, []);
+        member.Assign(draft.RoleKeys, draft.Department, workspaceRoles);
+        try
+        {
+            members.Add(member);
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            await accounts.DeleteAccountAsync(account.Value, CancellationToken.None);
+            throw;
+        }
+
+        return MemberDto.From(member);
+    }
+}
+
+/// <summary>
+/// A workspace admin sets a temporary password for a person in their workspace who forgot theirs. The person must
+/// choose a new one at their next sign-in. The password goes to the identity provider only; nothing is stored here.
+/// </summary>
+public sealed class ResetMemberPasswordHandler(
+    ITenantContext tenantContext,
+    ITenantRepository tenants,
+    IWorkspaceMemberRepository members,
+    IAccountDirectory accounts)
+{
+    public async Task<Result> HandleAsync(Guid? tenantId, string accountId, ResetMemberPasswordRequest request, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var tenant = await TenantScope.ResolveAsync(tenantContext, tenants, tenantId, ct);
+        if (tenant.IsFailure)
+        {
+            return tenant.Error!;
+        }
+
+        if (await members.GetAsync(tenant.Value, accountId, ct) is null)
+        {
+            return WorkspaceMember.NotFound(accountId);
+        }
+
+        if (!PasswordPolicy.IsSatisfiedBy(request.TemporaryPassword))
+        {
+            return MemberErrors.WeakPassword;
+        }
+
+        var reset = await accounts.SetTemporaryPasswordAsync(tenant.Value, accountId, request.TemporaryPassword, ct);
+        return reset.IsFailure ? MemberAccountErrors.ForAdmin(reset.Error!) : Result.Success();
+    }
+}
+
+/// <summary>The account directory speaks in sign-up terms; a workspace admin gets messages written for them.</summary>
+internal static class MemberAccountErrors
+{
+    public static Error ForAdmin(Error error)
+    {
+        if (error == WorkspaceErrors.EmailTaken)
+        {
+            return MemberErrors.EmailTaken;
+        }
+
+        if (error == WorkspaceErrors.WeakPassword)
+        {
+            return MemberErrors.WeakPassword;
+        }
+
+        return error == WorkspaceErrors.AccountServiceUnavailable ? MemberErrors.AccountServiceUnavailable : error;
     }
 }

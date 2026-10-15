@@ -4,10 +4,12 @@ using System.Text.Json;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Recuro.Admin.Application.Abstractions;
+using Recuro.Admin.Application.Roles;
 using Recuro.Admin.Application.Tenants;
 using Recuro.Admin.Application.Workspaces;
 using Recuro.Admin.Domain.Common;
 using Recuro.Admin.Domain.Tenants;
+using Recuro.Admin.Infrastructure.Persistence.Seed;
 
 namespace Recuro.Admin.IntegrationTests;
 
@@ -174,6 +176,34 @@ public sealed class WorkspaceSignUpTests : IDisposable
         Assert.False(Assert.Single(directory.Owners).MustChangePassword);
     }
 
+    [Fact]
+    public async Task Added_people_get_a_temporary_password_and_their_workspace_roles_in_the_directory()
+    {
+        var directory = new RecordingDirectory();
+        var admin = WithDirectory(directory, persona: AdminApiFactory.Aurora);
+
+        var created = await admin.PostAsJsonAsync(
+            "/api/v1/workspace/members", new CreateMemberRequest(" Ravi Kumar ", "Ravi@Aurora.example", ["hrta", "hod"], null, "Temp!pass1"), Json);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var person = Assert.Single(directory.People);
+        Assert.Equal(new NewWorkspacePerson(DatabaseSeeder.AuroraTenantId, "Ravi Kumar", "ravi@aurora.example", person.RoleKeys, "Temp!pass1"), person);
+        Assert.Equal(["hrta", "hod"], person.RoleKeys);
+
+        var reset = await admin.PutAsJsonAsync("/api/v1/workspace/members/kc-person-1/password", new ResetMemberPasswordRequest("N3w!temp99"), Json);
+        Assert.Equal(HttpStatusCode.NoContent, reset.StatusCode);
+        Assert.Equal((DatabaseSeeder.AuroraTenantId, "kc-person-1", "N3w!temp99"), Assert.Single(directory.PasswordResets));
+    }
+
+    [Fact]
+    public async Task Adding_someone_whose_email_already_has_an_account_says_so()
+    {
+        var response = await WithDirectory(new RefusingDirectory(WorkspaceErrors.EmailTaken), persona: AdminApiFactory.Aurora)
+            .PostAsJsonAsync("/api/v1/workspace/members", new CreateMemberRequest("Ravi Kumar", "ravi@aurora.example", ["hrta"], null, "Temp!pass1"), Json);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Contains("member.emailTaken", await response.Content.ReadAsStringAsync());
+    }
+
     private HttpClient WithDirectory(IAccountDirectory directory, string? persona = null)
     {
         var client = _factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
@@ -206,6 +236,22 @@ public sealed class WorkspaceSignUpTests : IDisposable
         public Task<Result> SyncWorkspaceRolesAsync(
             string accountId, IReadOnlyList<string> roleKeys, IReadOnlyCollection<string> workspaceRoleKeys, CancellationToken ct) =>
             Task.FromResult(Result.Success());
+
+        public List<NewWorkspacePerson> People { get; } = [];
+
+        public List<(Guid TenantId, string AccountId, string Password)> PasswordResets { get; } = [];
+
+        public Task<Result<string>> CreateWorkspacePersonAsync(NewWorkspacePerson person, CancellationToken ct)
+        {
+            People.Add(person);
+            return Task.FromResult(Result.Success($"kc-person-{People.Count}"));
+        }
+
+        public Task<Result> SetTemporaryPasswordAsync(Guid tenantId, string accountId, string password, CancellationToken ct)
+        {
+            PasswordResets.Add((tenantId, accountId, password));
+            return Task.FromResult(Result.Success());
+        }
     }
 
     private sealed class RefusingDirectory(Error error) : IAccountDirectory
@@ -221,6 +267,12 @@ public sealed class WorkspaceSignUpTests : IDisposable
 
         public Task<Result> SyncWorkspaceRolesAsync(
             string accountId, IReadOnlyList<string> roleKeys, IReadOnlyCollection<string> workspaceRoleKeys, CancellationToken ct) =>
+            Task.FromResult(Result.Failure(error));
+
+        public Task<Result<string>> CreateWorkspacePersonAsync(NewWorkspacePerson person, CancellationToken ct) =>
+            Task.FromResult(Result.Failure<string>(error));
+
+        public Task<Result> SetTemporaryPasswordAsync(Guid tenantId, string accountId, string password, CancellationToken ct) =>
             Task.FromResult(Result.Failure(error));
     }
 }

@@ -27,6 +27,19 @@ internal sealed partial class DisabledAccountDirectory(ILogger<DisabledAccountDi
         string accountId, IReadOnlyList<string> roleKeys, IReadOnlyCollection<string> workspaceRoleKeys, CancellationToken ct) =>
         Task.FromResult(Result.Success());
 
+    public Task<Result<string>> CreateWorkspacePersonAsync(NewWorkspacePerson person, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(person);
+        LogPersonSkipped(logger, person.TenantId);
+        return Task.FromResult(Result.Success($"local-{Guid.NewGuid():N}"));
+    }
+
+    public Task<Result> SetTemporaryPasswordAsync(Guid tenantId, string accountId, string password, CancellationToken ct) =>
+        Task.FromResult(Result.Success());
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "AccountDirectory is disabled: no sign-in account was created for a new person in tenant {TenantId}")]
+    private static partial void LogPersonSkipped(ILogger logger, Guid tenantId);
+
     [LoggerMessage(Level = LogLevel.Warning, Message = "AccountDirectory is disabled: no sign-in account was created for the owner of tenant {TenantId}")]
     private static partial void LogSkipped(ILogger logger, Guid tenantId);
 }

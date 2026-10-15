@@ -3,6 +3,7 @@ import { ApiError, type AdminApi } from './contract'
 
 const BASE = '/api/v1'
 export const PERSONA_HEADER = 'X-Recuro-Persona'
+const NO_CONTENT = 204
 
 interface ProblemDetails {
   title?: string
@@ -29,6 +30,7 @@ export function createHttpClient(
       throw new ApiError(response.status, problem.title ?? response.statusText, problem.code)
     }
 
+    if (response.status === NO_CONTENT) return undefined as T
     return (await response.json()) as T
   }
 
@@ -59,5 +61,7 @@ export function createHttpClient(
     setRoleActive: (scope, roleKey, isActive) => request('PUT', `${workspace(scope)}/roles/${key(roleKey)}/status`, { isActive }),
     listMembers: (scope) => request('GET', `${workspace(scope)}/members`),
     updateMember: (scope, accountId, body) => request('PUT', `${workspace(scope)}/members/${key(accountId)}`, body),
+    createMember: (scope, body) => request('POST', `${workspace(scope)}/members`, body),
+    resetMemberPassword: (scope, accountId, body) => request('PUT', `${workspace(scope)}/members/${key(accountId)}/password`, body),
   }
 }
