@@ -181,14 +181,36 @@ public sealed class SignUpWorkspaceHandler(OpenWorkspaceHandler open)
     }
 }
 
-/// <summary>Public workspace lookup, for the sign-in page of a workspace that isn't known to this browser yet.</summary>
+/// <summary>
+/// Public workspace lookup, for the sign-in page of a workspace that isn't known to this browser yet. People type
+/// the workspace's address (<c>mb-consulting</c>) or its name (<c>MB Consulting</c>); both find it. A name two
+/// active workspaces share finds neither, so a lookup never guesses between workspaces.
+/// </summary>
 public sealed class GetWorkspaceHandler(ITenantRepository tenants)
 {
-    public async Task<Result<WorkspaceDto>> HandleAsync(string slug, CancellationToken ct)
+    public async Task<Result<WorkspaceDto>> HandleAsync(string slugOrName, CancellationToken ct)
     {
-        var tenant = await tenants.GetBySlugAsync(slug ?? string.Empty, ct);
-        return tenant is null || tenant.Status != TenantStatus.Active
-            ? WorkspaceErrors.NotFound(slug ?? string.Empty)
-            : WorkspaceDto.From(tenant);
+        var wanted = slugOrName ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(wanted))
+        {
+            return WorkspaceErrors.NotFound(wanted);
+        }
+
+        var tenant = await ActiveBySlugAsync(wanted, ct)
+            ?? await ActiveBySlugAsync(WorkspaceSlug.From(wanted), ct)
+            ?? await UniqueActiveByNameAsync(wanted, ct);
+        return tenant is null ? WorkspaceErrors.NotFound(wanted) : WorkspaceDto.From(tenant);
+    }
+
+    private async Task<Tenant?> ActiveBySlugAsync(string slug, CancellationToken ct)
+    {
+        var tenant = await tenants.GetBySlugAsync(slug, ct);
+        return tenant?.Status == TenantStatus.Active ? tenant : null;
+    }
+
+    private async Task<Tenant?> UniqueActiveByNameAsync(string name, CancellationToken ct)
+    {
+        var matches = await tenants.ListActiveByNameAsync(name, ct);
+        return matches.Count == 1 ? matches[0] : null;
     }
 }
