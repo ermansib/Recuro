@@ -1,14 +1,30 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useUpdateMember } from '../../api/hooks'
 import type { RoleScope, WorkspaceMember, WorkspaceRole } from '../../api/types'
 import { ErrorMessage } from '../../components/ui'
+import { MEMBER_LIMITS } from './memberDraft'
+import { ResetPasswordForm } from './ResetPasswordForm'
 import { toggle } from './roleDraft'
 
+const COLUMN_COUNT = 5
+
+type Editing = { kind: 'none' } | { kind: 'roles' | 'password'; accountId: string }
+
+interface MemberTableProps {
+  scope: RoleScope
+  members: WorkspaceMember[]
+  roles: WorkspaceRole[]
+  /** Called after a temporary password is set, with the person and the password to give them. */
+  onPasswordSet: (member: WorkspaceMember, password: string) => void
+}
+
 /** People in the workspace and their roles. One person is edited at a time. */
-export function MemberTable({ scope, members, roles }: { scope: RoleScope; members: WorkspaceMember[]; roles: WorkspaceRole[] }) {
+export function MemberTable({ scope, members, roles, onPasswordSet }: MemberTableProps) {
   const { t } = useTranslation()
-  const [editing, setEditing] = useState<string | null>(null)
+  const [editing, setEditing] = useState<Editing>({ kind: 'none' })
+  const close = () => setEditing({ kind: 'none' })
+  const isEditing = (kind: Editing['kind'], accountId: string) => editing.kind === kind && 'accountId' in editing && editing.accountId === accountId
   const names = new Map(roles.map((role) => [role.key, role.name]))
 
   if (members.length === 0) return <p className="muted">{t('roles.members.empty')}</p>
@@ -29,25 +45,53 @@ export function MemberTable({ scope, members, roles }: { scope: RoleScope; membe
         </thead>
         <tbody>
           {members.map((member) =>
-            editing === member.accountId ? (
-              <MemberEditor key={member.accountId} scope={scope} member={member} roles={roles} onDone={() => setEditing(null)} />
+            isEditing('roles', member.accountId) ? (
+              <MemberEditor key={member.accountId} scope={scope} member={member} roles={roles} onDone={close} />
             ) : (
-              <tr key={member.accountId}>
-                <th scope="row">{member.name}</th>
-                <td>{member.email}</td>
-                <td>{member.roleKeys.map((key) => names.get(key) ?? key).join(', ') || '—'}</td>
-                <td>{member.department ?? '—'}</td>
-                <td>
-                  <button
-                    type="button"
-                    className="btn secondary small"
-                    aria-label={t('roles.members.editFor', { name: member.name })}
-                    onClick={() => setEditing(member.accountId)}
-                  >
-                    {t('roles.edit')}
-                  </button>
-                </td>
-              </tr>
+              <Fragment key={member.accountId}>
+                <tr>
+                  <th scope="row">{member.name}</th>
+                  <td>{member.email}</td>
+                  <td>{member.roleKeys.map((key) => names.get(key) ?? key).join(', ') || '—'}</td>
+                  <td>{member.department ?? '—'}</td>
+                  <td>
+                    <div className="actions" style={{ marginTop: 0 }}>
+                      <button
+                        type="button"
+                        className="btn secondary small"
+                        aria-label={t('roles.members.editFor', { name: member.name })}
+                        onClick={() => setEditing({ kind: 'roles', accountId: member.accountId })}
+                      >
+                        {t('roles.edit')}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn secondary small"
+                        aria-label={t('roles.members.resetPasswordFor', { name: member.name })}
+                        aria-expanded={isEditing('password', member.accountId)}
+                        onClick={() => setEditing({ kind: 'password', accountId: member.accountId })}
+                      >
+                        {t('roles.members.resetPassword')}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {isEditing('password', member.accountId) && (
+                  <tr>
+                    <td colSpan={COLUMN_COUNT}>
+                      <ResetPasswordForm
+                        scope={scope}
+                        member={member}
+                        onCancel={close}
+                        onDone={(password) => {
+                          close()
+                          onPasswordSet(member, password)
+                        }}
+                      />
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             ),
           )}
         </tbody>
@@ -88,7 +132,7 @@ function MemberEditor({ scope, member, roles, onDone }: { scope: RoleScope; memb
         <input
           className="input"
           aria-label={t('roles.members.departmentFor', { name: member.name })}
-          maxLength={80}
+          maxLength={MEMBER_LIMITS.department}
           value={department}
           onChange={(event) => setDepartment(event.target.value)}
         />

@@ -58,3 +58,9 @@ public sealed record MemberDto(string AccountId, string Name, string Email, IRea
 }
 
 public sealed record UpdateMemberRequest(IReadOnlyList<string> RoleKeys, string? Department);
+
+/// <summary>A person a workspace admin adds. They sign in with <see cref="TemporaryPassword"/> once and then choose their own.</summary>
+public sealed record CreateMemberRequest(string Name, string Email, IReadOnlyList<string> RoleKeys, string? Department, string TemporaryPassword);
+
+/// <summary>A new temporary password for someone who forgot theirs; they replace it at their next sign-in.</summary>
+public sealed record ResetMemberPasswordRequest(string TemporaryPassword);

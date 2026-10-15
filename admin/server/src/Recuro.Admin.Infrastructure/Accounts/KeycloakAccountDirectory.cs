@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Recuro.Admin.Application.Abstractions;
 using Recuro.Admin.Domain.Common;
+using Recuro.Admin.Domain.Roles;
 using Recuro.Admin.Domain.Tenants;
 
 namespace Recuro.Admin.Infrastructure.Accounts;
@@ -143,6 +144,90 @@ internal sealed partial class KeycloakAccountDirectory(
         }
     }
 
+    public async Task<Result<string>> CreateWorkspacePersonAsync(NewWorkspacePerson person, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(person);
+        try
+        {
+            var token = await GetServiceTokenAsync(ct);
+            var accountId = await CreateUserAsync(
+                person.TenantId, person.Name, person.Email, person.RoleKeys, person.TemporaryPassword, temporary: true, token, ct);
+            if (accountId.IsFailure)
+            {
+                return accountId;
+            }
+
+            try
+            {
+                // Realm roles of the same name keep tokens working for services that still read realm roles.
+                var realmRoles = new List<KeycloakRole>();
+                foreach (var key in person.RoleKeys.Distinct(StringComparer.Ordinal))
+                {
+                    if (await FindRealmRoleAsync(key, token, ct) is { } role)
+                    {
+                        realmRoles.Add(role);
+                    }
+                }
+
+                await ChangeRealmRolesAsync(accountId.Value, HttpMethod.Post, realmRoles, token, ct);
+            }
+            catch
+            {
+                await DeleteAccountAsync(accountId.Value, CancellationToken.None);
+                throw;
+            }
+
+            return accountId;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or KeycloakException)
+        {
+            LogCreatePersonFailed(logger, person.TenantId, ex);
+            return WorkspaceErrors.AccountServiceUnavailable;
+        }
+    }
+
+    public async Task<Result> SetTemporaryPasswordAsync(Guid tenantId, string accountId, string password, CancellationToken ct)
+    {
+        try
+        {
+            var token = await GetServiceTokenAsync(ct);
+            var path = $"users/{Uri.EscapeDataString(accountId)}";
+
+            // The admin database already scopes people to the workspace; the account's own tenant_id must agree.
+            using var read = Authorized(HttpMethod.Get, path, token);
+            using var found = await http.SendAsync(read, ct);
+            if (found.StatusCode == HttpStatusCode.NotFound)
+            {
+                return WorkspaceMember.NotFound(accountId);
+            }
+
+            EnsureSuccess(found, "read user");
+            var user = await found.Content.ReadFromJsonAsync<JsonObject>(ct);
+            var tenants = (user?["attributes"] as JsonObject)?[TenantAttribute] as JsonArray;
+            if (tenants is null || !tenants.Any(t => string.Equals(t?.GetValue<string>(), tenantId.ToString(), StringComparison.OrdinalIgnoreCase)))
+            {
+                return WorkspaceMember.NotFound(accountId);
+            }
+
+            using var reset = Authorized(HttpMethod.Put, $"{path}/reset-password", token);
+            reset.Content = JsonContent.Create(new KeycloakCredential("password", password, Temporary: true));
+            using var response = await http.SendAsync(reset, ct);
+            if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                // Keycloak refuses passwords that break the realm's own policy (including password history).
+                return WorkspaceErrors.WeakPassword;
+            }
+
+            EnsureSuccess(response, "reset the password");
+            return Result.Success();
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or KeycloakException)
+        {
+            LogResetFailed(logger, accountId, ex);
+            return WorkspaceErrors.AccountServiceUnavailable;
+        }
+    }
+
     /// <summary>Read-modify-write of the whole user, because Keycloak replaces the attribute map on update.</summary>
     private async Task SetWorkspaceRolesAttributeAsync(string accountId, IReadOnlyList<string> roleKeys, string token, CancellationToken ct)
     {
@@ -200,22 +285,26 @@ internal sealed partial class KeycloakAccountDirectory(
         EnsureSuccess(response, "change role mappings");
     }
 
-    private async Task<Result<string>> CreateUserAsync(NewWorkspaceOwner owner, string token, CancellationToken ct)
+    private Task<Result<string>> CreateUserAsync(NewWorkspaceOwner owner, string token, CancellationToken ct) =>
+        CreateUserAsync(owner.TenantId, owner.Name, owner.Email, [owner.Role], owner.Password, owner.MustChangePassword, token, ct);
+
+    private async Task<Result<string>> CreateUserAsync(
+        Guid tenantId, string name, string email, IReadOnlyList<string> roleKeys, string password, bool temporary, string token, CancellationToken ct)
     {
-        var (firstName, lastName) = SplitName(owner.Name);
+        var (firstName, lastName) = SplitName(name);
         var body = new KeycloakUser(
-            owner.Email,
-            owner.Email,
+            email,
+            email,
             firstName,
             lastName,
             Enabled: true,
             EmailVerified: false,
             new Dictionary<string, string[]>
             {
-                [TenantAttribute] = [owner.TenantId.ToString()],
-                [WorkspaceRolesAttribute] = [owner.Role],
+                [TenantAttribute] = [tenantId.ToString()],
+                [WorkspaceRolesAttribute] = [.. roleKeys],
             },
-            [new KeycloakCredential("password", owner.Password, Temporary: owner.MustChangePassword)]);
+            [new KeycloakCredential("password", password, Temporary: temporary)]);
 
         using var request = Authorized(HttpMethod.Post, "users", token);
         request.Content = JsonContent.Create(body);
@@ -306,6 +395,12 @@ internal sealed partial class KeycloakAccountDirectory(
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Syncing workspace roles to Keycloak account {AccountId} failed")]
     private static partial void LogSyncFailed(ILogger logger, string accountId, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Creating a person's account in Keycloak failed for tenant {TenantId}")]
+    private static partial void LogCreatePersonFailed(ILogger logger, Guid tenantId, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Setting a temporary password for Keycloak account {AccountId} failed")]
+    private static partial void LogResetFailed(ILogger logger, string accountId, Exception exception);
 
     private sealed record KeycloakUserSummary(string? Id, string? Username, string? Email, string? FirstName, string? LastName);
 

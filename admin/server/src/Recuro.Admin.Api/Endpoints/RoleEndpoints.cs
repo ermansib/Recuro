@@ -42,6 +42,12 @@ internal static class RoleEndpoints
         group.MapGet("/members", async (HttpContext http, ListMembersHandler handler, CancellationToken ct) =>
             (await handler.HandleAsync(tenantOf(http), ct)).ToHttpResult());
 
+        group.MapPost("/members", async (HttpContext http, CreateMemberRequest request, CreateMemberHandler handler, CancellationToken ct) =>
+            (await handler.HandleAsync(tenantOf(http), request, ct)).ToCreatedResult(m => $"{http.Request.Path}/{Uri.EscapeDataString(m.AccountId)}"));
+
+        group.MapPut("/members/{accountId}/password", async (HttpContext http, string accountId, ResetMemberPasswordRequest request, ResetMemberPasswordHandler handler, CancellationToken ct) =>
+            (await handler.HandleAsync(tenantOf(http), accountId, request, ct)).ToNoContentResult());
+
         group.MapPut("/members/{accountId}", async (HttpContext http, string accountId, UpdateMemberRequest request, UpdateMemberHandler handler, CancellationToken ct) =>
             (await handler.HandleAsync(tenantOf(http), accountId, request, ct)).ToHttpResult());
     }

@@ -222,3 +222,90 @@ public sealed class MyAccessApiTests : IDisposable
         Assert.Equal(HttpStatusCode.NotFound, (await _factory.ClientAs(Person(Guid.NewGuid(), "hrta")).GetAsync(new Uri(Path, UriKind.Relative))).StatusCode);
     }
 }
+
+public sealed class MemberAccountApiTests : IDisposable
+{
+    private const string Members = "/api/v1/workspace/members";
+    private const string TemporaryPassword = "Temp!pass1";
+    private readonly AdminApiFactory _factory = new();
+    private static readonly JsonSerializerOptions Json = AdminApiFactory.Json;
+
+    public void Dispose() => _factory.Dispose();
+
+    private static CreateMemberRequest Ravi(IReadOnlyList<string>? roles = null, string password = TemporaryPassword, string email = "ravi@aurora.example") =>
+        new("Ravi Kumar", email, roles ?? ["hrta"], "Talent", password);
+
+    private async Task<MemberDto> AddRaviToAuroraAsync()
+    {
+        var response = await _factory.ClientAs(AdminApiFactory.Aurora).PostAsJsonAsync(Members, Ravi(), Json);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        return (await response.Content.ReadFromJsonAsync<MemberDto>(Json))!;
+    }
+
+    [Fact]
+    public async Task A_workspace_admin_adds_a_person_with_roles_and_only_their_workspace_lists_them()
+    {
+        var ravi = await AddRaviToAuroraAsync();
+
+        Assert.Equal(["hrta"], ravi.RoleKeys);
+        Assert.Equal("Talent", ravi.Department);
+        var aurora = await _factory.ClientAs(AdminApiFactory.Aurora).GetFromJsonAsync<List<MemberDto>>(Members, Json);
+        var bridge = await _factory.ClientAs(AdminApiFactory.TalentBridge).GetFromJsonAsync<List<MemberDto>>(Members, Json);
+        Assert.Contains(aurora!, m => m.AccountId == ravi.AccountId && m.Email == "ravi@aurora.example");
+        Assert.DoesNotContain(bridge!, m => m.AccountId == ravi.AccountId);
+    }
+
+    [Theory]
+    [InlineData("member.password", "short")]
+    [InlineData("member.email", null)]
+    [InlineData("role.notFound", null)]
+    [InlineData("member.roles", null)]
+    public async Task Bad_details_are_refused_before_any_account_is_made(string code, string? password)
+    {
+        var request = code switch
+        {
+            "member.email" => Ravi(email: "not-an-email"),
+            "role.notFound" => Ravi(roles: ["ghost"]),
+            "member.roles" => Ravi(roles: []),
+            _ => Ravi(password: password!),
+        };
+
+        var response = await _factory.ClientAs(AdminApiFactory.Aurora).PostAsJsonAsync(Members, request, Json);
+
+        Assert.True(response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.NotFound, response.StatusCode.ToString());
+        Assert.Contains(code, await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task A_workspace_admin_sets_a_temporary_password_for_their_own_people_only()
+    {
+        var ravi = await AddRaviToAuroraAsync();
+        var path = $"{Members}/{ravi.AccountId}/password";
+
+        var reset = await _factory.ClientAs(AdminApiFactory.Aurora).PutAsJsonAsync(path, new ResetMemberPasswordRequest("N3w!temp99"), Json);
+        Assert.Equal(HttpStatusCode.NoContent, reset.StatusCode);
+
+        var weak = await _factory.ClientAs(AdminApiFactory.Aurora).PutAsJsonAsync(path, new ResetMemberPasswordRequest("password"), Json);
+        Assert.Equal(HttpStatusCode.BadRequest, weak.StatusCode);
+
+        var otherWorkspace = await _factory.ClientAs(AdminApiFactory.TalentBridge).PutAsJsonAsync(path, new ResetMemberPasswordRequest("N3w!temp99"), Json);
+        Assert.Equal(HttpStatusCode.NotFound, otherWorkspace.StatusCode);
+
+        var anonymous = await _factory.ClientAs(null).PutAsJsonAsync(path, new ResetMemberPasswordRequest("N3w!temp99"), Json);
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
+    }
+
+    [Fact]
+    public async Task A_platform_admin_adds_people_and_resets_passwords_in_any_workspace()
+    {
+        var platform = _factory.ClientAs("platform");
+        var basePath = $"/api/v1/platform/workspaces/{DatabaseSeeder.TalentBridgeTenantId}/members";
+
+        var created = await platform.PostAsJsonAsync(basePath, Ravi(email: "ravi@talentbridge.example"), Json);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var ravi = (await created.Content.ReadFromJsonAsync<MemberDto>(Json))!;
+
+        var reset = await platform.PutAsJsonAsync($"{basePath}/{ravi.AccountId}/password", new ResetMemberPasswordRequest("N3w!temp99"), Json);
+        Assert.Equal(HttpStatusCode.NoContent, reset.StatusCode);
+    }
+}

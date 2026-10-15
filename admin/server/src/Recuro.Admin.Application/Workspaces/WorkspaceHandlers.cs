@@ -1,4 +1,3 @@
-using System.Net.Mail;
 using Recuro.Admin.Application.Abstractions;
 using Recuro.Admin.Domain.Common;
 using Recuro.Admin.Domain.Roles;
@@ -127,11 +126,7 @@ public sealed class OpenWorkspaceHandler(
         return PasswordPolicy.IsSatisfiedBy(details.Password) ? null : WorkspaceErrors.WeakPassword;
     }
 
-    private static bool IsValidEmail(string? email) =>
-        !string.IsNullOrWhiteSpace(email)
-        && MailAddress.TryCreate(email.Trim(), out var address)
-        && address.Address == email.Trim()
-        && address.Host.Contains('.', StringComparison.Ordinal);
+    private static bool IsValidEmail(string? email) => EmailAddresses.IsValid(email);
 
     /// <summary>`Acme Corp` → `acme-corp`, then `acme-corp-2` and so on if that is taken.</summary>
     private async Task<string> UniqueSlugAsync(string orgName, CancellationToken ct)

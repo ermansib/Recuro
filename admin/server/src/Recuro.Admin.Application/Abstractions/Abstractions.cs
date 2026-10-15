@@ -76,6 +76,12 @@ public interface IScreenConfigurationRepository
 public sealed record NewWorkspaceOwner(Guid TenantId, string Name, string Email, string Role, string Password, bool MustChangePassword = false);
 
 /// <summary>
+/// A person a workspace admin adds to their workspace. <paramref name="TemporaryPassword"/> is replaced by the
+/// person at first sign-in; <paramref name="RoleKeys"/> become the <c>workspace_roles</c> attribute.
+/// </summary>
+public sealed record NewWorkspacePerson(Guid TenantId, string Name, string Email, IReadOnlyList<string> RoleKeys, string TemporaryPassword);
+
+/// <summary>
 /// The people directory that signs users in (Keycloak). Accounts live there, never in the admin database,
 /// so passwords stay with the identity provider.
 /// </summary>
@@ -101,6 +107,18 @@ public interface IAccountDirectory
     /// </summary>
     Task<Result> SyncWorkspaceRolesAsync(
         string accountId, IReadOnlyList<string> roleKeys, IReadOnlyCollection<string> workspaceRoleKeys, CancellationToken ct);
+
+    /// <summary>
+    /// Creates a person's account in the workspace with a temporary password, their workspace roles (attribute,
+    /// plus realm roles of the same name where they exist) and no admin rights. Returns the account id.
+    /// </summary>
+    Task<Result<string>> CreateWorkspacePersonAsync(NewWorkspacePerson person, CancellationToken ct);
+
+    /// <summary>
+    /// Sets a temporary password the person must replace at their next sign-in. Refused with not found when the
+    /// account does not belong to <paramref name="tenantId"/>.
+    /// </summary>
+    Task<Result> SetTemporaryPasswordAsync(Guid tenantId, string accountId, string password, CancellationToken ct);
 }
 
 /// <summary>An account in the identity provider. <see cref="RealmRoles"/> is empty when it wasn't read.</summary>

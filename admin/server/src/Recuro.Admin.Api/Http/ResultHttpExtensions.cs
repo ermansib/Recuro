@@ -8,6 +8,9 @@ internal static class ResultHttpExtensions
     public static IResult ToHttpResult<T>(this Result<T> result) =>
         result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
 
+    public static IResult ToNoContentResult(this Result result) =>
+        result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
+
     public static IResult ToCreatedResult<T>(this Result<T> result, Func<T, string> location) =>
         result.IsSuccess ? Results.Created(location(result.Value), result.Value) : result.Error!.ToProblem();
 

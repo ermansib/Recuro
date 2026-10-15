@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCreateRole, useMembers, useRoleCatalog, useRoles, useSetRoleActive, useUpdateRole } from '../../api/hooks'
-import type { RoleCatalog, RoleScope, WorkspaceRole } from '../../api/types'
+import type { RoleCatalog, RoleScope, WorkspaceMember, WorkspaceRole } from '../../api/types'
 import { ErrorMessage, QueryState, StatusMessage } from '../../components/ui'
+import { AddMemberForm } from './AddMemberForm'
 import { MemberTable } from './MemberTable'
 import { RoleForm } from './RoleForm'
 import { draftFrom, EMPTY_DRAFT, toRequest, type RoleDraft } from './roleDraft'
@@ -23,24 +24,68 @@ export function RolesWorkspace({ scope }: { scope: RoleScope }) {
       {roles.data && catalog.data && (
         <>
           <RoleSection scope={scope} roles={roles.data} catalog={catalog.data} />
-          <PeopleSection isLoading={members.isLoading} error={members.error}>
-            {members.data && <MemberTable scope={scope} members={members.data} roles={roles.data} />}
-          </PeopleSection>
+          <PeopleSection scope={scope} roles={roles.data} members={members.data} isLoading={members.isLoading} error={members.error} />
         </>
       )}
     </QueryState>
   )
 }
 
-function PeopleSection({ isLoading, error, children }: { isLoading: boolean; error: Error | null; children: ReactNode }) {
+interface PeopleSectionProps {
+  scope: RoleScope
+  roles: WorkspaceRole[]
+  members: WorkspaceMember[] | undefined
+  isLoading: boolean
+  error: Error | null
+}
+
+/** Everyone in the workspace, with adding a person and setting a temporary password (email isn't set up yet). */
+function PeopleSection({ scope, roles, members, isLoading, error }: PeopleSectionProps) {
   const { t } = useTranslation()
+  const [adding, setAdding] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
+
+  const announce = (message: string) => {
+    setAdding(false)
+    setNotice(message)
+  }
+
   return (
     <section className="card" aria-labelledby="members-heading">
       <h2 id="members-heading">{t('roles.members.title')}</h2>
       <p className="muted">{t('roles.members.subtitle')}</p>
+      <StatusMessage message={notice} />
       <QueryState isLoading={isLoading} error={error}>
-        {children}
+        {members && (
+          <MemberTable
+            scope={scope}
+            members={members}
+            roles={roles}
+            onPasswordSet={(member, password) => announce(t('roles.members.passwordSet', { name: member.name, password }))}
+          />
+        )}
       </QueryState>
+      {adding ? (
+        <AddMemberForm
+          scope={scope}
+          roles={roles}
+          onCancel={() => setAdding(false)}
+          onAdded={(member) => announce(t('roles.members.added', { name: member.name, email: member.email }))}
+        />
+      ) : (
+        <div className="actions">
+          <button
+            type="button"
+            className="btn"
+            onClick={() => {
+              setNotice(null)
+              setAdding(true)
+            }}
+          >
+            {t('roles.members.add')}
+          </button>
+        </div>
+      )}
     </section>
   )
 }

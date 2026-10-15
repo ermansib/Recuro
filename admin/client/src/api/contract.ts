@@ -3,10 +3,12 @@ import type {
   AuthConfig,
   Branding,
   CurrentAdmin,
+  CreateMemberRequest,
   CreateRoleRequest,
   CreateTenantRequest,
   EffectiveScreen,
   Persona,
+  ResetMemberPasswordRequest,
   RoleCatalog,
   RoleScope,
   Tenant,
@@ -50,6 +52,10 @@ export interface AdminApi {
   setRoleActive(scope: RoleScope, key: string, isActive: boolean): Promise<WorkspaceRole>
   listMembers(scope: RoleScope): Promise<WorkspaceMember[]>
   updateMember(scope: RoleScope, accountId: string, request: UpdateMemberRequest): Promise<WorkspaceMember>
+  /** Creates the person's sign-in account with a temporary password (email isn't set up yet, so no invite). */
+  createMember(scope: RoleScope, request: CreateMemberRequest): Promise<WorkspaceMember>
+  /** Sets a temporary password the person must replace at their next sign-in. */
+  resetMemberPassword(scope: RoleScope, accountId: string, request: ResetMemberPasswordRequest): Promise<void>
 }
 
 /** An RFC 7807 problem returned by the API, with the domain error code (for example "screen.lockedField"). */
