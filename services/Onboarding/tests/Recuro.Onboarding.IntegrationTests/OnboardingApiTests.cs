@@ -349,7 +349,11 @@ public sealed class OnboardingApiTests(OnboardingApiFactory api) : IClassFixture
         var appId = await AcceptedAsync(A, Today.AddMonths(-7));
         await TickAllAsync(A, appId);
         var hrTa = api.ClientFor(A, RecuroRoles.HrTa);
-        Assert.Equal(HttpStatusCode.BadRequest, (await hrTa.PutAsJsonAsync($"/api/v1/onboarding/cases/{appId}/assignments", new { department = "Legal Team" })).StatusCode);
+        foreach (var badKey in new[] { "Legal Team", "9legal", new string('l', 51) })
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, (await hrTa.PutAsJsonAsync($"/api/v1/onboarding/cases/{appId}/assignments", new { department = badKey })).StatusCode);
+        }
+
         var assigned = await hrTa.PutAsJsonAsync($"/api/v1/onboarding/cases/{appId}/assignments", new { department = "legal" });
         Assert.Equal("legal", (await assigned.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("department").GetString());
 

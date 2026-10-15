@@ -57,7 +57,7 @@ internal sealed class AssignPeopleCommandValidator : AbstractValidator<AssignPeo
         RuleFor(c => c.Department!)
             .Matches(OnboardingLimits.DepartmentKeyPattern)
             .When(c => !string.IsNullOrWhiteSpace(c.Department))
-            .WithMessage("department is a lowercase key of letters, digits and dashes, e.g. operations.");
+            .WithMessage("department is a lowercase key: a letter, then up to 49 letters, digits or dashes, e.g. operations.");
     }
 }
 
