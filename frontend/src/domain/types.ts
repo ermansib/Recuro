@@ -616,3 +616,41 @@ export interface WorkspaceRoleConfig {
   permissions: string[]
   pages: string[]
 }
+
+/** An internal opening HR has put up for employees (Employee portal API `GET /api/v1/employee/ijp`, RCU-EMP-001). */
+export interface InternalJob {
+  reqId: string
+  title: string
+  location: string
+  department: string
+  grade: string
+  eligibleGrades: string[]
+  minTenureMonths: number
+  summary: string | null
+  opensAt: string
+  closesAt: string
+}
+
+export interface ReferralInput {
+  reqId: string
+  name: string
+  email: string
+  phone: string
+  experienceYears: number | null
+  relationship: string
+  /** The conflict-of-interest declaration (FRD §7.1); the server refuses a referral without it. */
+  coiAccepted: boolean
+}
+
+/** One of the employee's own referrals with coarse progress only (RCU-EMP-005). */
+export interface MyReferral {
+  id: string
+  reqId: string
+  candidateName: string
+  relationship: string
+  bonusEligible: boolean
+  appId: string | null
+  status: string
+  progress: string
+  submittedAt: string
+}

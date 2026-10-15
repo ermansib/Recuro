@@ -19,6 +19,9 @@ import type {
   InvitationView,
   InviteInput,
   InterviewRound,
+  InternalJob,
+  MyReferral,
+  ReferralInput,
   MyAccess,
   JobDescription,
   JobPosting,
@@ -176,4 +179,16 @@ export interface WorkspaceApi {
  */
 export interface AppearanceApi {
   getTenantAppearance(slug: string): Promise<TenantAppearance | null>
+}
+
+/**
+ * The Employee portal API (RCU-EMP, gateway `/api/v1/employee`). `token` is the session handle; the
+ * implementation for server-backed sessions sends the person's own access token, and the server scopes
+ * everything to their workspace and subject.
+ */
+export interface EmployeeApi {
+  /** Internal openings whose window is open now, closing soonest first. */
+  listInternalJobs(token: string): Promise<InternalJob[]>
+  submitReferral(token: string, input: ReferralInput): Promise<MyReferral>
+  listMyReferrals(token: string): Promise<MyReferral[]>
 }
