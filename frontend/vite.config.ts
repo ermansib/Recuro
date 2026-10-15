@@ -6,6 +6,8 @@ import { defineConfig } from 'vitest/config'
 // Tenant themes come from the admin portal (admin/, `dotnet run` serves it on 5080). The dev server
 // proxies its runtime endpoint so the browser needs no CORS. Set ADMIN_API_PROXY to point elsewhere.
 const DEFAULT_ADMIN_API = 'http://127.0.0.1:5080'
+// The Employee portal API (RCU-EMP) is reached through the YARP gateway (services/, port 5100).
+const DEFAULT_GATEWAY = 'http://127.0.0.1:5100'
 
 // The create-workspace form is defined once, next to the admin API that owns it (admin/contracts).
 const WORKSPACE_FORM = fileURLToPath(new URL('../admin/contracts/workspace-form', import.meta.url))
@@ -20,6 +22,7 @@ export default defineConfig(({ mode }) => {
       proxy: {
         '/api/v1/runtime': { target: env.ADMIN_API_PROXY || DEFAULT_ADMIN_API, changeOrigin: true },
         '/api/v1/workspaces': { target: env.ADMIN_API_PROXY || DEFAULT_ADMIN_API, changeOrigin: true },
+        '/api/v1/employee': { target: env.GATEWAY_PROXY || DEFAULT_GATEWAY, changeOrigin: true },
         '/api/v1/me': { target: env.ADMIN_API_PROXY || DEFAULT_ADMIN_API, changeOrigin: true },
       },
     },

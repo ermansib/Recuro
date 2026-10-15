@@ -8,6 +8,7 @@ import auth from './en/auth.json'
 import assessment from './en/assessment.json'
 import bgv from './en/bgv.json'
 import careers from './en/careers.json'
+import employee from './en/employee.json'
 import common from './en/common.json'
 import dashboard from './en/dashboard.json'
 import jd from './en/jd.json'
@@ -16,7 +17,7 @@ import offer from './en/offer.json'
 import pipeline from './en/pipeline.json'
 
 export const resources = {
-  en: { translation: { common, auth, dashboard, mrf, approvals, jd, pipeline, assessment, bgv, offer, careers, workspaceForm } },
+  en: { translation: { common, auth, dashboard, mrf, approvals, jd, pipeline, assessment, bgv, offer, careers, employee, workspaceForm } },
 } as const
 
 void i18n.use(initReactI18next).init({

@@ -1,0 +1,39 @@
+{
+  "title": "Welcome, {{name}}",
+  "sub": "Jobs open to employees of {{workspace}}, and people you can refer.",
+  "jobs": {
+    "title": "Internal jobs",
+    "sub": "Openings HR has made open to {{workspace}} employees first",
+    "empty": "No internal jobs are open right now. Check back soon.",
+    "closes": "Open until {{date}}",
+    "refer": "Refer someone",
+    "tenure": "{{months}}+ months in the workspace",
+    "grades": "Grades: {{grades}}"
+  },
+  "refer": {
+    "title": "Refer a candidate",
+    "for": "For: {{job}}",
+    "chooseJob": "Choose a job above",
+    "name": "Candidate's name",
+    "email": "Candidate's email",
+    "phone": "Phone (optional)",
+    "experience": "Experience (years)",
+    "relationship": "How do you know them?",
+    "coi": "I declare that I have no conflict of interest in referring this person.",
+    "submit": "Submit referral",
+    "needJob": "Choose the job you are referring for.",
+    "needFields": "Enter the candidate's name, email and how you know them.",
+    "needCoi": "Accept the conflict-of-interest declaration to refer someone.",
+    "done": "Referral submitted for {{name}}"
+  },
+  "mine": {
+    "title": "My referrals",
+    "empty": "You haven't referred anyone yet.",
+    "candidate": "Candidate",
+    "job": "Job",
+    "status": "Status",
+    "submitted": "Submitted",
+    "bonus": "Bonus eligible"
+  },
+  "noRole": "Your role in this workspace can't refer candidates."
+}

@@ -20,6 +20,8 @@ export type Capability =
   | 'approvals.view'
   | 'internal.view'
   | 'careers.apply'
+  | 'ijp.browse'
+  | 'referral.submit'
   | 'team.invite'
 
 const matrix: Record<Capability, readonly Role[]> = {
@@ -38,6 +40,9 @@ const matrix: Record<Capability, readonly Role[]> = {
   'approvals.view': ['hrta', 'hrhead', 'mdceo'],
   'internal.view': ['hrta', 'hrhead', 'mdceo'],
   'careers.apply': ['candidate'],
+  // Employee portal (RCU-EMP): browse internal openings and refer people. `referral.submit` is the admin catalogue's key.
+  'ijp.browse': ['employee'],
+  'referral.submit': ['employee'],
   // Workspace administration: HR roles invite colleagues; candidates self-register (RCU-PLT-001).
   'team.invite': ['hrta', 'hrhead'],
 }

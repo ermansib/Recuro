@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSession } from '../auth/sessionContext'
 import { features } from '../config/features'
 import type { Role } from '../domain/types'
-import { api } from './client'
+import { api, employeeApi } from './client'
 
 export const keys = {
   branding: (workspace: string) => ['branding', workspace] as const,
@@ -25,6 +25,8 @@ export const keys = {
   notifications: (role: Role) => ['notifications', role] as const,
   emails: (role: Role) => ['emails', role] as const,
   postings: ['postings'] as const,
+  internalJobs: (tenantId: string) => ['internalJobs', tenantId] as const,
+  myReferrals: (tenantId: string) => ['myReferrals', tenantId] as const,
 }
 
 export const useWorkspaceBranding = (workspace: string | null) =>
@@ -69,6 +71,18 @@ export const useInterview = (appId: string) =>
 export const useBgvCase = (appId: string) => useQuery({ queryKey: keys.bgv(appId), queryFn: () => api.getBgvCase(appId) })
 export const useOffers = () => useQuery({ queryKey: keys.offers, queryFn: api.listOffers })
 export const useJobPostings = () => useQuery({ queryKey: keys.postings, queryFn: api.listJobPostings })
+
+/** Internal openings HR has put up for employees in the signed-in workspace (RCU-EMP-001). */
+export function useInternalJobs() {
+  const { token, tenant } = useSession()
+  return useQuery({ queryKey: keys.internalJobs(tenant.id), queryFn: () => employeeApi.listInternalJobs(token) })
+}
+
+/** The signed-in employee's own referrals (RCU-EMP-005). */
+export function useMyReferrals() {
+  const { token, tenant } = useSession()
+  return useQuery({ queryKey: keys.myReferrals(tenant.id), queryFn: () => employeeApi.listMyReferrals(token) })
+}
 
 export function useApprovals() {
   const { user } = useSession()

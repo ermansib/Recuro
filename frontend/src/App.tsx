@@ -15,6 +15,7 @@ import { SignUpPage } from './features/auth/SignUpPage'
 import { AssessmentPage } from './features/assessment/AssessmentPage'
 import { BgvPage } from './features/bgv/BgvPage'
 import { CareersPage } from './features/careers/CareersPage'
+import { EmployeePage } from './features/employee/EmployeePage'
 import { DashboardPage } from './features/dashboard/DashboardPage'
 import { JdBuilderPage } from './features/jd/JdBuilderPage'
 import { MrfWizardPage } from './features/mrf/MrfWizardPage'
@@ -67,7 +68,7 @@ export function App() {
         <Route path="onboarding" element={<Internal screen="onboarding"><Phase1Placeholder screen="onboarding" stories="RCU-ONB-001..006" /></Internal>} />
         <Route path="vendors" element={<Internal screen="vendors"><Phase1Placeholder screen="vendors" stories="RCU-VEN-001..005" /></Internal>} />
         <Route path="reports" element={<Internal screen="reports"><Phase1Placeholder screen="reports" stories="RCU-RPT-001..006" /></Internal>} />
-        <Route path="internal-careers" element={<Phase1Placeholder screen="internalCareers" stories="RCU-EMP-001..005" />} />
+        <Route path="internal-careers" element={<Allowed capability="ijp.browse" screen="internalCareers"><EmployeePage /></Allowed>} />
         <Route path="careers" element={<CareersPage />} />
         <Route path="team" element={<Allowed capability="team.invite"><TeamPage /></Allowed>} />
         <Route path="*" element={<Navigate to="/" replace />} />
