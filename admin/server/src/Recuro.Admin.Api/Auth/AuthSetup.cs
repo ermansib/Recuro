@@ -44,13 +44,14 @@ internal static class AuthSetup
                     jwt.MapInboundClaims = false;
                     // Keycloak in local development runs on plain http; everywhere else the issuer must be https.
                     jwt.RequireHttpsMetadata = !environment.IsDevelopment();
+                    jwt.TokenValidationParameters.ValidIssuers = LoopbackIssuers.For(options.Authority);
                     jwt.TokenValidationParameters.RoleClaimType = options.RoleClaim;
                     jwt.TokenValidationParameters.NameClaimType = "name";
                 })
                 .AddJwtBearer(ServiceScheme, jwt =>
                 {
                     jwt.Authority = options.ServiceAuthority ?? options.Authority;
-                    jwt.TokenValidationParameters.ValidIssuers = new[] { options.Authority, options.ServiceAuthority }.OfType<string>().ToArray();
+                    jwt.TokenValidationParameters.ValidIssuers = LoopbackIssuers.For(options.Authority, options.ServiceAuthority);
                     jwt.Audience = options.ServiceAudience;
                     jwt.MapInboundClaims = false;
                     jwt.RequireHttpsMetadata = !environment.IsDevelopment();

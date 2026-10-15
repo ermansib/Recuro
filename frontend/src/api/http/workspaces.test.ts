@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../contract'
-import { LOOKUP_SERVER_DOWN, SIGN_UP_SERVER_DOWN, createHttpWorkspaceApi } from './workspaces'
+import { ACCESS_REFUSED, LOOKUP_SERVER_DOWN, SIGN_UP_SERVER_DOWN, createHttpWorkspaceApi } from './workspaces'
 
 const INPUT = {
   orgName: 'Acme Corp',
@@ -84,5 +84,10 @@ describe('http access of the signed-in person', () => {
   it('passes on a refusal and reports an unreachable server as 503', async () => {
     await expect(createHttpWorkspaceApi('', vi.fn().mockResolvedValue(json({ title: 'Forbidden' }, 403))).getMyAccess('tok')).rejects.toMatchObject({ status: 403 })
     await expect(createHttpWorkspaceApi('', vi.fn().mockRejectedValue(new TypeError('down'))).getMyAccess('tok')).rejects.toMatchObject({ status: 503 })
+  })
+
+  it('explains a refused token instead of showing a bare "Unauthorized"', async () => {
+    const fetcher = vi.fn().mockResolvedValue(json({ title: 'Unauthorized', status: 401 }, 401))
+    await expect(createHttpWorkspaceApi('', fetcher).getMyAccess('tok')).rejects.toMatchObject({ status: 401, message: ACCESS_REFUSED })
   })
 })
