@@ -5,7 +5,7 @@
 //
 // Every session made here carries the workspace's tenant id, and an account whose `tenant_id` claim
 // names another workspace is refused, so one tenant's people can never open another tenant's portal.
-import { initialsOf, isValidEmail, normaliseEmail, unmetPasswordRules } from '../../domain/auth'
+import { initialsOf, isValidEmail, normaliseEmail, slugify, unmetPasswordRules } from '../../domain/auth'
 import type { AuthSession, Role, TenantConfig, User, Workspace, WorkspaceBranding } from '../../domain/types'
 import { personaFor } from '../../auth/permissions'
 import { ApiError, type AuthApi, type WorkspaceApi } from '../contract'
@@ -49,9 +49,12 @@ export function brandingOfWorkspace(ws: Workspace): WorkspaceBranding {
 export function createIdentityProviderAuthApi({ local, workspaces, provider, defaults }: IdentityProviderAuthDeps): AuthApi {
   /** Which identity owns the workspace. While the server is down, only workspaces this browser knows open. */
   async function resolve(slug: string): Promise<Resolved> {
+    // People type the workspace's name ("MB Consulting") as often as its address (mb-consulting). The server
+    // matches either; the address is tried too in case the name differs from what made the address.
     const wanted = slug.trim().toLowerCase()
+    const address = slugify(wanted)
     try {
-      const workspace = await workspaces.getWorkspace(wanted)
+      const workspace = (await workspaces.getWorkspace(wanted)) ?? (address && address !== wanted ? await workspaces.getWorkspace(address) : null)
       return workspace ? { kind: 'server', workspace } : { kind: 'local' }
     } catch (serverDown) {
       const knownHere = await local.getWorkspaceBranding(wanted).then(

@@ -99,6 +99,11 @@ describe('sign-in for workspaces saved on the server', () => {
     expect(provider.startSignIn).toHaveBeenCalledWith({ workspace: 'mb-consulting', email: 'owner@mbconsulting.example', returnTo: '/approvals' })
   })
 
+  it('finds the workspace from its name as people type it, spaces and capitals included', async () => {
+    const { api } = setup()
+    expect(await api.getWorkspaceBranding('  MB Consulting ')).toMatchObject({ slug: 'mb-consulting', signInFlow: 'redirect' })
+  })
+
   it('reopens MB Consulting from a fresh browser: the session carries the workspace and the account’s role', async () => {
     const { api } = setup()
     const { session, returnTo } = await api.completeSignIn()

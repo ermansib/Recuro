@@ -57,6 +57,29 @@ public sealed class WorkspaceSignUpTests : IDisposable
     }
 
     [Theory]
+    [InlineData("Acme Corp")]
+    [InlineData("  ACME corp ")]
+    [InlineData("ACME-CORP")]
+    public async Task The_workspace_is_found_by_its_name_as_well_as_its_address(string typed)
+    {
+        var client = _factory.ClientAs(null);
+        await client.PostAsJsonAsync("/api/v1/workspaces", Request(), Json);
+
+        var found = await client.GetFromJsonAsync<WorkspaceDto>($"/api/v1/workspaces/{Uri.EscapeDataString(typed)}", Json);
+
+        Assert.Equal("acme-corp", found!.Slug);
+    }
+
+    [Fact]
+    public async Task A_name_that_matches_nothing_is_not_found()
+    {
+        var client = _factory.ClientAs(null);
+        await client.PostAsJsonAsync("/api/v1/workspaces", Request(), Json);
+
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync(new Uri("/api/v1/workspaces/RB%20Consulting", UriKind.Relative))).StatusCode);
+    }
+
+    [Theory]
     [InlineData("weak", "owner@acme.example")]
     [InlineData("Str0ng!pass", "not-an-email")]
     public async Task Invalid_sign_ups_are_rejected_and_nothing_is_saved(string password, string email)

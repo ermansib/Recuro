@@ -31,6 +31,9 @@ public interface ITenantRepository
 
     Task<Tenant?> GetBySlugAsync(string slug, CancellationToken ct);
 
+    /// <summary>Active workspaces whose name matches, ignoring case and surrounding spaces.</summary>
+    Task<IReadOnlyList<Tenant>> ListActiveByNameAsync(string name, CancellationToken ct);
+
     Task<bool> SlugExistsAsync(string slug, CancellationToken ct);
 
     void Add(Tenant tenant);
