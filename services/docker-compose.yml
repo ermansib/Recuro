@@ -57,6 +57,8 @@ services:
       - "${KEYCLOAK_PORT:-8080}:8080"
     volumes:
       - ../admin/keycloak:/opt/keycloak/data/import:ro
+      # Recuro sign-in pages (admin/keycloak-themes/recuro), used by the recuro-portal client.
+      - ../admin/keycloak-themes:/opt/keycloak/themes:ro
 
   # Mailpit: catches every email the services send (MIT). Web UI http://localhost:8025.
   mailpit:

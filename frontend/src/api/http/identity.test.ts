@@ -96,7 +96,12 @@ describe('sign-in for workspaces saved on the server', () => {
     const { api, provider } = setup()
     expect(await api.getWorkspaceBranding('MB-Consulting')).toMatchObject({ slug: 'mb-consulting', name: 'MB Consulting', signInFlow: 'redirect' })
     expect(await api.signIn({ workspace: 'mb-consulting', email: ' owner@mbconsulting.example ', password: '', returnTo: '/approvals' })).toEqual({ status: 'redirecting' })
-    expect(provider.startSignIn).toHaveBeenCalledWith({ workspace: 'mb-consulting', email: 'owner@mbconsulting.example', returnTo: '/approvals' })
+    expect(provider.startSignIn).toHaveBeenCalledWith({
+      workspace: 'mb-consulting',
+      email: 'owner@mbconsulting.example',
+      returnTo: '/approvals',
+      brand: expect.objectContaining({ name: 'MB Consulting' }) as unknown,
+    })
   })
 
   it('finds the workspace from its name as people type it, spaces and capitals included', async () => {
@@ -190,7 +195,7 @@ describe('sign-up with the server', () => {
     const { api, workspaces, provider } = setup()
     expect(await api.registerOrganisation(SIGN_UP)).toEqual({ status: 'redirecting' })
     expect(workspaces.registerWorkspace).toHaveBeenCalledWith(expect.objectContaining({ orgName: 'MB Consulting', email: 'owner@mbconsulting.example' }))
-    expect(provider.startSignIn).toHaveBeenCalledWith({ workspace: 'mb-consulting', email: 'owner@mbconsulting.example' })
+    expect(provider.startSignIn).toHaveBeenCalledWith({ workspace: 'mb-consulting', email: 'owner@mbconsulting.example', brand: expect.objectContaining({ name: 'MB Consulting' }) as unknown })
   })
 
   it('passes on the server’s refusal and does not call it for an invalid form', async () => {

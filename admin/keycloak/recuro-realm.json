@@ -145,7 +145,8 @@
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:5173/*##http://127.0.0.1:5173/*"
+        "post.logout.redirect.uris": "http://localhost:5173/*##http://127.0.0.1:5173/*",
+        "login_theme": "recuro"
       },
       "protocolMappers": [
         {

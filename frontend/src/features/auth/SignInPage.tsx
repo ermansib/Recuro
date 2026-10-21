@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../../api/client'
 import { useDemoAccess, useWorkspaceBranding } from '../../api/hooks'
 import { homePath } from '../../auth/permissions'
@@ -16,8 +16,17 @@ import { useCompleteSignIn, type SignInRedirectState } from './useCompleteSignIn
 import { useWorkspaceParam, withWorkspace } from './useWorkspace'
 
 type MfaChallenge = Extract<SignInResult, { status: 'mfaRequired' }>
+type Reason = ReturnType<typeof useAuth>['signedOutReason']
 
-/** RCU-PLT-001: tenant-branded sign-in with email + password, SSO options and MFA for elevated roles. */
+/** The three steps people see. For workspaces on the server the password step is the identity provider's page, themed to match. */
+const STEPS = ['workspace', 'email', 'password'] as const
+type StepKey = (typeof STEPS)[number]
+type Direction = 'forward' | 'back'
+
+/**
+ * RCU-PLT-001: one card that walks through workspace → email → password, with a back link at every step.
+ * The workspace's branding (admin portal theme) applies from the email step on.
+ */
 export function SignInPage() {
   const { status, session, signedOutReason } = useAuth()
   const workspace = useWorkspaceParam()
@@ -26,27 +35,100 @@ export function SignInPage() {
   if (status === 'restoring') return <Loading />
   if (status === 'signedIn' && session) return <Navigate to={homePath(session.user.role)} replace />
 
-  if (!workspace || branding.isError) {
-    return (
-      <AuthShell>
-        <WorkspaceStep initial={workspace ?? ''} notFound={branding.isError ? branding.error : null} reason={signedOutReason} />
-      </AuthShell>
-    )
-  }
-  if (branding.isPending) return <Loading />
-
+  const chooseWorkspace = !workspace || branding.isError
   return (
-    <AuthShell branding={branding.data}>
-      {branding.data.signInFlow === 'redirect' ? (
-        <RedirectStep branding={branding.data} reason={signedOutReason} />
+    <AuthShell branding={chooseWorkspace ? undefined : branding.data}>
+      {chooseWorkspace ? (
+        <StepFrame key="workspace" direction="forward">
+          <WorkspaceStep initial={workspace ?? ''} notFound={branding.isError ? branding.error : null} reason={signedOutReason} />
+        </StepFrame>
+      ) : branding.isPending ? (
+        <FindingWorkspace />
       ) : (
-        <CredentialsStep branding={branding.data} reason={signedOutReason} />
+        <AccountSteps branding={branding.data} reason={signedOutReason} />
       )}
     </AuthShell>
   )
 }
 
-type Reason = ReturnType<typeof useAuth>['signedOutReason']
+/** Keyed by step at each use, so it re-mounts on every step change and the new step slides in from the side it logically comes from. */
+function StepFrame({ direction, leaving = false, children }: { direction: Direction; leaving?: boolean; children: ReactNode }) {
+  return (
+    <div className={`auth-step ${direction}${leaving ? ' leaving' : ''}`}>
+      {children}
+    </div>
+  )
+}
+
+function StepProgress({ current }: { current: StepKey }) {
+  const { t } = useTranslation()
+  const at = STEPS.indexOf(current)
+  return (
+    <ol className="auth-steps" aria-label={t('auth.steps.label', { n: at + 1, total: STEPS.length })}>
+      {STEPS.map((step, i) => (
+        <li key={step} className={i < at ? 'done' : i === at ? 'on' : ''} aria-current={i === at ? 'step' : undefined}>
+          <span className="auth-steps-dot" aria-hidden="true" />
+          <span className="auth-steps-name">{t(`auth.steps.${step}`)}</span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+function BackButton({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <button type="button" className="auth-back" onClick={onClick}>
+      <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+        <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      {label}
+    </button>
+  )
+}
+
+/** Who is signing in where, with a way to change it: the workspace from the email step on, the email on the password step. */
+function Identity({ workspace, email, onChangeWorkspace, onChangeEmail }: { workspace: WorkspaceBranding; email?: string; onChangeWorkspace?: () => void; onChangeEmail?: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <div className="auth-who">
+      <div className="auth-chip">
+        <span className="auth-chip-mark" aria-hidden="true">{workspace.name.trim().charAt(0).toUpperCase()}</span>
+        <span className="auth-chip-text">
+          <small>{t('auth.steps.workspace')}</small>
+          <b>{workspace.name}</b>
+        </span>
+        {onChangeWorkspace && (
+          <button type="button" className="auth-chip-change" onClick={onChangeWorkspace} aria-label={t('auth.signIn.changeWorkspace')}>
+            {t('auth.signIn.change')}
+          </button>
+        )}
+      </div>
+      {email && (
+        <div className="auth-chip">
+          <span className="auth-chip-mark person" aria-hidden="true">{email.charAt(0).toUpperCase()}</span>
+          <span className="auth-chip-text">
+            <small>{t('auth.steps.email')}</small>
+            <b>{email}</b>
+          </span>
+          {onChangeEmail && (
+            <button type="button" className="auth-chip-change" onClick={onChangeEmail} aria-label={t('auth.signIn.changeEmail')}>
+              {t('auth.signIn.change')}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SubmitButton({ busy, label, busyLabel }: { busy: boolean; label: string; busyLabel: string }) {
+  return (
+    <button type="submit" className="btn btn-primary auth-submit" disabled={busy} aria-busy={busy}>
+      {busy && <span className="auth-spinner" aria-hidden="true" />}
+      {busy ? busyLabel : label}
+    </button>
+  )
+}
 
 function SignedOutNotice({ reason, minutes }: { reason: Reason; minutes: number }) {
   const { t } = useTranslation()
@@ -54,6 +136,16 @@ function SignedOutNotice({ reason, minutes }: { reason: Reason; minutes: number 
   return (
     <div className="auth-info" role="status">
       {t(`auth.signIn.reasons.${reason}`, { minutes })}
+    </div>
+  )
+}
+
+function FindingWorkspace() {
+  const { t } = useTranslation()
+  return (
+    <div className="auth-finding" role="status">
+      <span className="auth-spinner dark" aria-hidden="true" />
+      {t('auth.signIn.findingWorkspace')}
     </div>
   )
 }
@@ -73,6 +165,7 @@ function WorkspaceStep({ initial, notFound, reason }: { initial: string; notFoun
 
   return (
     <form onSubmit={submit} noValidate>
+      <StepProgress current="workspace" />
       <h2>{t('auth.signIn.title')}</h2>
       <p className="auth-sub">{t('auth.signIn.chooseWorkspace')}</p>
       <SignedOutNotice reason={reason} minutes={DEFAULT_IDLE_MINUTES} />
@@ -99,23 +192,91 @@ function WorkspaceStep({ initial, notFound, reason }: { initial: string; notFoun
   )
 }
 
-function CredentialsStep({ branding, reason }: { branding: WorkspaceBranding; reason: Reason }) {
+/** Email, then password (or the identity provider's password page), then a second factor when the role needs one. */
+function AccountSteps({ branding, reason }: { branding: WorkspaceBranding; reason: Reason }) {
+  const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const [email, setEmail] = useState(() => params.get('email')?.trim() ?? '')
+  const [step, setStep] = useState<'email' | 'password' | 'mfa'>('email')
+  const [direction, setDirection] = useState<Direction>('forward')
+  const [challenge, setChallenge] = useState<MfaChallenge | null>(null)
+  const [leaving, setLeaving] = useState(false)
+
+  const goTo = (next: typeof step, dir: Direction) => {
+    setDirection(dir)
+    setStep(next)
+  }
+  const changeWorkspace = () => navigate('/signin?workspace=', { replace: true })
+
+  if (step === 'mfa' && challenge) {
+    return (
+      <StepFrame key="mfa" direction="forward">
+        <MfaStep challenge={challenge} onBack={() => goTo('email', 'back')} />
+      </StepFrame>
+    )
+  }
+  if (step === 'password') {
+    return (
+      <StepFrame key="password" direction={direction}>
+        <PasswordStep
+          branding={branding}
+          email={email}
+          onBack={() => goTo('email', 'back')}
+          onChallenge={(c) => {
+            setChallenge(c)
+            goTo('mfa', 'forward')
+          }}
+        />
+      </StepFrame>
+    )
+  }
+  return (
+    <StepFrame key="email" direction={direction} leaving={leaving}>
+      <EmailStep
+        branding={branding}
+        reason={reason}
+        email={email}
+        onEmail={setEmail}
+        onBack={changeWorkspace}
+        onLeaving={setLeaving}
+        onNext={() => goTo('password', 'forward')}
+        onChallenge={(c) => {
+          setChallenge(c)
+          goTo('mfa', 'forward')
+        }}
+      />
+    </StepFrame>
+  )
+}
+
+interface EmailStepProps {
+  branding: WorkspaceBranding
+  reason: Reason
+  email: string
+  onEmail: (email: string) => void
+  onBack: () => void
+  onNext: () => void
+  onLeaving: (leaving: boolean) => void
+  onChallenge: (challenge: MfaChallenge) => void
+}
+
+function EmailStep({ branding, reason, email, onEmail, onBack, onNext, onLeaving, onChallenge }: EmailStepProps) {
   const { t } = useTranslation()
+  const location = useLocation()
   const complete = useCompleteSignIn()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
+  const returnTo = (location.state as SignInRedirectState | null)?.from
+  const redirect = branding.signInFlow === 'redirect'
+  const [error, setError] = useState<string | null>(null)
   const [failure, setFailure] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
-  const [challenge, setChallenge] = useState<MfaChallenge | null>(null)
 
-  const handle = async (attempt: () => Promise<SignInResult>) => {
+  const attempt = async (run: () => Promise<SignInResult>) => {
     setBusy(true)
     setFailure(null)
     try {
-      const result = await attempt()
+      const result = await run()
       if (result.status === 'signedIn') complete(result.session)
-      else if (result.status === 'mfaRequired') setChallenge(result)
+      else if (result.status === 'mfaRequired') onChallenge(result)
     } catch (e) {
       setFailure(e)
     } finally {
@@ -123,41 +284,44 @@ function CredentialsStep({ branding, reason }: { branding: WorkspaceBranding; re
     }
   }
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault()
-    const next = {
-      email: isValidEmail(email) ? undefined : t('auth.errors.email'),
-      password: password ? undefined : t('auth.errors.password'),
+    if (!isValidEmail(email)) return setError(t('auth.errors.email'))
+    setError(null)
+    if (!redirect) return onNext()
+    setFailure(null)
+    setBusy(true)
+    onLeaving(true)
+    try {
+      // On success the browser leaves for the password page, so `busy` stays on.
+      await api.signIn({ workspace: branding.slug, email, password: '', returnTo })
+    } catch (err) {
+      setFailure(err)
+      setBusy(false)
+      onLeaving(false)
     }
-    setErrors(next)
-    if (next.email || next.password) return
-    void handle(() => api.signIn({ workspace: branding.slug, email, password }))
   }
-
-  if (challenge) return <MfaStep challenge={challenge} onBack={() => setChallenge(null)} />
 
   return (
     <>
-      <form onSubmit={submit} noValidate>
+      <form onSubmit={(e) => void submit(e)} noValidate>
+        <BackButton onClick={onBack} label={t('auth.signIn.back')} />
+        <StepProgress current="email" />
         <h2>{t('auth.signIn.subtitle', { workspace: branding.name })}</h2>
+        <p className="auth-sub">{t('auth.signIn.emailSub')}</p>
+        <Identity workspace={branding} onChangeWorkspace={onBack} />
         <SignedOutNotice reason={reason} minutes={branding.sessionIdleMinutes} />
         <FormError error={failure} />
-        <AuthField label={t('auth.fields.email')} type="email" value={email} onChange={setEmail} error={errors.email} autoComplete="username" autoFocus />
-        <PasswordField label={t('auth.fields.password')} value={password} onChange={setPassword} error={errors.password} autoComplete="current-password" />
-        <div className="auth-row">
-          <Link to={withWorkspace('/forgot-password', branding.slug)}>{t('auth.signIn.forgot')}</Link>
-        </div>
-        <button type="submit" className="btn btn-primary auth-submit" disabled={busy}>
-          {busy ? t('auth.signIn.submitting') : t('auth.signIn.submit')}
-        </button>
+        <AuthField label={t('auth.fields.email')} type="email" value={email} onChange={onEmail} error={error} autoComplete="username" inputMode="email" autoFocus />
+        <SubmitButton busy={busy} label={t('auth.signIn.continue')} busyLabel={t('auth.signIn.continuing')} />
       </form>
 
-      {branding.ssoProviders.length > 0 && (
+      {!redirect && branding.ssoProviders.length > 0 && (
         <>
           <div className="auth-divider"><span>{t('auth.signIn.or')}</span></div>
           <div className="auth-sso">
             {branding.ssoProviders.map((p: SsoProvider) => (
-              <button key={p} type="button" className="btn btn-ghost" disabled={busy} onClick={() => void handle(() => api.signInWithSso(branding.slug, p))}>
+              <button key={p} type="button" className="btn btn-ghost" disabled={busy} onClick={() => void attempt(() => api.signInWithSso(branding.slug, p))}>
                 {t(`auth.signIn.sso.${p}`)}
               </button>
             ))}
@@ -167,68 +331,66 @@ function CredentialsStep({ branding, reason }: { branding: WorkspaceBranding; re
 
       <div className="auth-alt">
         <p>{t('auth.signIn.staffNote')}</p>
-        <p>
-          {t('auth.signIn.candidatePrompt', { workspace: branding.name })}{' '}
-          <Link to={withWorkspace('/signup/candidate', branding.slug)}>{t('auth.signIn.candidateLink')}</Link>
-        </p>
-        <p>
-          <Link to="/signin?workspace=" replace>
-            {t('auth.signIn.switchWorkspace', { workspace: branding.name })}
-          </Link>
-        </p>
+        {!redirect && (
+          <p>
+            {t('auth.signIn.candidatePrompt', { workspace: branding.name })}{' '}
+            <Link to={withWorkspace('/signup/candidate', branding.slug)}>{t('auth.signIn.candidateLink')}</Link>
+          </p>
+        )}
       </div>
 
-      <DemoPersonas workspace={branding.slug} onPick={(role) => void handle(async () => ({ status: 'signedIn', session: await api.demoSignIn(branding.slug, role) }))} />
+      {!redirect && (
+        <DemoPersonas workspace={branding.slug} onPick={(role) => void attempt(async () => ({ status: 'signedIn', session: await api.demoSignIn(branding.slug, role) }))} />
+      )}
     </>
   )
 }
 
-/** Workspaces saved on the server: the identity provider (Keycloak) asks for the password on its own page. */
-function RedirectStep({ branding, reason }: { branding: WorkspaceBranding; reason: Reason }) {
+function PasswordStep({ branding, email, onBack, onChallenge }: { branding: WorkspaceBranding; email: string; onBack: () => void; onChallenge: (challenge: MfaChallenge) => void }) {
   const { t } = useTranslation()
-  const location = useLocation()
-  const returnTo = (location.state as SignInRedirectState | null)?.from
-  const [email, setEmail] = useState('')
+  const complete = useCompleteSignIn()
+  const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [failure, setFailure] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
+  // Re-mounts the field after a refused attempt, so it is empty and focused for the next try.
+  const [attempt, setAttempt] = useState(0)
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!isValidEmail(email)) return setError(t('auth.errors.email'))
+    if (!password) return setError(t('auth.errors.password'))
     setError(null)
     setFailure(null)
     setBusy(true)
     try {
-      // On success the browser leaves for the sign-in page, so `busy` stays on.
-      await api.signIn({ workspace: branding.slug, email, password: '', returnTo })
+      const result = await api.signIn({ workspace: branding.slug, email, password })
+      if (result.status === 'signedIn') complete(result.session)
+      else if (result.status === 'mfaRequired') onChallenge(result)
     } catch (err) {
       setFailure(err)
+      setPassword('')
+      setAttempt((n) => n + 1)
+    } finally {
       setBusy(false)
     }
   }
 
   return (
-    <>
-      <form onSubmit={(e) => void submit(e)} noValidate>
-        <h2>{t('auth.signIn.subtitle', { workspace: branding.name })}</h2>
-        <SignedOutNotice reason={reason} minutes={branding.sessionIdleMinutes} />
-        <FormError error={failure} />
-        <AuthField label={t('auth.fields.email')} type="email" value={email} onChange={setEmail} error={error} autoComplete="username" autoFocus />
-        <p className="auth-sub">{t('auth.signIn.redirectNote')}</p>
-        <button type="submit" className="btn btn-primary auth-submit" disabled={busy}>
-          {busy ? t('auth.signIn.redirecting') : t('auth.signIn.continueToSignIn')}
-        </button>
-      </form>
-      <div className="auth-alt">
-        <p>{t('auth.signIn.staffNote')}</p>
-        <p>
-          <Link to="/signin?workspace=" replace>
-            {t('auth.signIn.switchWorkspace', { workspace: branding.name })}
-          </Link>
-        </p>
+    <form onSubmit={(e) => void submit(e)} noValidate>
+      <BackButton onClick={onBack} label={t('auth.signIn.back')} />
+      <StepProgress current="password" />
+      <h2>{t('auth.signIn.passwordTitle')}</h2>
+      <p className="auth-sub">{t('auth.signIn.passwordSub')}</p>
+      <Identity workspace={branding} email={email} onChangeEmail={onBack} />
+      {/* Lets password managers pair the password with the account. */}
+      <input className="sr-only" type="email" name="username" autoComplete="username" value={email} readOnly tabIndex={-1} aria-hidden="true" />
+      <FormError error={failure} />
+      <PasswordField key={attempt} label={t('auth.fields.password')} value={password} onChange={setPassword} error={error} autoComplete="current-password" autoFocus />
+      <div className="auth-row">
+        <Link to={withWorkspace('/forgot-password', branding.slug)}>{t('auth.signIn.forgot')}</Link>
       </div>
-    </>
+      <SubmitButton busy={busy} label={t('auth.signIn.submit')} busyLabel={t('auth.signIn.submitting')} />
+    </form>
   )
 }
 
@@ -261,7 +423,7 @@ function MfaStep({ challenge, onBack }: { challenge: MfaChallenge; onBack: () =>
       {features.demoPersonas && challenge.demoCode && <div className="auth-info">{t('auth.mfa.demoCode', { code: challenge.demoCode })}</div>}
       <FormError error={failure} />
       <AuthField label={t('auth.fields.code')} value={code} onChange={setCode} error={error} inputMode="numeric" autoComplete="one-time-code" maxLength={6} autoFocus />
-      <button type="submit" className="btn btn-primary auth-submit" disabled={busy}>{t('auth.mfa.submit')}</button>
+      <SubmitButton busy={busy} label={t('auth.mfa.submit')} busyLabel={t('auth.signIn.submitting')} />
       <button type="button" className="btn btn-ghost auth-submit" onClick={onBack}>{t('auth.mfa.back')}</button>
     </form>
   )

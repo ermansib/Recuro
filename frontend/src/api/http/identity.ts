@@ -135,7 +135,8 @@ export function createIdentityProviderAuthApi({ local, workspaces, provider, def
       const resolved = await resolve(input.workspace)
       if (resolved.kind === 'local') return local.signIn(input)
       try {
-        await provider.startSignIn({ workspace: resolved.workspace.slug, email: input.email.trim(), returnTo: input.returnTo })
+        const { slug, name, careersTagline } = resolved.workspace
+        await provider.startSignIn({ workspace: slug, email: input.email.trim(), returnTo: input.returnTo, brand: { name, tagline: careersTagline } })
       } catch {
         throw new ApiError(503, SIGN_IN_DOWN)
       }
@@ -185,7 +186,8 @@ export function createIdentityProviderAuthApi({ local, workspaces, provider, def
       const saved = await workspaces.registerWorkspace({ ...input, email })
       // The owner signs in once with the password they just chose; Keycloak then keeps them signed in.
       try {
-        await provider.startSignIn({ workspace: saved.workspace.slug, email })
+        const { slug, name, careersTagline } = saved.workspace
+        await provider.startSignIn({ workspace: slug, email, brand: { name, tagline: careersTagline } })
       } catch {
         throw new ApiError(
           503,

@@ -100,6 +100,26 @@ without them.
 Workspace admins of a suspended workspace are refused. To add a workspace admin, create the user in Keycloak,
 give them the `tenant-admin` role, and set `tenant_id` to the workspace's id from the platform console.
 
+### Main portal sign-in pages (Recuro theme)
+
+The main portal asks for the workspace and the email in its own card, then hands over to Keycloak for the
+password. Keycloak shows that step with the **Recuro login theme** in `keycloak-themes/recuro`, set only on
+the `recuro-portal` client (`login_theme` attribute), so it reads as the next step of the same card: the
+workspace's name, colours and light/dark mode, the email as a chip with "Change", a back link to the
+portal, show/hide password and inline errors. The portal sends the look as the `recuro_brand` query
+parameter (`frontend/src/api/http/signInBrand.ts`); the theme accepts only plain colours and sets text as
+text. The password itself only ever goes to Keycloak (authorization code + PKCE, no password grant).
+
+Both compose files mount the theme at `/opt/keycloak/themes`. On a Keycloak that is already running, copy
+it in and point the client at it without recreating the container (start-dev keeps its data inside it):
+
+```bash
+docker cp admin/keycloak-themes/recuro <keycloak-container>:/opt/keycloak/themes/recuro
+# Keycloak admin console → recuro realm → Clients → recuro-portal → Settings → Login settings → Login theme: recuro
+```
+
+If the theme is missing, Keycloak falls back to its default page and sign-in still works.
+
 ## Workspace sign-up
 
 The main portal's "Create workspace" page calls `POST /api/v1/workspaces` (anonymous, rate limited per IP,
