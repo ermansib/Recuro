@@ -7,6 +7,7 @@
 // validate every token they receive.
 import { UserManager, WebStorageStateStore, type User as OidcUser } from 'oidc-client-ts'
 import { identityProvider as settings } from '../../config/identity'
+import { captureSignInLook, encodeSignInBrand, SIGN_IN_BRAND_PARAM } from './signInBrand'
 
 /** Who the identity provider signed in, read from its tokens. */
 export interface IdentityAccount {
@@ -29,8 +30,11 @@ export interface IdentityAccount {
 }
 
 export interface IdentityProvider {
-  /** Sends the browser to the provider's sign-in page. Resolves only if navigation is blocked. */
-  startSignIn(request: { workspace: string; email?: string; returnTo?: string }): Promise<void>
+  /**
+   * Sends the browser to the provider's sign-in page. Resolves only if navigation is blocked. With `brand`,
+   * the page shows the workspace's name and the portal's current colours (see signInBrand.ts).
+   */
+  startSignIn(request: { workspace: string; email?: string; returnTo?: string; brand?: { name: string; tagline: string } }): Promise<void>
   /** Reads the provider's answer on the callback page. */
   finishSignIn(): Promise<IdentityAccount>
   /** The signed-in account, renewing expired tokens with the refresh token; `null` when there is none. */
@@ -123,10 +127,13 @@ export function createKeycloakIdentityProvider(origin: string = window.location.
     }))
 
   return {
-    startSignIn: ({ workspace, email, returnTo }) =>
+    startSignIn: ({ workspace, email, returnTo, brand }) =>
       users().signinRedirect({
         login_hint: email || undefined,
         state: { workspace, returnTo: returnTo ?? null } satisfies SignInState,
+        extraQueryParams: brand
+          ? { [SIGN_IN_BRAND_PARAM]: encodeSignInBrand({ v: 1, slug: workspace, ...brand, ...captureSignInLook() }) }
+          : undefined,
       }),
 
     finishSignIn: async () => {

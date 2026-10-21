@@ -23,6 +23,8 @@ services:
       - "8080:8080"
     volumes:
       - ./keycloak:/opt/keycloak/data/import:ro
+      # Recuro sign-in pages (admin/keycloak-themes/recuro), used by the recuro-portal client.
+      - ./keycloak-themes:/opt/keycloak/themes:ro
 
 volumes:
   recuro-admin-pg:

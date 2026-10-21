@@ -58,7 +58,11 @@ describe('sign-in and sign-out (RCU-PLT-001)', () => {
     expect(await screen.findByRole('heading', { name: 'Sign in to Aurora Housing Finance' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue with company SSO (SAML)' })).toBeInTheDocument()
 
+    expect(screen.queryByLabelText('Password')).not.toBeInTheDocument()
     await user.type(screen.getByLabelText('Email'), 'a.sharma@aurora-demo.example')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+    expect(await screen.findByRole('heading', { name: 'Enter your password' })).toBeInTheDocument()
+    expect(screen.getByText('a.sharma@aurora-demo.example')).toBeInTheDocument()
     await user.type(screen.getByLabelText('Password'), DEMO_PASSWORD)
     await user.click(screen.getByRole('button', { name: 'Sign in' }))
 
@@ -70,9 +74,36 @@ describe('sign-in and sign-out (RCU-PLT-001)', () => {
     const user = userEvent.setup()
     renderWithProviders(<App />, { signedIn: false, route: '/signin?workspace=aurora' })
     await user.type(await screen.findByLabelText('Email'), 'a.sharma@aurora-demo.example')
-    await user.type(screen.getByLabelText('Password'), 'wrong')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.type(await screen.findByLabelText('Password'), 'wrong')
     await user.click(screen.getByRole('button', { name: 'Sign in' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('That email and password don’t match')
+    expect(screen.getByLabelText('Password')).toHaveValue('')
+    expect(screen.getByLabelText('Password')).toHaveFocus()
+  })
+
+  it('checks the email before asking for the password, and goes back with the email kept', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<App />, { signedIn: false, route: '/signin?workspace=aurora' })
+    await user.type(await screen.findByLabelText('Email'), 'not-an-email')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+    expect(screen.getByText('Enter a valid email address.')).toBeInTheDocument()
+
+    await user.clear(screen.getByLabelText('Email'))
+    await user.type(screen.getByLabelText('Email'), 'a.sharma@aurora-demo.example')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.click(await screen.findByRole('button', { name: 'Sign in' }))
+    expect(screen.getByText('Enter your password.')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Use a different email' }))
+    expect(await screen.findByLabelText('Email')).toHaveValue('a.sharma@aurora-demo.example')
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    expect(await screen.findByLabelText('Workspace')).toBeInTheDocument()
+  })
+
+  it('opens on the email step with the address filled in when coming back from the password page', async () => {
+    renderWithProviders(<App />, { signedIn: false, route: '/signin?workspace=aurora&email=a.sharma%40aurora-demo.example' })
+    expect(await screen.findByLabelText('Email')).toHaveValue('a.sharma@aurora-demo.example')
   })
 
   it('signs out from the account menu and returns to sign-in', async () => {
@@ -103,7 +134,13 @@ describe('sign-in and sign-out (RCU-PLT-001)', () => {
     await user.type(screen.getByLabelText('Password'), 'Str0ng!pass')
     await user.click(screen.getByRole('checkbox'))
     await user.click(screen.getByRole('button', { name: 'Create workspace' }))
-    await vi.waitFor(() => expect(keycloak.startSignIn).toHaveBeenCalledWith({ workspace: 'northwind-talent', email: 'j.doe@northwind.example' }))
+    await vi.waitFor(() =>
+      expect(keycloak.startSignIn).toHaveBeenCalledWith({
+        workspace: 'northwind-talent',
+        email: 'j.doe@northwind.example',
+        brand: { name: 'Northwind Talent', tagline: 'Find your next role through us' },
+      }),
+    )
     expect(screen.getByRole('button', { name: 'Creating workspace…' })).toBeDisabled()
   })
 
@@ -132,10 +169,16 @@ describe('sign-in for a workspace saved on the server', () => {
     expect(await screen.findByRole('heading', { name: 'Sign in to Northwind Talent' })).toBeInTheDocument()
     expect(screen.queryByLabelText('Password')).not.toBeInTheDocument()
     await user.type(screen.getByLabelText('Email'), 'j.doe@northwind.example')
-    await user.click(screen.getByRole('button', { name: 'Continue to sign in' }))
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
     await vi.waitFor(() =>
-      expect(keycloak.startSignIn).toHaveBeenCalledWith({ workspace: 'northwind-talent', email: 'j.doe@northwind.example', returnTo: undefined }),
+      expect(keycloak.startSignIn).toHaveBeenCalledWith({
+        workspace: 'northwind-talent',
+        email: 'j.doe@northwind.example',
+        returnTo: undefined,
+        brand: { name: 'Northwind Talent', tagline: 'Find your next role through us' },
+      }),
     )
+    expect(screen.getByRole('button', { name: 'One moment…' })).toBeDisabled()
   })
 
   it('opens the workspace when Keycloak sends the person back', async () => {
@@ -180,7 +223,8 @@ describe('role landing and second factor', () => {
     const user = userEvent.setup()
     renderWithProviders(<App />, { signedIn: false, route: '/signin?workspace=aurora' })
     await user.type(await screen.findByLabelText('Email'), 'k.iyer@aurora-demo.example')
-    await user.type(screen.getByLabelText('Password'), DEMO_PASSWORD)
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+    await user.type(await screen.findByLabelText('Password'), DEMO_PASSWORD)
     await user.click(screen.getByRole('button', { name: 'Sign in' }))
     expect(await screen.findByRole('heading', { name: 'Check your email' })).toBeInTheDocument()
     const code = screen.getByText(/^Demo code: \d{6}$/).textContent?.slice(-6) ?? ''

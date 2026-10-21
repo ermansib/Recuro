@@ -1,0 +1,152 @@
+/* Recuro sign-in theme for Keycloak. Mirrors the portal's sign-in card (frontend/src/styles/app.css,
+   "Sign-in steps") so the password page reads as the next step of the same card. Default colours are the
+   Recuro Classic tokens (frontend/src/styles/tokens.css); js/recuro.js overrides them with the workspace's. */
+:root{
+  --navy:#1E2A5E; --navy-dk:#141C42; --navy-lt:#3B4BC8; --navy-tint:#E9EBFB; --on-navy:#fff; --cy:#22D3EE;
+  --gold:#7C3AED; --gold-lt:#F1EDFE; --accent-line:#E4DBFB; --accent-tx:#5B21B6;
+  --bar:#1E2A5E; --bar-dk:#141C42; --bar-lt:#3B4BC8; --on-bar:#fff; --on-bar-muted:#C8D6E8;
+  --red:#D7402F; --red-lt:#FDECEA; --red-tx:#A3271B; --green:#2E9E5B; --green-lt:#E7F6EE;
+  --amber-lt:#FDF5E6; --amber-tx:#9C6F12;
+  --bg:#F4F6FB; --card:#ffffff; --line:#E2E8F0; --surface-2:#F8FAFC; --surface-3:#EEF2F7; --hover:#F6F7FE; --track:#EDF1F6;
+  --txt:#1E293B; --txt-2:#475569; --muted:#64748B; --faint:#8A9BB0;
+  --shadow:0 1px 3px rgba(15,23,42,.08),0 4px 14px rgba(15,23,42,.06);
+  --radius:12px;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --navy:#A5B4FC; --navy-dk:#6E78A8; --navy-lt:#C7D0FD; --navy-tint:#1F2850; --on-navy:#0B1020;
+  --gold:#A78BFA; --gold-lt:#251D45; --accent-line:#3E3270; --accent-tx:#DDD6FE;
+  --bar:#151C36; --bar-dk:#0B1020; --bar-lt:#232C52; --on-bar:#F1F5F9; --on-bar-muted:#B6C2D6;
+  --red:#F87171; --red-lt:#3A1C22; --red-tx:#FCA5A5; --green:#4ADE80; --green-lt:#15301F;
+  --amber-lt:#33270F; --amber-tx:#FCD34D;
+  --bg:#0B1020; --card:#151C36; --line:#2A3458; --surface-2:#1A2240; --surface-3:#1F2848; --hover:#212A4C; --track:#2A3456;
+  --txt:#E5E7EB; --txt-2:#CBD5E1; --muted:#A0AEC4; --faint:#8C9AB3;
+  --shadow:0 1px 3px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.3);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none !important}
+body{font-family:"Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.45}
+button{font-family:inherit;cursor:pointer}
+a{color:var(--navy-lt);font-weight:600;text-decoration:none}
+a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+.rc-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+
+/* Split layout */
+.rc-shell{min-height:100vh;display:grid;grid-template-columns:minmax(280px,1fr) minmax(360px,520px)}
+.rc-brand{background:linear-gradient(140deg,var(--bar-dk),var(--bar) 60%,var(--bar-lt));color:var(--on-bar);padding:48px 44px;display:flex;flex-direction:column;justify-content:space-between;gap:32px;position:relative;overflow:hidden}
+.rc-brand::after{content:"";position:absolute;right:-90px;bottom:-90px;width:300px;height:300px;border-radius:50%;background:rgba(124,58,237,.22)}
+.rc-brand>*{position:relative;z-index:1}
+.rc-brand h1{font-size:30px;line-height:1.2;max-width:460px;letter-spacing:-.4px}
+.rc-brand ul{margin-top:22px;padding-left:18px;color:var(--on-bar-muted);font-size:14px;display:flex;flex-direction:column;gap:8px}
+.rc-tag{color:#C4B5FD;font-size:11px;letter-spacing:2.5px;font-weight:700;text-transform:uppercase;margin-bottom:10px}
+.rc-powered{display:flex;align-items:center;gap:12px;color:var(--on-bar-muted);font-size:12px}
+.rc-logo{display:flex;align-items:center;gap:10px}
+.rc-wordmark{line-height:1}
+.rc-wordmark div{font-size:21px;font-weight:800;letter-spacing:-.8px;color:#fff}
+.rc-wordmark span{background:linear-gradient(90deg,#A78BFA,#22D3EE);-webkit-background-clip:text;background-clip:text;color:transparent}
+.rc-wordmark small{display:block;font-size:7px;letter-spacing:2.4px;color:#8FA3BF;margin-top:2px}
+.rc-main{display:flex;align-items:center;justify-content:center;padding:36px 24px;background:var(--bg)}
+
+/* Card */
+.rc-card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px 28px 24px;overflow:hidden}
+.rc-step{display:flex;flex-direction:column;gap:14px;animation:rcStepIn .32s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rcStepIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+.rc-card h2{font-size:20px;color:var(--navy);margin-bottom:-8px}
+.rc-sub{font-size:13px;color:var(--muted)}
+.rc-back{align-self:flex-start;display:inline-flex;align-items:center;gap:4px;color:var(--muted);font-size:12.5px;font-weight:600;padding:4px 8px 4px 2px;margin:-6px 0 -4px -2px;border-radius:6px}
+.rc-back:hover{color:var(--navy);background:var(--hover);text-decoration:none}
+
+/* Progress */
+.rc-steps{list-style:none;display:flex;gap:6px;margin-bottom:4px}
+.rc-steps li{flex:1;display:flex;flex-direction:column;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--faint)}
+.rc-steps-dot{height:4px;border-radius:4px;background:var(--track);overflow:hidden;position:relative}
+.rc-steps-dot::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--navy),var(--gold));transform:scaleX(0);transform-origin:left}
+.rc-steps li.done .rc-steps-dot::after{transform:scaleX(1)}
+.rc-steps li.on .rc-steps-dot::after{animation:rcFill .45s cubic-bezier(.2,.8,.2,1) .1s both}
+@keyframes rcFill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.rc-steps li.on{color:var(--navy)}
+.rc-steps li.done{color:var(--muted)}
+
+/* Who is signing in where */
+.rc-who{display:flex;flex-direction:column;gap:8px}
+.rc-who:empty{display:none}
+.rc-chip{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);min-width:0}
+.rc-chip-mark{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:13px;background:var(--navy);color:var(--on-navy)}
+.rc-chip-mark.person{border-radius:50%;background:var(--gold-lt);color:var(--accent-tx)}
+.rc-chip-text{display:flex;flex-direction:column;min-width:0;flex:1}
+.rc-chip-text small{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--faint)}
+.rc-chip-text b{font-size:13.5px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc-chip-change{font-weight:700;font-size:12px;padding:6px 8px;border-radius:7px}
+.rc-chip-change:hover{background:var(--hover);text-decoration:none}
+
+/* Forms (also used by Keycloak's base pages through theme.properties) */
+.rc-form{display:flex;flex-direction:column;gap:14px}
+.rc-group{display:flex;flex-direction:column;gap:6px}
+.rc-label,.rc-group label{font-size:12px;font-weight:700;color:var(--navy)}
+.rc-input,.rc-group input[type=text],.rc-group input[type=email],.rc-group input[type=password],.rc-group input[type=tel],.rc-group select,.rc-group textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:14px;font-family:inherit;background:var(--card);color:var(--txt);transition:border-color .15s,box-shadow .15s}
+.rc-input:focus,.rc-group input:focus,.rc-group select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-lt)}
+.rc-err .rc-input,.rc-input[aria-invalid=true]{border-color:var(--red);background:var(--red-lt)}
+.rc-err .rc-input:focus,.rc-input[aria-invalid=true]:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt)}
+.rc-field-error{font-size:12px;color:var(--red-tx);font-weight:600}
+.rc-help{font-size:11px;color:var(--muted)}
+.rc-input-group{position:relative}
+.rc-input-group .rc-input{padding-right:44px}
+.rc-pw-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:none;background:transparent;border-radius:6px;color:var(--muted);display:grid;place-items:center}
+.rc-pw-toggle:hover{background:var(--surface-3);color:var(--navy)}
+.rc-eye{width:18px;height:18px;display:block;background:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E") center/contain no-repeat}
+.rc-eye.rc-eye-off{
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M4 4l16 16'/%3E%3C/svg%3E");
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M4 4l16 16'/%3E%3C/svg%3E")}
+.rc-row,.rc-options,.rc-settings{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px;margin-top:-4px}
+.rc-row>a:only-child{margin-left:auto}
+.rc-check,.rc-options label{display:inline-flex;align-items:center;gap:6px;color:var(--txt-2);font-size:12.5px;font-weight:500}
+.rc-buttons{display:flex;flex-direction:column;gap:8px}
+
+/* Buttons */
+.rc-btn,input.rc-btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:none;border-radius:10px;padding:12px 16px;font-size:14px;font-weight:600;font-family:inherit;transition:.15s;cursor:pointer;text-decoration:none}
+.rc-btn:hover{text-decoration:none}
+.rc-btn-primary{background:var(--navy);color:var(--on-navy)}
+.rc-btn-primary:hover{background:var(--navy-lt)}
+.rc-btn-ghost{background:var(--card);border:1px solid var(--line);color:var(--txt)}
+.rc-btn-ghost:hover{border-color:var(--navy);color:var(--navy)}
+.rc-btn-block{width:100%}
+.rc-btn:disabled,.rc-btn[aria-busy=true]{opacity:.7;cursor:progress}
+.rc-link-button{border:none;background:none;color:var(--navy-lt);font-weight:600;font-size:12.5px;padding:0}
+.rc-spinner{width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:rcSpin .7s linear infinite;flex:none}
+@keyframes rcSpin{to{transform:rotate(360deg)}}
+
+/* Messages */
+.rc-alert{border-radius:8px;padding:10px 12px;font-size:12.5px;background:var(--gold-lt);color:var(--accent-tx)}
+.rc-alert-error{background:var(--red-lt);color:var(--red-tx)}
+.rc-alert-success{background:var(--green-lt);color:var(--green)}
+.rc-alert-warning{background:var(--amber-lt);color:var(--amber-tx)}
+.rc-alt{font-size:12.5px;color:var(--muted)}
+.rc-divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:11.5px;margin:4px 0 2px}
+.rc-divider::before,.rc-divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.rc-social{display:flex;flex-direction:column;gap:8px}
+
+/* One-time code and authenticator lists on Keycloak's base pages */
+.rc-otp-list,.rc-select-list{display:flex;flex-direction:column;gap:8px}
+.rc-select-item{display:flex;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;color:var(--txt)}
+.rc-select-item:hover{border-color:var(--navy);text-decoration:none}
+
+@media(max-width:900px){
+  .rc-shell{grid-template-columns:1fr}
+  .rc-brand{padding:28px 20px}
+  .rc-brand h1{font-size:22px}
+  .rc-brand ul{display:none}
+}
+@media(max-width:480px){
+  .rc-main{padding:20px 16px}
+  .rc-card{padding:22px 18px}
+}
+@media(prefers-reduced-motion:reduce){
+  .rc-step,.rc-steps li.on .rc-steps-dot::after{animation:none}
+  .rc-steps li.on .rc-steps-dot::after{transform:scaleX(1)}
+  .rc-spinner{animation-duration:2s}
+}

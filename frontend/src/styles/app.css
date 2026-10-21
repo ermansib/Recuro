@@ -513,8 +513,8 @@ button.n-item.unread{background:var(--gold-lt)}
 .auth-demo .rm-item span{display:block;margin:2px 0 0}
 .pw-wrap{position:relative}
 .pw-wrap input{padding-right:42px !important}
-.pw-toggle{position:absolute;right:6px;top:27px;width:32px;height:32px;border:none;background:transparent;border-radius:6px;font-size:15px}
-.pw-toggle:hover{background:var(--surface-3)}
+.pw-toggle{position:absolute;right:6px;top:25px;width:32px;height:32px;border:none;background:transparent;border-radius:6px;color:var(--muted);display:grid;place-items:center}
+.pw-toggle:hover{background:var(--surface-3);color:var(--navy)}
 .pw-rules{font-size:11.5px;color:var(--muted);margin-top:-6px}
 .pw-rules ul{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;margin-top:4px}
 .pw-rules li.ok{color:var(--green);font-weight:600}
@@ -561,3 +561,46 @@ button.n-item.unread{background:var(--gold-lt)}
 .theme-sw.on-page label.on{background:var(--navy);color:var(--on-navy)}
 .auth-main{position:relative}
 .auth-theme{position:absolute;top:16px;right:16px}
+
+/* ===== Sign-in steps: workspace → email → password in one card (RCU-PLT-001) =====
+   admin/keycloak/themes/recuro mirrors these rules for the identity provider's password page. */
+.auth-card{overflow:hidden}
+.auth-card .field input{padding:11px 12px;font-size:14px;border-radius:10px;transition:border-color .15s,box-shadow .15s}
+.auth-card .field input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-lt)}
+.auth-card .field.err input:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt)}
+.auth-card .pw-toggle{top:27px}
+.auth-submit{display:inline-flex;align-items:center;justify-content:center;gap:9px;border-radius:10px;font-size:14px;padding:12px 16px}
+.auth-step form>h2{margin-bottom:-8px}
+.auth-step{animation:authStepIn .32s cubic-bezier(.2,.8,.2,1) both}
+.auth-step.back{animation-name:authStepBack}
+.auth-step.leaving{animation:authStepOut .22s ease forwards;pointer-events:none}
+@keyframes authStepIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes authStepBack{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+@keyframes authStepOut{to{opacity:.35;transform:translateX(-18px)}}
+.auth-back{align-self:flex-start;display:inline-flex;align-items:center;gap:4px;border:none;background:none;color:var(--muted);font-size:12.5px;font-weight:600;padding:4px 8px 4px 2px;margin:-6px 0 -4px -2px;border-radius:6px}
+.auth-back:hover{color:var(--navy);background:var(--hover)}
+.auth-steps{list-style:none;display:flex;gap:6px;margin-bottom:4px}
+.auth-steps li{flex:1;display:flex;flex-direction:column;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--faint)}
+.auth-steps-dot{height:4px;border-radius:4px;background:var(--track);overflow:hidden;position:relative}
+.auth-steps-dot::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--navy),var(--gold));transform:scaleX(0);transform-origin:left;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.auth-steps li.done .auth-steps-dot::after,.auth-steps li.on .auth-steps-dot::after{transform:scaleX(1)}
+.auth-steps li.on{color:var(--navy)}
+.auth-steps li.done{color:var(--muted)}
+.auth-who{display:flex;flex-direction:column;gap:8px}
+.auth-chip{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);min-width:0}
+.auth-chip-mark{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:13px;background:var(--navy);color:var(--on-navy)}
+.auth-chip-mark.person{border-radius:50%;background:var(--gold-lt);color:var(--accent-tx)}
+.auth-chip-text{display:flex;flex-direction:column;min-width:0;flex:1}
+.auth-chip-text small{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--faint)}
+.auth-chip-text b{font-size:13.5px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.auth-chip-change{border:none;background:none;color:var(--navy-lt);font-weight:700;font-size:12px;padding:6px 8px;border-radius:7px}
+.auth-chip-change:hover{background:var(--hover)}
+.auth-spinner{width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:authSpin .7s linear infinite;flex:none}
+.auth-spinner.dark{color:var(--navy);width:20px;height:20px}
+@keyframes authSpin{to{transform:rotate(360deg)}}
+.auth-finding{display:flex;align-items:center;justify-content:center;gap:12px;min-height:220px;color:var(--muted);font-size:13.5px}
+@media(prefers-reduced-motion:reduce){
+  .auth-step,.auth-step.back,.auth-step.leaving{animation:none}
+  .auth-steps-dot::after{transition:none}
+  .auth-spinner{animation-duration:2s}
+}
