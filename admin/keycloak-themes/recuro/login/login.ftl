@@ -1,6 +1,8 @@
 <#-- The password step of the portal's sign-in card (RCU-PLT-001). The portal has already asked for the
      workspace and the email (sent here as login_hint), so this page shows both as chips with a way back,
-     and asks only for the password. Opened without an email, it asks for both. -->
+     and asks only for the password. Opened without an email, the same card asks for the email first and
+     then the password (js/recuro.js switches the steps in place, no second page); without JavaScript both
+     fields show together. -->
 <#import "template.ftl" as layout>
 <#import "passkeys.ftl" as passkeys>
 <#assign credentialsError = messagesPerField.existsError('username','password')>
@@ -11,13 +13,25 @@
             <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             ${msg("recuroBack")}
         </a>
-        <ol class="rc-steps" aria-label="${msg('recuroStepsLabel')}">
-            <li class="done"><span class="rc-steps-dot" aria-hidden="true"></span><span>${msg("recuroStepWorkspace")}</span></li>
-            <li class="done"><span class="rc-steps-dot" aria-hidden="true"></span><span>${msg("recuroStepEmail")}</span></li>
-            <li class="on" aria-current="step"><span class="rc-steps-dot" aria-hidden="true"></span><span>${msg("recuroStepPassword")}</span></li>
-        </ol>
-        <h2 id="kc-page-title">${msg("loginAccountTitle")}</h2>
-        <p class="rc-sub">${msg("recuroPasswordSub")}</p>
+        <#if knownEmail>
+            <ol class="rc-steps" aria-label="${msg('recuroStepsLabel')}">
+                <#-- The workspace step only shows when the portal sent the workspace along (js/recuro.js). -->
+                <li class="done" data-brand-only hidden><span class="rc-steps-dot" aria-hidden="true"></span><span>${msg("recuroStepWorkspace")}</span></li>
+                <li class="done"><span class="rc-steps-dot" aria-hidden="true"></span><span>${msg("recuroStepEmail")}</span></li>
+                <li class="on" aria-current="step"><span class="rc-steps-dot" aria-hidden="true"></span><span>${msg("recuroStepPassword")}</span></li>
+            </ol>
+            <h2 id="kc-page-title">${msg("loginAccountTitle")}</h2>
+            <p class="rc-sub">${msg("recuroPasswordSub")}</p>
+        <#else>
+            <#-- Email first, then password, in this one card. js/recuro.js moves the step markers and swaps the
+                 heading to the data-password-* text when the person presses Continue. -->
+            <ol class="rc-steps" aria-label="${msg('recuroStepsLabelTwo')}">
+                <li class="on" aria-current="step" data-step-mark="email"><span class="rc-steps-dot" aria-hidden="true"></span><span>${msg("recuroStepEmail")}</span></li>
+                <li data-step-mark="password"><span class="rc-steps-dot" aria-hidden="true"></span><span>${msg("recuroStepPassword")}</span></li>
+            </ol>
+            <h2 id="kc-page-title" data-password-text="${msg('loginAccountTitle')}">${msg("recuroEmailTitle")}</h2>
+            <p class="rc-sub" data-password-text="${msg('recuroPasswordSub')}">${msg("recuroEmailSub")}</p>
+        </#if>
 
         <div class="rc-who">
             <div class="rc-chip" data-brand-chip hidden>
@@ -30,6 +44,13 @@
                     <span class="rc-chip-text"><small>${msg("recuroStepEmail")}</small><b>${login.username}</b></span>
                     <a class="rc-chip-change" data-portal-back data-email="${login.username}" href="${url.loginRestartFlowUrl}" aria-label="${msg('recuroChangeEmail')}">${msg("recuroChange")}</a>
                 </div>
+            <#elseif !usernameHidden??>
+                <#-- Filled in and shown by js/recuro.js once the email step is done. -->
+                <div class="rc-chip" data-email-chip hidden>
+                    <span class="rc-chip-mark person" aria-hidden="true" data-email-initial></span>
+                    <span class="rc-chip-text"><small>${msg("recuroStepEmail")}</small><b data-email-value></b></span>
+                    <button class="rc-chip-change rc-link-button" type="button" data-change-email aria-label="${msg('recuroChangeEmail')}">${msg("recuroChange")}</button>
+                </div>
             </#if>
         </div>
 
@@ -40,19 +61,23 @@
         </#if>
 
         <#if realm.password>
-            <form id="kc-form-login" class="rc-form" data-signing-in="${msg('recuroSigningIn')}" action="${url.loginAction}" method="post" novalidate>
+            <form id="kc-form-login" class="rc-form" data-signing-in="${msg('recuroSigningIn')}" action="${url.loginAction}" method="post" novalidate
+                  <#if !knownEmail && !usernameHidden??>data-identifier-first data-email-invalid="${msg('recuroEmailInvalid')}"</#if>>
                 <#if knownEmail>
                     <#-- Sent with the password, and lets password managers pair the two. -->
                     <input class="rc-sr-only" id="username" name="username" type="email" value="${login.username}" autocomplete="username" readonly tabindex="-1" aria-hidden="true"/>
                 <#elseif !usernameHidden??>
-                    <div class="rc-group<#if credentialsError> rc-err</#if>">
+                    <div class="rc-group<#if credentialsError> rc-err</#if>" data-step="email">
                         <label for="username" class="rc-label">${msg("email")}</label>
                         <input id="username" class="rc-input" name="username" value="${(login.username!'')}" type="email" inputmode="email"
                                autofocus autocomplete="${(enableWebAuthnConditionalUI?has_content)?then('username webauthn', 'username')}"
-                               aria-invalid="${credentialsError?c}" dir="ltr"/>
+                               aria-invalid="${credentialsError?c}" aria-describedby="email-error" dir="ltr"/>
+                        <span id="email-error" class="rc-field-error" role="alert" data-email-error hidden></span>
+                        <button class="rc-btn rc-btn-primary rc-btn-block rc-continue" type="button" data-continue hidden>${msg("recuroContinue")}</button>
                     </div>
                 </#if>
 
+                <div class="rc-form" data-step="password">
                 <div class="rc-group<#if credentialsError> rc-err</#if>">
                     <label for="password" class="rc-label">${msg("password")}</label>
                     <div class="rc-input-group" dir="ltr">
@@ -85,6 +110,7 @@
 
                 <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if>/>
                 <button class="rc-btn rc-btn-primary rc-btn-block" name="login" id="kc-login" type="submit">${msg("doLogIn")}</button>
+                </div>
             </form>
         </#if>
         <@passkeys.conditionalUIData />

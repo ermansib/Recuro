@@ -91,6 +91,99 @@
     Array.prototype.forEach.call(document.querySelectorAll(selector), fn);
   }
 
+  var EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  function restartAnimation(el) {
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = '';
+  }
+
+  // Opened without an email: ask for it first, then the password, in this same card and without another
+  // page load. Both fields stay in one form so Keycloak gets them together, as on its own page.
+  function identifierFirst(form) {
+    var emailStep = form.querySelector('[data-step=email]');
+    var passwordStep = form.querySelector('[data-step=password]');
+    var username = form.querySelector('#username');
+    var password = form.querySelector('#password');
+    var error = form.querySelector('[data-email-error]');
+    var chip = document.querySelector('[data-email-chip]');
+    var card = form.closest('.rc-step');
+    if (!emailStep || !passwordStep || !username || !password || !chip) return;
+    var onEmail = true;
+
+    function setText(toPassword) {
+      each('[data-password-text]', function (el) {
+        if (!el.hasAttribute('data-email-text')) el.setAttribute('data-email-text', el.textContent);
+        el.textContent = el.getAttribute(toPassword ? 'data-password-text' : 'data-email-text');
+      });
+      each('[data-step-mark]', function (li) {
+        var current = li.getAttribute('data-step-mark') === (toPassword ? 'password' : 'email');
+        li.className = current ? 'on' : (toPassword ? 'done' : '');
+        if (current) li.setAttribute('aria-current', 'step');
+        else li.removeAttribute('aria-current');
+      });
+    }
+
+    function showError(text) {
+      error.textContent = text;
+      error.hidden = !text;
+      username.setAttribute('aria-invalid', text ? 'true' : 'false');
+      emailStep.classList.toggle('rc-err', !!text);
+    }
+
+    function toPassword() {
+      var email = username.value.trim();
+      if (!EMAIL.test(email)) {
+        showError(form.getAttribute('data-email-invalid') || '');
+        username.focus();
+        return;
+      }
+      username.value = email;
+      showError('');
+      onEmail = false;
+      chip.querySelector('[data-email-value]').textContent = email;
+      chip.querySelector('[data-email-initial]').textContent = email.charAt(0).toUpperCase();
+      // The email field stays in the form (visually hidden) so it is sent and password managers pair it.
+      emailStep.classList.add('rc-sr-only');
+      username.setAttribute('tabindex', '-1');
+      chip.hidden = false;
+      passwordStep.hidden = false;
+      setText(true);
+      if (card) restartAnimation(card);
+      password.focus();
+    }
+
+    function toEmail() {
+      onEmail = true;
+      emailStep.classList.remove('rc-sr-only');
+      username.removeAttribute('tabindex');
+      chip.hidden = true;
+      passwordStep.hidden = true;
+      password.value = '';
+      setText(false);
+      if (card) restartAnimation(card);
+      username.focus();
+      username.select();
+    }
+
+    // A server error with no email (Keycloak re-rendered the page) belongs to the email step.
+    var serverError = form.querySelector('#input-error');
+    if (serverError && !username.value.trim()) showError(serverError.textContent.trim());
+
+    form.querySelector('[data-continue]').hidden = false;
+    form.querySelector('[data-continue]').addEventListener('click', toPassword);
+    chip.querySelector('[data-change-email]').addEventListener('click', toEmail);
+    // Enter in the email field means Continue, not Sign in.
+    form.addEventListener('submit', function (event) {
+      if (!onEmail) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      toPassword();
+    });
+    passwordStep.hidden = true;
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     if (brand) {
       each('[data-brand-tag]', function (el) {
@@ -102,7 +195,7 @@
       each('[data-brand-powered]', function (el) { el.hidden = false; });
       each('[data-brand-name]', function (el) { el.textContent = brand.name; });
       each('[data-brand-initial]', function (el) { el.textContent = brand.name.trim().charAt(0).toUpperCase(); });
-      each('[data-brand-chip]', function (el) { el.hidden = false; });
+      each('[data-brand-chip], [data-brand-only]', function (el) { el.hidden = false; });
     }
 
     // Back to the portal's email step for this workspace, with the email filled in.
@@ -115,6 +208,8 @@
         el.hidden = false;
       });
     }
+
+    each('form[data-identifier-first]', identifierFirst);
 
     // Busy state on submit, like the portal's buttons. Keycloak re-renders the page on any error.
     each('form', function (form) {
