@@ -110,15 +110,27 @@ portal, show/hide password and inline errors. The portal sends the look as the `
 parameter (`frontend/src/api/http/signInBrand.ts`); the theme accepts only plain colours and sets text as
 text. The password itself only ever goes to Keycloak (authorization code + PKCE, no password grant).
 
-Both compose files mount the theme at `/opt/keycloak/themes`. On a Keycloak that is already running, copy
-it in and point the client at it without recreating the container (start-dev keeps its data inside it):
+Opened without an email (straight from a bookmark, or another app), the same card asks for the email
+first and then the password, switching steps in place without another page load; without JavaScript
+both fields show together.
 
-```bash
-docker cp admin/keycloak-themes/recuro <keycloak-container>:/opt/keycloak/themes/recuro
-# Keycloak admin console → recuro realm → Clients → recuro-portal → Settings → Login settings → Login theme: recuro
+Both compose files mount the theme at `/opt/keycloak/themes`. A Keycloak created before the theme existed
+does not get it, nor the client's `login_theme` (the realm is imported with IGNORE_EXISTING), and keeps
+showing Keycloak's default page with email and password together. Run the install script once: it copies
+the theme into the running container (unless the folder is mounted) and sets `login_theme` on
+`recuro-portal` only, without recreating the container (start-dev keeps its data inside it):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File admin\keycloak\install-login-theme.ps1   # Windows
 ```
 
-If the theme is missing, Keycloak falls back to its default page and sign-in still works.
+```bash
+admin/keycloak/install-login-theme.sh                                             # macOS / Linux
+```
+
+Both find the Keycloak container themselves (or take its name) and use the bootstrap admin `admin` /
+`admin` (`KEYCLOAK_ADMIN_USER` / `KEYCLOAK_ADMIN_PASSWORD` override it). Run it again after a pull that
+changes the theme. If the theme is missing, Keycloak falls back to its default page and sign-in still works.
 
 ## Workspace sign-up
 
